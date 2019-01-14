@@ -18,7 +18,6 @@ using namespace std;
 
 SystemControllerClass::SystemControllerClass()
 {
-    fDatabase = new DatabaseInterfaceClass();
     _daqmodule = nullptr;
     fConnectRasp = nullptr;
 }
@@ -316,6 +315,14 @@ void SystemControllerClass::ReadXmlFile(std::string pFileName)
         
         throw;
     }
+}
+
+const Thermorasp *SystemControllerClass::getRasp() const {
+    return fConnectRasp;
+}
+
+vector<string> SystemControllerClass::getRaspSensorNames() const {
+    return fRaspberrySensorsNames;
 }
 
 //gets the value of key pStr

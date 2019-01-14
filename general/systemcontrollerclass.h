@@ -7,8 +7,6 @@
 #include <QThread>
 
 #include "voltagecontrol/powercontrolclass.h"
-#include "environmentcontrolclass.h"
-#include "databaseinterfaceclass.h"
 #include "voltagecontrol/controlttipower.h"
 #include "thermorasp.h"
 #include "voltagecontrol/controlkeithleypower.h"
@@ -28,17 +26,11 @@ public:
     virtual ~SystemControllerClass();
     SystemControllerClass(const SystemControllerClass&) = delete;
     SystemControllerClass& operator=(const SystemControllerClass&) = delete;
+    
+    const Thermorasp *getRasp() const;
+    vector<string> getRaspSensorNames() const;
 
-    Thermorasp *fConnectRasp;
-    EnvironmentControlClass *fEnv;
-    DatabaseInterfaceClass *fDatabase;
-    vector<string> fRaspberrySensorsNames;
-
-    vector<GenericInstrumentDescription_t> fHWDescription;
-    map<string, PowerControlClass* > fMapSources;
     map<string , GenericInstrumentClass*> fGenericInstrumentMap;
-    vector<string> fNamesVoltageSources;
-    vector<string> fNamesInstruments;
     //struct for the vector which contains commands
     struct fParameters{
         string cName;
@@ -70,6 +62,14 @@ private:
     void _parseDaqModule();
     
     DAQModule* _daqmodule;
+    
+    Thermorasp *fConnectRasp;
+    vector<string> fRaspberrySensorsNames;
+    
+    vector<GenericInstrumentDescription_t> fHWDescription;
+    map<string, PowerControlClass* > fMapSources;
+    vector<string> fNamesVoltageSources;
+    vector<string> fNamesInstruments;
 
 private slots:
     void wait(double pTime);

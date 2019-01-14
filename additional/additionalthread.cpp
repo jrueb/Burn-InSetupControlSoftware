@@ -36,7 +36,7 @@ void AdditionalThread::getVAC()
 void AdditionalThread::getRaspSensors()
 {
     while (true){
-        QMap<QString, QString> readings = fAddControl->fConnectRasp->getReadings();
+        QMap<QString, QString> readings = fAddControl->getRasp()->getReadings();
         emit updatedThermorasp(readings);
         QThread::sleep(10);
     }
