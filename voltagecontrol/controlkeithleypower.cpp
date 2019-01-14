@@ -76,6 +76,7 @@ ControlKeithleyPower::ControlKeithleyPower(string pConnection, double pSetVolt, 
     fVoltSet = pSetVolt;
     fCurrCompliance = pSetCurr;
     _turnOffScheduled = false;
+    keithleyOutputOn = false;
     
     KeithleyPowerSweepWorker* worker = new KeithleyPowerSweepWorker(this);
     worker->moveToThread(&_sweepThread);

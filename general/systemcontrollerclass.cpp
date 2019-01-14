@@ -258,7 +258,7 @@ void SystemControllerClass::_parseDaqModule() {
     }
 }
 
-int SystemControllerClass::countIntrument(string instrument_name) {
+int SystemControllerClass::countInstrument(string instrument_name) {
     return fGenericInstrumentMap.count(instrument_name);
 }
 

@@ -379,7 +379,7 @@ void MainWindow::getVoltAndCurr()
 
 void MainWindow::getMeasurments()
 {
-    if (fControl->countIntrument("Thermorasp") == 0) {
+    if (fControl->countInstrument("Thermorasp") == 0) {
         ui->groupBox_3->setEnabled(false);
         return;
     }
@@ -394,7 +394,7 @@ void MainWindow::getMeasurments()
 
 void MainWindow::getVoltAndCurrKeithley()
 {
-    if (fControl->countIntrument("Keithley2410") == 0) {
+    if (fControl->countInstrument("Keithley2410") == 0) {
         ui->groupBox_2->setEnabled(false);
         return;
     }
@@ -424,7 +424,7 @@ void MainWindow::getVoltAndCurrKeithley()
 
 void MainWindow::getChillerStatus()
 {
-    if (fControl->countIntrument("JulaboFP50") == 0) {
+    if (fControl->countInstrument("JulaboFP50") == 0) {
         ui->groupBox_Chiller->setEnabled(false);
         return;
     }
@@ -870,9 +870,20 @@ void MainWindow::on_read_conf_button_clicked()
 
 void MainWindow::app_quit() {
     // Set chillder temperature and turn off
-    if (fControl != nullptr and fControl->countIntrument("JulaboFP50") > 0) {
+    if (fControl != nullptr and fControl->countInstrument("JulaboFP50") > 0) {
         JulaboFP50* chiller = dynamic_cast<JulaboFP50*>(fControl->getGenericInstrObj("JulaboFP50"));
         chiller->SetWorkingTemperature(20);
         chiller->SetCirculatorOff();
+    }
+    
+    // Turn off Keithley power
+    if (fControl != nullptr and fControl->countInstrument("Keithley2410")) {
+        ControlKeithleyPower* keithley = dynamic_cast<ControlKeithleyPower*>(fControl->getGenericInstrObj("Keithley2410"));
+        QEventLoop loop;
+        connect(keithley, SIGNAL(outputStateChanged(bool)), &loop, SLOT(quit()));
+        keithley->offPower();
+        
+        // Wait for power off
+        loop.exec();
     }
 }

@@ -51,7 +51,7 @@ public:
     void startDoingList();
     void Wait(int pSec);
 
-    int countIntrument(string instrument_name);
+    int countInstrument(string instrument_name);
     PowerControlClass* getObject(string pStr);
     GenericInstrumentClass* getGenericInstrObj(string pStr);
     vector<string> getSourceNameVec();
