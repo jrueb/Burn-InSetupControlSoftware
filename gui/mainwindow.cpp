@@ -351,6 +351,15 @@ void MainWindow::getVoltAndCurr()
         gui_pointers_low_voltage[dev_num][1].v_set->setValue(vals->pVSet1);
         gui_pointers_low_voltage[dev_num][0].i_set->setValue(vals->pISet2);
         gui_pointers_low_voltage[dev_num][0].v_set->setValue(vals->pVSet2);
+        
+        for (int i = 0; i < 2; ++i) {
+            bool power_status = ttidev->getPower(2 - i);
+            bool blocked = gui_pointers_low_voltage[dev_num][i].onoff_button->signalsBlocked();
+            gui_pointers_low_voltage[dev_num][i].onoff_button->blockSignals(true);
+            gui_pointers_low_voltage[dev_num][i].onoff_button->setChecked(power_status);
+            gui_pointers_low_voltage[dev_num][i].onoff_button->blockSignals(blocked);
+        }        
+        
         ++dev_num;
     }
     if (dev_num == 0) {

@@ -24,6 +24,7 @@ public:
     void setCurr(double pCurrent , int pId);
     void onPower(int pId);
     void offPower(int pId);
+    bool getPower(int pId);
     void closeConnection();
 
     string fAddress;

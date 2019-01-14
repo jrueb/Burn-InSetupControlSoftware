@@ -83,6 +83,26 @@ void ControlTTiPower::offPower(int pId)
     }
 }
 
+bool ControlTTiPower::getPower(int pId)
+{
+    char buf[BUFLEN];
+    snprintf(buf, sizeof(buf), "OP%d?\n", pId);
+    lxi_send(fDevice, buf, strlen(buf), cTimeOut);
+    QThread::msleep(50);
+    
+    int len;
+    if ((len = lxi_receive(fDevice, buf, sizeof(buf), cTimeOut)) == LXI_ERROR) {
+        cerr << "ControlTTiPower::getPower: Could not receive value." << endl;
+        
+        throw BurnInException("Could not receive TTi power status");
+    }
+    
+    if (buf[0] == '0')
+        return false;
+    else
+        return true;
+}
+
 PowerControlClass::fVACvalues* ControlTTiPower::getVoltAndCurr()
 {
     fVACvalues *cObject = new fVACvalues;
