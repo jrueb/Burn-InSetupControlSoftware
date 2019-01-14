@@ -13,6 +13,8 @@
 #include "ComHandler.h"
 #include "BurnInException.h"
 
+#include <sys/select.h>
+
 // SETTINGS ON THE DEVICE:
 // (MENU RS-232)
 // 
@@ -74,31 +76,32 @@ void ComHandler::SendCommand( const char *commandString, bool sendfeed ) {
 //! Read a string from device.
 /*!
 \par receiveString:
-  <br><b>receiveString array must be at least 1024 bytes long.</b>
+  <br><b>Buffer to read into. Will be 0 terminated. receiveString array must be at least 1024 bytes long.</b>
 */
 void ComHandler::ReceiveString( char *receiveString ) {
-
-  usleep( ComHandlerDelay );
-
-  int timeout = 0, readResult = 0;
-
-  while ( timeout < 100000 )  {
-
-    readResult = read( fIoPortFileDescriptor, receiveString, 1024 );
-
-    if ( readResult >= 0 )
-      receiveString[readResult] = 0;
-
-    if ( readResult > 0 )
-      break;
-
-    timeout++;
-
+  timeval timeout;
+  fd_set set;
+  
+  receiveString[0] = 0;
+  
+  FD_ZERO(&set);
+  FD_SET(fIoPortFileDescriptor, &set);
+  timeout.tv_sec = 1; // 1 second timeout
+  timeout.tv_usec = 0;
+  
+  int rv = select(fIoPortFileDescriptor + 1, &set, NULL, NULL, &timeout);
+  if (rv == -1) {
+    std::cerr << "Error occured when reading from " << fIoPort << std::endl;
+    return;
+  } else if (rv == 0) {
+    std::cerr << "Timeout reached when reading from " << fIoPort << std::endl;
+    return;
+  } else {
+    int len = read(fIoPortFileDescriptor, receiveString, 1023);
+    receiveString[len] = 0;
+    std::cout << "Read " << len << " bytes from " << fIoPort << ": " << receiveString << std::endl;
   }
-  if (timeout >= 100000)
-    std::cout << "Timeout reached when reading from " << fIoPort << std::endl;
-  else
-    std::cout << "Read " << readResult << " bytes from " << fIoPort << ": " << receiveString << std::endl;
+  
 }
 
 //! Open I/O port.
