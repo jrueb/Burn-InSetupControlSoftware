@@ -886,4 +886,16 @@ void MainWindow::app_quit() {
         // Wait for power off
         loop.exec();
     }
+    
+    // Turn off TTi power
+    if (fControl != nullptr) {
+        const vector<string> sources = fControl->getSourceNameVec();
+        for (const string& name: sources) {
+            if (name.substr(0, 3) != "TTI")
+                continue;
+                
+            ControlTTiPower* ttidev = dynamic_cast<ControlTTiPower*>(fControl->getGenericInstrObj(name));
+            ttidev->offPower(0);
+        }
+    }
 }
