@@ -24,7 +24,6 @@ class SystemControllerClass;
 }
 
 struct output_pointer_t {
-    QLayout *layout;
     QDoubleSpinBox *i_set;
     QDoubleSpinBox *v_set;
     QLCDNumber *i_applied;
@@ -112,7 +111,7 @@ private:
     void getMeasurments();
     QString transformQString(QString pStr);
     QString deleteSpaces(QString pStr);
-    output_pointer_t SetSourceOutputLayout(std::string pType);
+    output_pointer_t SetSourceOutputLayout() const;
     output_pointer_t *SetVoltageSource(QLayout *pMainLayout, std::string pName, std::string pType,
                                        int pNoutputs);
     output_Raspberry* gui_raspberry;

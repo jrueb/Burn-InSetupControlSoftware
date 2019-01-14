@@ -71,46 +71,33 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-output_pointer_t MainWindow::SetSourceOutputLayout(std::string pType)
+output_pointer_t MainWindow::SetSourceOutputLayout() const
 {
     // create pointer list
     output_pointer_t cOutputPointers;
-
-    // create layout
-    cOutputPointers.layout = new QVBoxLayout;
-
-    // type of the power source
-    QLabel *type = new QLabel(pType.c_str());
-    type->setMaximumHeight(20);
-    cOutputPointers.layout->addWidget(type);
 
     // i/v set
     cOutputPointers.i_set = new QDoubleSpinBox();
     cOutputPointers.i_set->setMaximumHeight(20);
     cOutputPointers.i_set->setDecimals(3);
     cOutputPointers.i_set->setSuffix(" A");
-    cOutputPointers.layout->addWidget(cOutputPointers.i_set);
     cOutputPointers.v_set = new QDoubleSpinBox();
     cOutputPointers.v_set->setMaximumHeight(20);
     cOutputPointers.v_set->setMinimum(-100000);
     cOutputPointers.v_set->setDecimals(3);
     cOutputPointers.v_set->setSuffix(" V");
-    cOutputPointers.layout->addWidget(cOutputPointers.v_set);
 
     // applied
     cOutputPointers.i_applied = new QLCDNumber();
     cOutputPointers.i_applied->setMaximumHeight(20);
     cOutputPointers.i_applied->setSegmentStyle(QLCDNumber::Flat);
-    cOutputPointers.layout->addWidget(cOutputPointers.i_applied);
     cOutputPointers.v_applied = new QLCDNumber();
     cOutputPointers.v_applied->setMaximumHeight(20);
     cOutputPointers.v_applied->setSegmentStyle(QLCDNumber::Flat);
-    cOutputPointers.layout->addWidget(cOutputPointers.v_applied);
 
     // on off
     cOutputPointers.onoff_button = new QCheckBox("On");
     cOutputPointers.onoff_button->setMaximumHeight(20);
-    cOutputPointers.layout->addWidget(cOutputPointers.onoff_button);
 
     // return
     return cOutputPointers;
@@ -235,37 +222,41 @@ output_pointer_t* MainWindow::SetVoltageSource(QLayout *pMainLayout, std::string
 
     // horizontal layout
     QGroupBox *group_box = new QGroupBox(pName.c_str());
-    QHBoxLayout *group_box_layout = new QHBoxLayout;
+    QGridLayout *group_box_layout = new QGridLayout;
 
     QSize size(80,20);
 
     // set the labels
-    QVBoxLayout *label_layout = new QVBoxLayout;
     QLabel *label_type = new QLabel("Type:");
     label_type->setMinimumSize(size);
-    label_layout->addWidget(label_type);
+    group_box_layout->addWidget(label_type, 0, 0);
     QLabel *label_i_set = new QLabel("Current limit:");
     label_i_set->setMinimumSize(size);
-    label_layout->addWidget(label_i_set);
+    group_box_layout->addWidget(label_i_set, 1, 0);
     QLabel *label_v_set = new QLabel("Voltage:");
     label_v_set->setMinimumSize(size);
-    label_layout->addWidget(label_v_set);
+    group_box_layout->addWidget(label_v_set, 2, 0);
     QLabel *label_i_applied = new QLabel("Current limit applied:");
     label_i_applied->setMinimumSize(size);
-    label_layout->addWidget(label_i_applied);
+    group_box_layout->addWidget(label_i_applied, 3, 0);
     QLabel *label_v_applied = new QLabel("Voltage applied:");
     label_v_applied->setMinimumSize(size);
-    label_layout->addWidget(label_v_applied);
+    group_box_layout->addWidget(label_v_applied, 4, 0);
     QLabel *label_onoff = new QLabel("On/Off:");
     label_onoff->setMinimumSize(size);
-    label_layout->addWidget(label_onoff);
-    // now set
-    group_box_layout->addItem(label_layout);
+    group_box_layout->addWidget(label_onoff, 5, 0);
 
     // set the outputs
     for (int i = 0; i < pNoutputs; i++) {
-        cOutputPointers[i] = SetSourceOutputLayout(pType);
-        group_box_layout->addItem(cOutputPointers[i].layout);
+        cOutputPointers[i] = SetSourceOutputLayout();
+        QLabel *type = new QLabel(pType.c_str());
+        type->setMaximumHeight(20);
+        group_box_layout->addWidget(type, 0, i + 1);
+        group_box_layout->addWidget(cOutputPointers[i].i_set, 1, i + 1);
+        group_box_layout->addWidget(cOutputPointers[i].v_set, 2, i + 1);
+        group_box_layout->addWidget(cOutputPointers[i].i_applied, 3, i + 1);
+        group_box_layout->addWidget(cOutputPointers[i].v_applied, 4, i + 1);
+        group_box_layout->addWidget(cOutputPointers[i].onoff_button, 5, i + 1);
     }
 
     // set the group box
