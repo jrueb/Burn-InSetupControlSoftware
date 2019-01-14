@@ -17,7 +17,7 @@ public:
     Thermorasp(const QString& address, quint16 port);
     Thermorasp(const string& address, quint16 port);
     void initialize() {};
-    QMap<QString, QString> getReadings(int timeout = 5000);
+    QMap<QString, QString> getReadings(int timeout = 5000) const;
 
 signals:
 
@@ -25,9 +25,8 @@ public slots:
 private:
     quint16 _port;
     QString _address;
-    QTcpSocket* _sock;
     
-    QMap<QString, QString> _parseReplyForReadings(QByteArray buffer);
+    QMap<QString, QString> _parseReplyForReadings(QByteArray buffer) const;
 };
 
 #endif // THERMORASP_H

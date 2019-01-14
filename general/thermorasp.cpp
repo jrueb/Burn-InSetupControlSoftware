@@ -17,7 +17,7 @@ Thermorasp::Thermorasp(const string& address, quint16 port) {
     _port = port;
 }
 
-QMap<QString, QString> Thermorasp::_parseReplyForReadings(QByteArray buffer) {
+QMap<QString, QString> Thermorasp::_parseReplyForReadings(QByteArray buffer) const {
     QMap<QString, QString> ret;
     QString data = QTextCodec::codecForMib(106)->toUnicode(buffer);
     int nlpos = data.indexOf('\n');
@@ -55,7 +55,7 @@ QMap<QString, QString> Thermorasp::_parseReplyForReadings(QByteArray buffer) {
     return ret;
 }
 
-QMap<QString, QString> Thermorasp::getReadings(int timeout) {
+QMap<QString, QString> Thermorasp::getReadings(int timeout) const {
     QTcpSocket* sock = new QTcpSocket(nullptr);
     QMap<QString, QString> ret;
     sock->connectToHost(_address, _port);
