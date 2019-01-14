@@ -20,6 +20,7 @@
 #include "ComHandler.h"
 
 #include "JulaboFP50.h"
+#include "BurnInException.h"
 
 //#####################
 // TODO:
@@ -602,12 +603,13 @@ void JulaboFP50::Device_Init( void ) {
 
   // std::cout << buffer << std::endl;
 
-  if (std::string::npos==std::string(buffer).find( "JULABO TOPTECH-SERIES MC-2 VERSION 3.0")) {
+  if (std::string::npos==std::string(buffer).find( "JULABO TOPTECH-SERIES MC-2 VERSION")) {
     std::cerr << " [JulaboFP50::Device_Init] ** ERROR: Device communication problem."
               << std::endl;
     std::cerr << "  > (could not read software version string)" << std::endl;
     isCommunication_ = false;
-    return;
+    
+    throw BurnInException("Device at address of Julabo is not a Julabo chiller");
   }
 
   isCommunication_ = true;

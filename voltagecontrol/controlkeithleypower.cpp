@@ -15,6 +15,7 @@
 #include <QThread>
 
 #include "controlkeithleypower.h"
+#include "general/BurnInException.h"
 #include "additional/additionalthread.h"
 #include "general/systemcontrollerclass.h"
 
@@ -99,10 +100,16 @@ void ControlKeithleyPower::initialize(){
     speed_t keithleybaud = B19200;
     comHandler_ = new ComHandler( ioPort, keithleybaud );
     
+    char buf[1024];
+    memset(buf, 0, sizeof(buf));
+    comHandler_->SendCommand("*IDN?");
+    comHandler_->ReceiveString(buf);
+    if (memcmp(buf, "KEITHLEY INSTRUMENTS INC.,MODEL 2410", 36) != 0)
+	throw BurnInException("Device at address of Keithley is not a Keithley 2410");
+    
     setCurr(fCurrCompliance);
     
     // check whether output is on
-    char buf[1024];
     comHandler_->SendCommand(":OUTPUT1:STATE?");
     usleep(1000);
     comHandler_->ReceiveString(buf);

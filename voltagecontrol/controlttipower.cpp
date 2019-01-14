@@ -36,7 +36,7 @@ void ControlTTiPower::initialize()
     
     if (fDevice == -1) {
         std::cerr << "Could not open ControlTTiPower on " << fAddress << " and port " << fPort << std::endl;
-        throw BurnInException("Could not open ControlTTiPower");
+        throw BurnInException("Could not open connection to TTi");
     }
 
     for (int i = 0; i < 2; ++i) {
