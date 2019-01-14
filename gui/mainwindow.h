@@ -44,7 +44,6 @@ struct output_Chiller{
      QLCDNumber *pressure;
      QLCDNumber *workingTemperature;
      QCheckBox *onoff_button;
-     QLayout *layout;
 };
 
 

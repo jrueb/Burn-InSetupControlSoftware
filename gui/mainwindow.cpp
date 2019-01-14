@@ -125,40 +125,30 @@ output_Chiller MainWindow::setChilerLayout()
 {
     output_Chiller cOutputPointers;
 
-    cOutputPointers.layout = new QVBoxLayout;
-
-
     cOutputPointers.setTemperature = new QDoubleSpinBox();
     cOutputPointers.setTemperature->setMaximumHeight(20);
     cOutputPointers.setTemperature->setMinimum(-100000);
-    cOutputPointers.layout->addWidget(cOutputPointers.setTemperature);
-
 
     cOutputPointers.bathTemperature = new QLCDNumber();
     cOutputPointers.bathTemperature->setMaximumHeight(20);
     cOutputPointers.bathTemperature->setSegmentStyle(QLCDNumber::Flat);
-    cOutputPointers.layout->addWidget(cOutputPointers.bathTemperature);
 
     cOutputPointers.workingTemperature = new QLCDNumber();
     cOutputPointers.workingTemperature->setMaximumHeight(20);
     cOutputPointers.workingTemperature->setSegmentStyle(QLCDNumber::Flat);
-    cOutputPointers.layout->addWidget(cOutputPointers.workingTemperature);
 
     cOutputPointers.sensorTemperature = new QLCDNumber();
     cOutputPointers.sensorTemperature->setMaximumHeight(20);
     cOutputPointers.sensorTemperature->setSegmentStyle(QLCDNumber::Flat);
-    cOutputPointers.layout->addWidget(cOutputPointers.sensorTemperature);
 
     cOutputPointers.pressure = new QLCDNumber();
     cOutputPointers.pressure->setMaximumHeight(20);
     cOutputPointers.pressure->setSegmentStyle(QLCDNumber::Flat);
-    cOutputPointers.layout->addWidget(cOutputPointers.pressure);
 
 
     // on off
     cOutputPointers.onoff_button = new QCheckBox("On");
     cOutputPointers.onoff_button->setMaximumHeight(20);
-    cOutputPointers.layout->addWidget(cOutputPointers.onoff_button);
 
     return cOutputPointers;
 }
@@ -170,41 +160,37 @@ output_Chiller* MainWindow::SetChillerOutput(QLayout *pMainLayout, string pName)
 
     // horizontal layout
     QGroupBox *group_box = new QGroupBox(pName.c_str());
-    QHBoxLayout *group_box_layout = new QHBoxLayout;
+    QGridLayout *group_box_layout = new QGridLayout;
 
     QSize size(80,20);
 
     // set the labels
-    QVBoxLayout *label_layout = new QVBoxLayout;
-    label_layout->setMargin(10);
-
-
     QLabel *label_t_set = new QLabel("T(set), °C:");
     label_t_set->setMinimumSize(size);
-    label_layout->addWidget(label_t_set);
+    group_box_layout->addWidget(label_t_set, 0, 0);
     QLabel *label_t_bath = new QLabel("T(bath), °C:");
     label_t_bath->setMinimumSize(size);
-    label_layout->addWidget(label_t_bath);
+    group_box_layout->addWidget(label_t_bath, 1, 0);
     QLabel *label_t_working = new QLabel("T(working), °C:");
     label_t_working->setMinimumSize(size);
-    label_layout->addWidget(label_t_working);
+    group_box_layout->addWidget(label_t_working, 2, 0);
     QLabel *label_t_sensor = new QLabel("T(sensor), °C:");
     label_t_sensor->setMinimumSize(size);
-    label_layout->addWidget(label_t_sensor);
+    group_box_layout->addWidget(label_t_sensor, 3, 0);
     QLabel *label_pressure = new QLabel("P, Pa:");
     label_pressure->setMinimumSize(size);
-    label_layout->addWidget(label_pressure);
+    group_box_layout->addWidget(label_pressure, 4, 0);
     QLabel *label_on_off = new QLabel("On/Off:");
     label_on_off->setMinimumSize(size);
-    label_layout->addWidget(label_on_off);
-    // add stretchconnect(fControl, SIGNAL(sendOnOff(string,bool)) , this , SLOT(receiveOnOff(string,bool)));
-    label_layout->addSpacing(15);
-
-    // now set
-    group_box_layout->addItem(label_layout);
+    group_box_layout->addWidget(label_on_off, 5, 0);
 
     cOutputPointers[0] = setChilerLayout();
-    group_box_layout->addItem(cOutputPointers[0].layout);
+    group_box_layout->addWidget(cOutputPointers[0].setTemperature, 0, 1);
+    group_box_layout->addWidget(cOutputPointers[0].bathTemperature, 1, 1);
+    group_box_layout->addWidget(cOutputPointers[0].workingTemperature, 2, 1);
+    group_box_layout->addWidget(cOutputPointers[0].sensorTemperature, 3, 1);
+    group_box_layout->addWidget(cOutputPointers[0].pressure, 4, 1);
+    group_box_layout->addWidget(cOutputPointers[0].onoff_button, 5, 1);
 
     group_box->setLayout(group_box_layout);
 
