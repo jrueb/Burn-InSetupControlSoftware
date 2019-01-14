@@ -126,8 +126,8 @@ bool DAQModule::getFC7Power() const {
 void DAQModule::loadFirmware() const {
 	QProcess fpgaconfig;
 	
-	QString cmd = _ph2SetupCommand + "; \"" + _ph2FpgaConfigPath + "\" -c \"" + _daqHwdescFile + "\" -i \"" + _daqImage + "\"";
-	if (not fpgaconfig.startDetached("/bin/bash", {"-c", cmd}))
+	QString cmd = _ph2SetupCommand + "; \"" + _ph2FpgaConfigPath + "\" -c \"" + _daqHwdescFile + "\" -i \"" + _daqImage + "\"; read";
+	if (not fpgaconfig.startDetached("/usr/bin/konsole", {"--hide-menubar", "--hide-tabbar", "-e", "bash", "-c", cmd}))
 		throw BurnInException("Unable to load firmware. Command: " + cmd.toStdString());
 }
 
@@ -158,7 +158,7 @@ void DAQModule::runCommission() const {
 void DAQModule::_run_ph2_binary(const QString& name, const QString& path) const {
 	QProcess process;
 	
-	QString cmd = _ph2SetupCommand + "; \"" + path + "\" -f \"" + _daqHwdescFile + "\"";
-	if (not process.startDetached("/bin/bash", {"-c", cmd}))
+	QString cmd = _ph2SetupCommand + "; \"" + path + "\" -f \"" + _daqHwdescFile + "\"; read";
+	if (not process.startDetached("/usr/bin/konsole", {"--hide-menubar", "--hide-tabbar", "-e", "bash", "-c", cmd}))
 		throw BurnInException("Unable to run" + name.toStdString() + ". Command: " + cmd.toStdString());
 }
