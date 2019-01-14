@@ -30,9 +30,11 @@ KeithleyPowerSweepWorker::KeithleyPowerSweepWorker(ControlKeithleyPower* keithle
     connect(&_timer, SIGNAL(timeout()), this, SLOT(doSweeping()));
     _timer.start(SWEEP_INTERVAL);
     
-    _voltTarget = _keithley->fVoltSet;
-    _voltApplied = _keithley->fVolt;
-    _outputState = _keithley->keithleyOutputOn;
+    PowerControlClass::fVACvalues *vals = _keithley->getVoltAndCurr();
+    _voltTarget = vals->pVSet1;
+    _voltApplied = vals->pVApp1;
+    delete vals;
+    _outputState = _keithley->getKeithleyOutputState();
 }
 
 void KeithleyPowerSweepWorker::doSweeping() {

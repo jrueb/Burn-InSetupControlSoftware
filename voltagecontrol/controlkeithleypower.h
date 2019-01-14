@@ -51,18 +51,6 @@ public:
     void closeConnection();
 
     void sendVoltageCommand(double pVoltage);
-    void onTargetVoltageReached(double voltage);
-    void checkVAC();
-
-    double fVolt;
-    double fVoltSet;
-    double fCurr;
-    double fCurrCompliance;
-    string fConnection;
-
-    ComHandler* comHandler_;
-
-    bool keithleyOutputOn;
 
     void setKeithleyOutputState ( int outputsetting );
     bool getKeithleyOutputState ( );
@@ -73,6 +61,19 @@ signals:
     void outputStateChanged(bool state);
 
 private:
+    void onTargetVoltageReached(double voltage);
+    void checkVAC();
+    
+    double fVolt;
+    double fVoltSet;
+    double fCurr;
+    double fCurrCompliance;
+    string fConnection;
+
+    ComHandler* comHandler_;
+
+    bool keithleyOutputOn;
+
     QThread _sweepThread;
     QMutex _commMutex;
     bool _turnOffScheduled;
