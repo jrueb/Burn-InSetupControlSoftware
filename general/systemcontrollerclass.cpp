@@ -166,6 +166,11 @@ void SystemControllerClass::_parseVSources()
             }
             dev = new ControlTTiPower(address, cPort, cVolt, cCurr);
         } else if (desc.classOfInstr == "Keithley2410") {
+            if (fGenericInstrumentMap.count(desc.classOfInstr) != 0) {
+                cerr << "Can only use one Keithley at a time. Ignoring others." << endl;
+                continue;
+            }
+            
             double cSetVolt = 0;
             double cSetCurr = 0;
             if (desc.operational_settings.size() > 0) {
@@ -221,6 +226,11 @@ void SystemControllerClass::_parseChiller()
     for(size_t i = 0 ; i != fHWDescription.size() ; i++){
 
         if(fHWDescription[i].classOfInstr == "JulaboFP50"){
+            if (fGenericInstrumentMap.count(fHWDescription[i].classOfInstr) != 0) {
+                cerr << "Can only use one JulaboFP50 at a time. Ignoring others." << endl;
+                continue;
+            }
+            
             string ident = _getIdentifierForDescription(fHWDescription[i]);
             
             string cAddress = fHWDescription[i].interface_settings["address"];
@@ -240,8 +250,13 @@ void SystemControllerClass::_parseDaqModule() {
         if (desc.section != "DAQModule")
             continue;
             
+        if (_daqmodule != nullptr) {
+            cerr << "Can only use one DAQ module at a time. Ignoring others." << endl;
+            continue;
+        }
+            
         if (desc.classOfInstr != "DAQModule")
-            throw BurnInException("Invalid class " + desc.classOfInstr + " for a VoltageSource device.");
+            throw BurnInException("Invalid class " + desc.classOfInstr + " for a DAQModule device.");
         
         QString fc7Port, controlhubPath, ph2acfPath, daqHwdescFile, daqImage;
         fc7Port = QString::fromStdString(desc.interface_settings.at("fc7Port"));
