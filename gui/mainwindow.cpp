@@ -210,7 +210,7 @@ output_pointer_t* MainWindow::SetVoltageSource(QLayout *pMainLayout, std::string
     QGroupBox *group_box = new QGroupBox(pName.c_str());
     QGridLayout *group_box_layout = new QGridLayout;
 
-    QSize size(80,20);
+    QSize size(300, 20);
 
     // set the labels
     QLabel *label_type = new QLabel("Type:");
@@ -222,10 +222,10 @@ output_pointer_t* MainWindow::SetVoltageSource(QLayout *pMainLayout, std::string
     QLabel *label_v_set = new QLabel("Voltage:");
     label_v_set->setMinimumSize(size);
     group_box_layout->addWidget(label_v_set, 2, 0);
-    QLabel *label_i_applied = new QLabel("Current limit applied:");
+    QLabel *label_i_applied = new QLabel("Current (A):");
     label_i_applied->setMinimumSize(size);
     group_box_layout->addWidget(label_i_applied, 3, 0);
-    QLabel *label_v_applied = new QLabel("Voltage applied:");
+    QLabel *label_v_applied = new QLabel("Voltage app. (V):");
     label_v_applied->setMinimumSize(size);
     group_box_layout->addWidget(label_v_applied, 4, 0);
     QLabel *label_onoff = new QLabel("On/Off:");
