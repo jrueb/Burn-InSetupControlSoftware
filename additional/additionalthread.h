@@ -19,7 +19,7 @@ public:
 signals:
     void sendToThread(PowerControlClass::fVACvalues *, int dev_num);
     void sendToThreadKeithley(PowerControlClass::fVACvalues *);
-    void updatedThermorasp(QMap<QString, QString>);
+    void updatedThermorasp(quint64 n, QMap<QString, QString>);
     void sendFromChiller(QString);
 
 public slots:

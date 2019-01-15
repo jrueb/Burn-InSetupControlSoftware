@@ -19,7 +19,6 @@ using namespace std;
 SystemControllerClass::SystemControllerClass()
 {
     _daqmodule = nullptr;
-    fConnectRasp = nullptr;
 }
 
 SystemControllerClass::~SystemControllerClass() {
@@ -205,12 +204,13 @@ void SystemControllerClass::_parseRaspberry()
             } catch (logic_error) {
                 throw BurnInException("Invalid port number for Thermorasp.");
             }
-            fConnectRasp = new Thermorasp(cAddress , cPort);
-            fGenericInstrumentMap.insert(pair<string , GenericInstrumentClass*>(ident, fConnectRasp));
+            Thermorasp* rasp = new Thermorasp(cAddress, cPort);
+            fConnectRasps.push_back(rasp);
+            fGenericInstrumentMap.insert(pair<string , GenericInstrumentClass*>(ident, rasp));
             fNamesInstruments.push_back(ident);
 
             for(size_t j = 0 ; j != fHWDescription[i].operational_settings.size() ; j++){
-                fConnectRasp->addSensorName(fHWDescription[i].operational_settings[j]["sensor"]);
+                rasp->addSensorName(fHWDescription[i].operational_settings[j]["sensor"]);
             }
         }
     }
@@ -266,14 +266,16 @@ GenericInstrumentClass* SystemControllerClass::getGenericInstrObj(string pStr)
 }
 
 void SystemControllerClass::_removeAllDevices() {
+    // Clear vectors and pointers
     fNamesInstruments.clear();
     _daqmodule = nullptr;
-    fConnectRasp = nullptr;
+    fConnectRasps.clear();
     fNamesVoltageSources.clear();
     fMapSources.clear();
     fHWDescription.clear();
     fListOfCommands.clear();
     
+    // Delete all instrument instances
     for (const auto& instrument: fGenericInstrumentMap)
         delete instrument.second;
     fGenericInstrumentMap.clear();
@@ -315,8 +317,16 @@ void SystemControllerClass::ReadXmlFile(std::string pFileName)
     }
 }
 
-const Thermorasp *SystemControllerClass::getRasp() const {
-    return fConnectRasp;
+size_t SystemControllerClass::getNumRasps() const {
+    return fConnectRasps.size();
+}
+
+std::vector<std::string> SystemControllerClass::getRaspSensorNames(size_t n) const {
+    return fConnectRasps.at(n)->getSensorNames();
+}
+
+QMap<QString, QString> SystemControllerClass::getRaspReadings(size_t n, int timeout) const {
+    return fConnectRasps.at(n)->getReadings(timeout);
 }
 
 //gets the value of key pStr

@@ -29,6 +29,11 @@
             <Sensor sensor="SHT75_temp"/>
             <Sensor sensor="SHT75_hum"/>
         </RaspberryControl>
+        <RaspberryControl class="Thermorasp" address="fhlthermorasp2.desy.de" port="50007" description="used for display temperature humidity pressure" >
+            <Sensor sensor="BME680_i2c-0_0x77_temp"/>
+            <Sensor sensor="BME680_i2c-0_0x77_hum"/>
+            <Sensor sensor="BME680_i2c-0_0x77_pres"/>
+        </RaspberryControl>
     </Environment>
     <DataAcquisition>
         <DAQModule class="DAQModule" fc7Port="/dev/ttyACM0" controlhubPath="/opt/cactus" ph2acfPath="/opt/Ph2_ACF" daqHwdescFile="/opt/Ph2_ACF/settings/D19CDescription8CBC2.xml" daqImage="d19c_8xCBC2_21112018.bin"/>

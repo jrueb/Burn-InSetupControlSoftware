@@ -66,7 +66,7 @@ private slots:
 
     void on_Start_pushButton_clicked();
 
-    void updateRaspWidget(QMap<QString, QString>);
+    void updateRaspWidget(quint64 n, QMap<QString, QString>);
 
     void updateTTiIWidget(PowerControlClass::fVACvalues *pObject, int dev_num);
 
@@ -113,7 +113,7 @@ private:
     output_pointer_t SetSourceOutputLayout() const;
     output_pointer_t *SetVoltageSource(QLayout *pMainLayout, std::string pName, std::string pType,
                                        int pNoutputs);
-    output_Raspberry* gui_raspberry;
+    vector<output_Raspberry*> gui_raspberrys;
 
     output_Raspberry setRaspberryLayout(string pName);
 

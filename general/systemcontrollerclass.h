@@ -27,7 +27,9 @@ public:
     SystemControllerClass(const SystemControllerClass&) = delete;
     SystemControllerClass& operator=(const SystemControllerClass&) = delete;
     
-    const Thermorasp *getRasp() const;
+    size_t getNumRasps() const;
+    std::vector<std::string> getRaspSensorNames(size_t n) const;
+    QMap<QString, QString> getRaspReadings(size_t n, int timeout = 5000) const;
 
     map<string , GenericInstrumentClass*> fGenericInstrumentMap;
     //struct for the vector which contains commands
@@ -62,7 +64,7 @@ private:
     
     DAQModule* _daqmodule;
     
-    Thermorasp *fConnectRasp;
+    vector<Thermorasp*> fConnectRasps;
     
     vector<GenericInstrumentDescription_t> fHWDescription;
     map<string, PowerControlClass* > fMapSources;

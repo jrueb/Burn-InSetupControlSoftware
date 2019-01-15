@@ -364,7 +364,7 @@ void MainWindow::getMeasurments()
     AdditionalThread *cThread = new AdditionalThread("B" , fControl);
     QThread *cQThread = new QThread();
     connect(cQThread , SIGNAL(started()), cThread, SLOT(getRaspSensors()));
-    connect(cThread, SIGNAL(updatedThermorasp(QMap<QString, QString>)), this, SLOT(updateRaspWidget(QMap<QString, QString>)));
+    connect(cThread, SIGNAL(updatedThermorasp(quint64, QMap<QString, QString>)), this, SLOT(updateRaspWidget(quint64, QMap<QString, QString>)));
     cThread->moveToThread(cQThread);
     cQThread->start();
 }
@@ -504,10 +504,10 @@ void MainWindow::on_Start_pushButton_clicked()
 }
 
 //reads sensor on rasp and sets info to Raspberry sensors
-void MainWindow::updateRaspWidget(QMap<QString, QString> readings) {
+void MainWindow::updateRaspWidget(quint64 n, QMap<QString, QString> readings) {
     int i = 0;
-    for (const string& name: fControl->getRasp()->getSensorNames()) {
-        gui_raspberry[i].value->display(readings[QString::fromStdString(name)]);
+    for (const string& name: fControl->getRaspSensorNames(n)) {
+        gui_raspberrys[n][i].value->display(readings[QString::fromStdString(name)]);
         ++i;
     }
 }
@@ -776,7 +776,8 @@ bool MainWindow::readXmlFile()
             }
 
             if( dynamic_cast<Thermorasp*>(i.second) ){
-                gui_raspberry = SetRaspberryOutput(rasp_layout, fControl->getRasp()->getSensorNames(), i.first);
+                Thermorasp* rasp = dynamic_cast<Thermorasp*>(i.second);
+                gui_raspberrys.push_back(SetRaspberryOutput(rasp_layout, rasp->getSensorNames(), i.first));
             }
 
             if( dynamic_cast<JulaboFP50*>(i.second) ){
