@@ -210,8 +210,7 @@ void SystemControllerClass::_parseRaspberry()
             fNamesInstruments.push_back(ident);
 
             for(size_t j = 0 ; j != fHWDescription[i].operational_settings.size() ; j++){
-                fRaspberrySensorsNames.push_back(fHWDescription[i].operational_settings[j]["sensor"]);
-
+                fConnectRasp->addSensorName(fHWDescription[i].operational_settings[j]["sensor"]);
             }
         }
     }
@@ -270,7 +269,6 @@ void SystemControllerClass::_removeAllDevices() {
     fNamesInstruments.clear();
     _daqmodule = nullptr;
     fConnectRasp = nullptr;
-    fRaspberrySensorsNames.clear();
     fNamesVoltageSources.clear();
     fMapSources.clear();
     fHWDescription.clear();
@@ -319,10 +317,6 @@ void SystemControllerClass::ReadXmlFile(std::string pFileName)
 
 const Thermorasp *SystemControllerClass::getRasp() const {
     return fConnectRasp;
-}
-
-vector<string> SystemControllerClass::getRaspSensorNames() const {
-    return fRaspberrySensorsNames;
 }
 
 //gets the value of key pStr

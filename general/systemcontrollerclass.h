@@ -28,7 +28,6 @@ public:
     SystemControllerClass& operator=(const SystemControllerClass&) = delete;
     
     const Thermorasp *getRasp() const;
-    vector<string> getRaspSensorNames() const;
 
     map<string , GenericInstrumentClass*> fGenericInstrumentMap;
     //struct for the vector which contains commands
@@ -64,7 +63,6 @@ private:
     DAQModule* _daqmodule;
     
     Thermorasp *fConnectRasp;
-    vector<string> fRaspberrySensorsNames;
     
     vector<GenericInstrumentDescription_t> fHWDescription;
     map<string, PowerControlClass* > fMapSources;

@@ -506,7 +506,7 @@ void MainWindow::on_Start_pushButton_clicked()
 //reads sensor on rasp and sets info to Raspberry sensors
 void MainWindow::updateRaspWidget(QMap<QString, QString> readings) {
     int i = 0;
-    for (const string& name: fControl->getRaspSensorNames()) {
+    for (const string& name: fControl->getRasp()->getSensorNames()) {
         gui_raspberry[i].value->display(readings[QString::fromStdString(name)]);
         ++i;
     }
@@ -776,7 +776,7 @@ bool MainWindow::readXmlFile()
             }
 
             if( dynamic_cast<Thermorasp*>(i.second) ){
-                gui_raspberry = SetRaspberryOutput(rasp_layout, fControl->getRaspSensorNames(), i.first);
+                gui_raspberry = SetRaspberryOutput(rasp_layout, fControl->getRasp()->getSensorNames(), i.first);
             }
 
             if( dynamic_cast<JulaboFP50*>(i.second) ){

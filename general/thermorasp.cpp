@@ -17,6 +17,18 @@ Thermorasp::Thermorasp(const string& address, quint16 port) {
     _port = port;
 }
 
+void Thermorasp::setSensorNames(const std::vector<std::string>& names) {
+    _sensorNames = names;
+}
+
+void Thermorasp::addSensorName(const std::string& name) {
+    _sensorNames.push_back(name);
+}
+
+std::vector<std::string> Thermorasp::getSensorNames() const {
+    return _sensorNames;
+}
+
 QMap<QString, QString> Thermorasp::_parseReplyForReadings(QByteArray buffer) const {
     QMap<QString, QString> ret;
     QString data = QTextCodec::codecForMib(106)->toUnicode(buffer);
