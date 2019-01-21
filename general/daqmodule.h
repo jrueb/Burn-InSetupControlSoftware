@@ -6,6 +6,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QVector>
 #include <initializer_list>
 
 class DAQModule : public QObject, public GenericInstrumentClass
@@ -29,7 +30,7 @@ public:
     void runDatatest() const;
     void runHybridtest() const;
     void runCmtest() const;
-    void runCommission() const;
+    void runNoiseMeasurement() const;
     
     const int FC7SLEEP = 10000; //us
 
@@ -55,7 +56,7 @@ private:
     bool _fc7power;
     
     QString _pathjoin(const std::initializer_list<const QString>& parts) const;
-    void _run_ph2_binary(const QString& name, const QString& path) const;
+    void _run_ph2_binary(const QString& name, const QString& path, const QVector<QString>& switches = {}) const;
 };
 
 #endif // DAQMODULE_H

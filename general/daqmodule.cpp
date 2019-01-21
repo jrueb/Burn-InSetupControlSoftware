@@ -140,7 +140,7 @@ void DAQModule::runDatatest() const {
 }
 
 void DAQModule::runCalibrate() const {
-	_run_ph2_binary("calibrate", _ph2CalibratePath);
+	_run_ph2_binary("calibrate", _ph2CalibratePath, {"-n"});
 }
 
 void DAQModule::runHybridtest() const {
@@ -151,14 +151,18 @@ void DAQModule::runCmtest() const {
 	_run_ph2_binary("cmtest", _ph2CmtestPath);
 }
 
-void DAQModule::runCommission() const {
-	_run_ph2_binary("comission", _ph2CommissionPath);
+void DAQModule::runNoiseMeasurement() const {
+	_run_ph2_binary("noise measurement", _ph2CommissionPath, {"-n"});
 }
 
-void DAQModule::_run_ph2_binary(const QString& name, const QString& path) const {
+void DAQModule::_run_ph2_binary(const QString& name, const QString& path, const QVector<QString>& switches) const {
 	QProcess process;
 	
-	QString cmd = _ph2SetupCommand + "; \"" + path + "\" -f \"" + _daqHwdescFile + "\"; read";
+	QString switches_str;
+	for (const auto& s: switches)
+		switches_str += "\"" + s + "\" ";
+	
+	QString cmd = _ph2SetupCommand + "; \"" + path + "\" -f \"" + _daqHwdescFile + "\" " + switches_str + "; read";
 	if (not process.startDetached("/usr/bin/konsole", {"--hide-menubar", "--hide-tabbar", "-p", "HistoryMode=2", "-e", "bash", "-c", cmd}))
 		throw BurnInException("Unable to run" + name.toStdString() + ". Command: " + cmd.toStdString());
 }

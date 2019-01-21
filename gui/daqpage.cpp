@@ -29,8 +29,8 @@ DAQPage::DAQPage(QWidget* daqPageWidget)
     QPushButton* cmtest_button = _daqPageWidget->findChild<QPushButton*>("cmtest_button");
     connect(cmtest_button, SIGNAL(clicked()), this, SLOT(onCmtestClicked()));
     
-    QPushButton* commission_button = _daqPageWidget->findChild<QPushButton*>("commission_button");
-    connect(commission_button, SIGNAL(clicked()), this, SLOT(onCommissionClicked()));
+    QPushButton* noisemeasurement_button = _daqPageWidget->findChild<QPushButton*>("noisemeasurement_button");
+    connect(noisemeasurement_button, SIGNAL(clicked()), this, SLOT(onNoiseMeasurementClicked()));
 }
 
 void DAQPage::setDAQModule(DAQModule* module) {
@@ -77,8 +77,8 @@ void DAQPage::onCmtestClicked() {
     _module->runCmtest();
 }
 
-void DAQPage::onCommissionClicked() {
-    _module->runCommission();
+void DAQPage::onNoiseMeasurementClicked() {
+    _module->runNoiseMeasurement();
 }
 
 

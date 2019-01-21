@@ -322,9 +322,9 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="commission_button">
+          <widget class="QPushButton" name="noisemeasurement_button">
            <property name="text">
-            <string>Commission</string>
+            <string>Noise measurement</string>
            </property>
           </widget>
          </item>

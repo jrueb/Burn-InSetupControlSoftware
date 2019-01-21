@@ -27,7 +27,7 @@ private slots:
     void onDatatestClicked();
     void onHybridtestClicked();
     void onCmtestClicked();
-    void onCommissionClicked();
+    void onNoiseMeasurementClicked();
 };
 
 #endif // DAQPAGE_H
