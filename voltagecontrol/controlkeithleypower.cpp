@@ -40,6 +40,8 @@ KeithleyPowerSweepWorker::KeithleyPowerSweepWorker(ControlKeithleyPower* keithle
 
 void KeithleyPowerSweepWorker::doSweeping() {
     if (not _outputState or _voltTarget == _voltApplied) {
+	// No sweeping needed
+	
 	if (_voltTarget == _voltApplied)
 	    emit targetReached(_voltTarget);
 	
@@ -218,7 +220,7 @@ void ControlKeithleyPower::checkVAC()
 
 void ControlKeithleyPower::closeConnection()
 {
-    setKeithleyOutputState ( 0 );
+    offPower();
 }
 
 void ControlKeithleyPower::setKeithleyOutputState ( int outputsetting )

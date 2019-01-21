@@ -29,6 +29,7 @@ public:
     void closeConnection();
     /* End of implementation of pure virtual functions */
 
+private:
     string fAddress;
     int fPort;
 
@@ -36,6 +37,5 @@ public:
     
     vector<double> fVoltSet;
     vector<double> fCurrSet;
-private:
 };
 #endif // CONTROLTTIPOWER_H
