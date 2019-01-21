@@ -42,6 +42,7 @@ public:
     ControlKeithleyPower(string pConnection, double pSetVolt, double pSetCurr);
     virtual ~ControlKeithleyPower();
 
+    /* Implementation of PowerControlClass pure virtual functions */
     void initialize();
     PowerControlClass::fVACvalues* getVoltAndCurr();
     void setVolt(double pVoltage, int = 0);
@@ -49,6 +50,7 @@ public:
     void onPower(int = 0);
     void offPower(int = 0);
     void closeConnection();
+    /* End of implementation of pure virtual functions */
 
     void sendVoltageCommand(double pVoltage);
 

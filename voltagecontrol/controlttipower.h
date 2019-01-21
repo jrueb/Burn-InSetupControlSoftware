@@ -17,6 +17,7 @@ class ControlTTiPower:public PowerControlClass
 public:
     ControlTTiPower(string pAddress, int pPort, vector<double> pVolt, vector<double> pCurr);
 
+    /* Implementation of PowerControlClass pure virtual functions */
     void initialize();
     PowerControlClass::fVACvalues* getVoltAndCurr();
 
@@ -26,6 +27,7 @@ public:
     void offPower(int pId);
     bool getPower(int pId);
     void closeConnection();
+    /* End of implementation of pure virtual functions */
 
     string fAddress;
     int fPort;
