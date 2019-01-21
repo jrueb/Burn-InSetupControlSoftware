@@ -51,11 +51,6 @@ public:
     void offPower(int = 0);
     void closeConnection();
     /* End of implementation of pure virtual functions */
-
-    void sendVoltageCommand(double pVoltage);
-
-    void setKeithleyOutputState ( int outputsetting );
-    bool getKeithleyOutputState ( );
     
 signals:
     void voltSetChanged(double volts);
@@ -63,8 +58,13 @@ signals:
     void outputStateChanged(bool state);
 
 private:
+    friend class KeithleyPowerSweepWorker;
+
     void onTargetVoltageReached(double voltage);
     void checkVAC();
+    void sendVoltageCommand(double pVoltage);
+    void setKeithleyOutputState ( int outputsetting );
+    bool getKeithleyOutputState ( );
     
     double fVolt;
     double fVoltSet;
