@@ -81,35 +81,20 @@ void SystemControllerClass::startDoingList()
         for(size_t i = 0 ; i != fNamesVoltageSources.size() ; i++){
             if(cStr == "On  " + fNamesVoltageSources[i] + "  power supply"){
                 connect(cThread, &QThread::started, [this, i]
-                {this->onPower(fNamesVoltageSources[i]);});
+                {this->getObject(fNamesVoltageSources[i])->onPower(0);});
                 cThread->start();
                 getObject(fNamesVoltageSources[i])->onPower(1);
                 emit sendOnOff(fNamesVoltageSources[i] , true);
             }
             if(cStr == "Off  " + fNamesVoltageSources[i] + "  power supply"){
                 connect(cThread, &QThread::started, [this, i]
-                {this->offPower(fNamesVoltageSources[i]);});
+                {this->getObject(fNamesVoltageSources[i])->offPower(0);});
                 cThread->start();
                 getObject(fNamesVoltageSources[i])->offPower(1);
                 emit sendOnOff(fNamesVoltageSources[i] , false);
             }
         }
     }
-}
-
-void SystemControllerClass::wait(double pTime)
-{
-    QThread::sleep(pTime);
-}
-
-void SystemControllerClass::onPower(string pSourceName)
-{
-    getObject(pSourceName)->onPower(0);
-}
-
-void SystemControllerClass::offPower(string pSourceName)
-{
-    getObject(pSourceName)->offPower(0);
 }
 
 string SystemControllerClass::_getIdentifierForDescription(const GenericInstrumentDescription_t& desc) const {
@@ -189,7 +174,6 @@ void SystemControllerClass::_parseVSources()
         fMapSources.insert(pair<string , PowerControlClass*>(ident, dev));
         fGenericInstrumentMap.insert(pair<string , GenericInstrumentClass*>(ident, dev));
         fNamesVoltageSources.push_back(ident);
-        fNamesInstruments.push_back(desc.classOfInstr);
     }
 }
 
@@ -212,7 +196,6 @@ void SystemControllerClass::_parseRaspberry()
             Thermorasp* rasp = new Thermorasp(cAddress, cPort);
             fConnectRasps.push_back(rasp);
             fGenericInstrumentMap.insert(pair<string , GenericInstrumentClass*>(ident, rasp));
-            fNamesInstruments.push_back(ident);
 
             for(size_t j = 0 ; j != fHWDescription[i].operational_settings.size() ; j++){
                 rasp->addSensorName(fHWDescription[i].operational_settings[j]["sensor"]);
@@ -239,7 +222,6 @@ void SystemControllerClass::_parseChiller()
 
             GenericInstrumentClass* fJulabo = new JulaboFP50(cAddress);
             fGenericInstrumentMap.insert(pair<string , GenericInstrumentClass*>(ident, fJulabo));
-            fNamesInstruments.push_back(fHWDescription[i].classOfInstr);
 
         }
     }
@@ -282,7 +264,6 @@ GenericInstrumentClass* SystemControllerClass::getGenericInstrObj(string pStr)
 
 void SystemControllerClass::_removeAllDevices() {
     // Clear vectors and pointers
-    fNamesInstruments.clear();
     _daqmodule = nullptr;
     fConnectRasps.clear();
     fNamesVoltageSources.clear();

@@ -38,7 +38,7 @@ public:
         double cValue;
     };
     vector<SystemControllerClass::fParameters> fListOfCommands;
-    //check if all devices are connected
+    
     void Initialize();
     void ReadXmlFile(std::string pFileName);
     void startDoingList();
@@ -69,12 +69,6 @@ private:
     vector<GenericInstrumentDescription_t> fHWDescription;
     map<string, PowerControlClass* > fMapSources;
     vector<string> fNamesVoltageSources;
-    vector<string> fNamesInstruments;
-
-private slots:
-    void wait(double pTime);
-    void onPower(string pSourceName);
-    void offPower(string pSourceName);
 
 signals:
     void sendOnOff(string pSourceName , bool pArg);

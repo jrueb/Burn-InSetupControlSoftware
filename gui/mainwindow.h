@@ -53,10 +53,7 @@ class MainWindow : public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
-    int fRowMax;
-    SystemControllerClass *fControl;
-    AdditionalWindow *fAddWnd;
+    virtual ~MainWindow();
 
 private slots:
 
@@ -93,6 +90,9 @@ private slots:
     void app_quit();
 
 private:
+    int fRowMax;
+    SystemControllerClass *fControl;
+    AdditionalWindow *fAddWnd;
     Ui::MainWindow *ui;
     DAQPage* daqPage;
     int fRowClicked;
