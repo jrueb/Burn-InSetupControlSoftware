@@ -50,53 +50,6 @@ vector<QString>* SystemControllerClass::readFile()
     return cVec;
 }
 
-void SystemControllerClass::Wait(int pSec)
-{
-    QTime cDieTime= QTime::currentTime().addSecs(pSec);
-       while (QTime::currentTime() < cDieTime){
-           QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
-       }
-}
-
-//
-void SystemControllerClass::startDoingList()
-{
-    QThread *cThread = new QThread();
-    for(vector<fParameters>::iterator cIter= fListOfCommands.begin() ; cIter != fListOfCommands.end() ; ++cIter){
-        string cStr = (*cIter).cName;
-
-        double cValue = (*cIter).cValue;
-        if(cStr == "Set Temperature (°C)"){
-           // moveToThread(cThread);
-            connect(cThread, &QThread::started, [this, cValue] {
-                dynamic_cast<JulaboFP50*>(this->getGenericInstrObj("JulaboFP50"))->SetWorkingTemperature(cValue);
-            });
-            cThread->start();
-        }
-        if(cStr == "Wait (Sec)"){
-            connect(cThread, &QThread::started, [this, cValue]
-            {this->Wait(cValue);});
-            cThread->start();
-        }
-        for(size_t i = 0 ; i != fNamesVoltageSources.size() ; i++){
-            if(cStr == "On  " + fNamesVoltageSources[i] + "  power supply"){
-                connect(cThread, &QThread::started, [this, i]
-                {this->getObject(fNamesVoltageSources[i])->onPower(0);});
-                cThread->start();
-                getObject(fNamesVoltageSources[i])->onPower(1);
-                emit sendOnOff(fNamesVoltageSources[i] , true);
-            }
-            if(cStr == "Off  " + fNamesVoltageSources[i] + "  power supply"){
-                connect(cThread, &QThread::started, [this, i]
-                {this->getObject(fNamesVoltageSources[i])->offPower(0);});
-                cThread->start();
-                getObject(fNamesVoltageSources[i])->offPower(1);
-                emit sendOnOff(fNamesVoltageSources[i] , false);
-            }
-        }
-    }
-}
-
 string SystemControllerClass::_getIdentifierForDescription(const GenericInstrumentDescription_t& desc) const {
     string ident;
     
@@ -327,6 +280,10 @@ QMap<QString, QString> SystemControllerClass::getRaspReadings(size_t n, int time
 
 size_t SystemControllerClass::getNumVoltageSources() const {
     return fMapSources.size();
+}
+
+map<string, PowerControlClass* > SystemControllerClass::getVoltageSources() const {
+    return fMapSources;
 }
 
 //gets the value of key pStr

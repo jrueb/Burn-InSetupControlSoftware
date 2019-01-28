@@ -32,6 +32,7 @@ public:
     QMap<QString, QString> getRaspReadings(size_t n, int timeout = 5000) const;
     
     size_t getNumVoltageSources() const;
+    map<string, PowerControlClass* > getVoltageSources() const;
 
     //struct for the vector which contains commands
     struct fParameters{
@@ -42,8 +43,6 @@ public:
     
     void Initialize();
     void ReadXmlFile(std::string pFileName);
-    void startDoingList();
-    void Wait(int pSec);
 
     int countInstrument(string instrument_name) const;
     PowerControlClass* getObject(string pStr);
@@ -72,9 +71,6 @@ private:
     vector<GenericInstrumentDescription_t> fHWDescription;
     map<string, PowerControlClass* > fMapSources;
     vector<string> fNamesVoltageSources;
-
-signals:
-    void sendOnOff(string pSourceName , bool pArg);
 
 };
 

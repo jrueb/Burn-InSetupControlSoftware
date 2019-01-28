@@ -29,6 +29,7 @@ public:
     };
 
     virtual void initialize() = 0;
+    virtual int getNumOutputs() const = 0;
     virtual fVACvalues* getVoltAndCurr() = 0;
     virtual void setVolt(double pVoltage, int pId) = 0;
     virtual void setCurr(double pCurrent , int pId) = 0;

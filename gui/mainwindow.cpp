@@ -24,39 +24,11 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    fRowMax = 1;
-    fRowClicked = 0;
-
-
     ui->setupUi(this);
+    commandListPage = new CommandListPage(ui->CommandList);
     daqPage = new DAQPage(ui->DAQControl);
 
     fControl = nullptr;
-
-    model = new QStandardItemModel(this);
-
-    QStandardItem *cItem1 = new QStandardItem("Added commands:");
-    model->setItem( 0 , 0 , cItem1);
-    model->index(0 , 0);
-    QStandardItem *cItem2 = new QStandardItem("Start time:");
-    model->setItem( 0 , 1 , cItem2);
-    model->index(0 , 1);
-    QStandardItem *cItem3 = new QStandardItem("End time:");
-    model->setItem( 0 , 2 , cItem3);
-    model->index(0 , 2);
-    QStandardItem *cItem4 = new QStandardItem("Status:");
-    model->setItem( 0 , 3 , cItem4);
-    model->index(0 , 3);
-
-    ui->AddedComands_tabelView->setModel(model);
-    ui->AddedComands_tabelView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    ui->AddedComands_tabelView->horizontalHeader()->setStretchLastSection(true);
-    ui->AddedComands_tabelView->resizeColumnsToContents();
-    ui->AddedComands_tabelView->verticalHeader()->setVisible(false);
-    ui->AddedComands_tabelView->horizontalHeader()->setVisible(false);
-    ui->AddedComands_tabelView->setDragEnabled(true);
-    ui->AddedComands_tabelView->setAcceptDrops(true);
-    ui->AddedComands_tabelView->setDropIndicatorShown(true);
 
     // default disabled everything
     ui->tabWidget->setEnabled(false);
@@ -282,37 +254,6 @@ output_Raspberry* MainWindow::SetRaspberryOutput(QLayout *pMainLayout , vector<s
     return cOutputPointers;
 }
 
-//creates a List with all commands
-void MainWindow::doListOfCommands()
-{
-    QStandardItemModel *cModel = new QStandardItemModel(this);
-
-    QStandardItem *cItem1 = new QStandardItem("Set Temperature (°C)");
-    cModel->setItem( 0 , cItem1);
-    cModel->index( 0 , 0);
-
-    QStandardItem *cItem2 = new QStandardItem("Wait (Sec)");
-    cModel->setItem( 1 , cItem2);
-    cModel->index( 1 , 0);
-
-    for(std::vector<string>::size_type i = 2 ; i != fSources.size()+2 ; i++){
-        QString cStr = QString::fromStdString(fSources[i-2]);
-        QStandardItem *cItem3 = new QStandardItem("On  " + cStr + "  power supply");
-        cModel->setItem(i, cItem3);
-        cModel->index(i , 0);
-
-    }
-    for(std::vector<string>::size_type i = fSources.size() + 2 ; i != 2*fSources.size() + 2 ; i++){
-        QString cStr = QString::fromStdString(fSources[i-fSources.size() - 2]);
-        QStandardItem *cItem4 = new QStandardItem("Off  " + cStr + "  power supply");
-        cModel->setItem(i, cItem4);
-        cModel->index(i , 0);
-    }
-
-    ui->listOfCommands->setModel(cModel);
-    ui->listOfCommands->setEditTriggers(QAbstractItemView::NoEditTriggers);
-}
-
 //reads out TTi once and creates a new thread to take info from TTi
 void MainWindow::getVoltAndCurr()
 {
@@ -427,82 +368,6 @@ void MainWindow::getChillerStatus()
     cQThread->start();
 }
 
-//func which adds command to the list and vector from listOfCommands to AddedWidget
-void MainWindow::on_listOfCommands_doubleClicked(const QModelIndex &pIndex)
-{
-    SystemControllerClass::fParameters cObj;
-    QString cValue;
-    QString cStr = pIndex.data().toString();
-    //another window to set the value
-    fAddWnd = new AdditionalWindow(this);
-    if(cStr == "Set Temperature (°C)" || cStr == "Wait (Sec)"){
-        fAddWnd->show();
-        fAddWnd->exec();
-        cValue = fAddWnd->getValue();
-        cObj.cName = cStr.toStdString();
-        cObj.cValue = cValue.toDouble();
-        fControl->fListOfCommands.push_back(cObj);
-        cStr = cStr + " =" + cValue;
-    }
-    //
-    else{
-        cObj.cName = cStr.toStdString();
-        cObj.cValue = 0;
-        fControl->fListOfCommands.push_back(cObj);
-    }
-    //addes object to the added commands
-    QStandardItem *cItem = new QStandardItem(cStr);
-    model->setItem(fRowMax , 0, cItem);
-    model->index(fRowMax, 0);
-    fRowMax++;
-    ui->AddedComands_tabelView->resizeColumnsToContents();
-    ui->Down_pushButton->setEnabled(true);
-    ui->Up_pushButton->setEnabled(true);
-}
-
-//reads file and writes it to AddWidget, QString into name field of fParam and string after = to value field
-void MainWindow::on_readConfig_push_button_clicked()
-{
-    SystemControllerClass::fParameters cObj;
-    QString cStr;
-    vector<QString> *cVec = new vector<QString>();
-
-    cVec = fControl->readFile();
-    for(vector<QString>::iterator iter = cVec->begin(); iter != cVec->end(); ++iter){
-        cStr = (*iter);
-        string cString = cStr.toStdString();
-        size_t cPos = cString.find("=");
-        if( cPos ){
-            string cPosStr = cString.substr(cPos+1);
-            QString cStrTemp = QString::fromStdString(cPosStr);
-            cString = cString.substr(0 , cPos);
-            cObj.cName = cString;
-            cObj.cValue = cStrTemp.toDouble();
-            fControl->fListOfCommands.push_back(cObj);
-        }
-        else{
-            cObj.cName = cStr.toStdString();
-            cObj.cValue = 0;
-            fControl->fListOfCommands.push_back(cObj);
-        }
-    }
-    for(vector<QString>::iterator iter = cVec->begin(); iter != cVec->end(); ++iter){
-        cStr = (*iter);
-        QStandardItem *cItem = new QStandardItem(cStr);
-        model->setItem(fRowMax , 0, cItem);
-        model->index(fRowMax , 0);
-        fRowMax++;
-        ui->AddedComands_tabelView->setModel(model);
-        ui->AddedComands_tabelView->resizeColumnsToContents();
-    }
-}
-
-//starts making list of commands
-void MainWindow::on_Start_pushButton_clicked()
-{
-    fControl->startDoingList();
-}
-
 //reads sensor on rasp and sets info to Raspberry sensors
 void MainWindow::updateRaspWidget(quint64 n, QMap<QString, QString> readings) {
     int i = 0;
@@ -526,105 +391,6 @@ void MainWindow::updateChillerWidget(QString pStr)
     gui_chiller->pressure->display(cVec[1].toDouble());
     gui_chiller->sensorTemperature->display(cVec[2].toDouble());
     gui_chiller->workingTemperature->display(cVec[3].toDouble());
-}
-
-//deletes highlighted item from the table(double-click on item)
-void MainWindow::on_AddedComands_tabelView_doubleClicked(const QModelIndex &pIndex)
-{
-    int cRow = pIndex.row();
-    QMessageBox cMsgBox;
-    cMsgBox.setText("Are you sure you want to delete this command?");
-    cMsgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-    cMsgBox.setIcon(QMessageBox::Warning);
-    cMsgBox.setDefaultButton(QMessageBox::Ok);
-    int res = cMsgBox.exec();
-    if (res == QMessageBox::Ok)
-        removeRow(cRow);
-}
-
-//removes row from the table with added commands
-void MainWindow::removeRow(int pRow)
-{
-    ui->AddedComands_tabelView->model()->removeRow(pRow);
-    vector<SystemControllerClass::fParameters>::iterator iter = fControl->fListOfCommands.begin();
-    fControl->fListOfCommands.erase(iter + pRow - 1);
-    fRowMax--;
-}
-
-void MainWindow::on_AddedComands_tabelView_clicked(const QModelIndex &pIndex)
-{
-    fIndex = pIndex;
-}
-
-//moves command up when up push button clicked
-void MainWindow::on_Up_pushButton_clicked()
-{
-    //get an index of the row
-    int cRowIndex = fIndex.row();
-
-    if( cRowIndex > 1 ){
-        //take text from clicked item
-        QString cData = ui->AddedComands_tabelView->model()->data(fIndex).toString();
-
-        //take text from item that above than clicked item
-        QString cTempData = ui->AddedComands_tabelView->model()->data(ui->AddedComands_tabelView->
-                                                                      model()->index(cRowIndex-1, 0)).toString();
-        //make new items
-        QStandardItem *cItem = new QStandardItem(cData);
-        QStandardItem *cItemTemp = new QStandardItem(cTempData);
-
-        //set items to the model
-        model->setItem(cRowIndex-1 , cItem);
-        model->index(cRowIndex-1 , 0);
-        model->setItem(cRowIndex , cItemTemp);
-        model->index(cRowIndex , 0);
-
-        //set information from items to fObjParam struct(changes position of items in vector)
-        SystemControllerClass::fParameters cObject;
-        vector<SystemControllerClass::fParameters>::iterator cIter = fControl->fListOfCommands.begin() + cRowIndex -1;
-        vector<SystemControllerClass::fParameters>::iterator cIterTemp = fControl->fListOfCommands.begin() +cRowIndex -2;
-
-        cObject.cName = (*cIter).cName;
-        cObject.cValue = (*cIter).cValue;
-
-        (*cIter).cName = (*cIterTemp).cName;
-        (*cIter).cValue = (*cIterTemp).cValue;
-
-        (*cIterTemp).cName = cObject.cName;
-        (*cIterTemp).cValue = cObject.cValue;
-    }
-}
-
-//moves the command down when down push button clicked
-void MainWindow::on_Down_pushButton_clicked()
-{
-
-    int cRowIndex = fIndex.row();
-
-    if(cRowIndex < fRowMax - 1 && cRowIndex > 0){
-        QString cData = ui->AddedComands_tabelView->model()->data(fIndex).toString();
-        QString cTempData = ui->AddedComands_tabelView->model()->data(ui->AddedComands_tabelView->
-                                                                      model()->index(cRowIndex+1, 0)).toString();
-        QStandardItem *cItem = new QStandardItem(cData);
-        QStandardItem *cItemTemp = new QStandardItem(cTempData);
-        model->setItem(cRowIndex+1 , cItem);
-        model->index(cRowIndex+1 , 0);
-        model->setItem(cRowIndex , cItemTemp);
-        model->index(cRowIndex , 0);
-
-        SystemControllerClass::fParameters cObject;
-        vector<SystemControllerClass::fParameters>::iterator cIter = fControl->fListOfCommands.begin() + cRowIndex -1;
-        vector<SystemControllerClass::fParameters>::iterator cIterTemp = fControl->fListOfCommands.begin() +cRowIndex;
-
-        cObject.cName = (*cIter).cName;
-        cObject.cValue = (*cIter).cValue;
-
-        (*cIter).cName = (*cIterTemp).cName;
-        (*cIter).cValue = (*cIterTemp).cValue;
-
-        (*cIterTemp).cName = cObject.cName;
-        (*cIterTemp).cValue = cObject.cValue;
-    }
 }
 
 void MainWindow::on_OnOff_button_stateChanged(string pSourceName, int dev_num, int pId, bool pArg)
@@ -673,16 +439,6 @@ void MainWindow::on_OnOff_button_stateChanged(string pSourceName, int dev_num, i
     }
 }
 
-void MainWindow::receiveOnOff(string pSourceName, bool pArg)
-{
-    if(pSourceName == "Keithley2410")
-        gui_pointers_high_voltage[0]->onoff_button->setChecked(pArg);
-    if(pSourceName == "TTI1"){
-        gui_pointers_low_voltage[0][0].onoff_button->setChecked(pArg);
-        gui_pointers_low_voltage[0][1].onoff_button->setChecked(pArg);
-    }
-}
-
 //Set func
 void MainWindow::on_V_set_doubleSpinBox_valueChanged(string pSourceName, int pId, double pVolt)
 {
@@ -727,8 +483,6 @@ void MainWindow::initHard()
     this->getVoltAndCurr();
     this->getVoltAndCurrKeithley();
     this->getChillerStatus();
-
-    connect(fControl, SIGNAL(sendOnOff(string,bool)) , this , SLOT(receiveOnOff(string,bool)));
 }
 
 bool MainWindow::readXmlFile()
@@ -794,11 +548,10 @@ bool MainWindow::readXmlFile()
         ui->groupBox_3->setLayout(rasp_layout);
         ui->groupBox_Chiller->setLayout(chiller_layout);
         
+        commandListPage->setSystemController(fControl);
         if (fControl->getDaqModule() != nullptr)
             daqPage->setDAQModule(fControl->getDaqModule());
 
-        //make a list with commands( depends on the devices we have read )
-        this->doListOfCommands();
         return true;
     }
 }

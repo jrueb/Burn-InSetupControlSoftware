@@ -43,20 +43,22 @@ SOURCES += \
     general/genericinstrumentclass.cpp \
     general/main.cpp \
     general/systemcontrollerclass.cpp \
-    gui/additionalwindow.cpp \
     gui/mainwindow.cpp \
     voltagecontrol/controlkeithleypower.cpp \
     voltagecontrol/controlttipower.cpp \
     voltagecontrol/powercontrolclass.cpp \
     general/daqmodule.cpp \
-    gui/daqpage.cpp
+    gui/daqpage.cpp \
+    gui/commandlistpage.cpp \
+    general/commandprocessor.cpp \
+    gui/commandmodifydialog.cpp
 
 
 
 
 FORMS += \
-    gui/additionalwindow.ui \
-    gui/mainwindow.ui
+    gui/mainwindow.ui \
+    gui/commandmodifydialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/
@@ -74,7 +76,6 @@ HEADERS += \
     general/environmentcontrolclass.h \
     general/genericinstrumentclass.h \
     general/systemcontrollerclass.h \
-    gui/additionalwindow.h \
     gui/mainwindow.h \
     voltagecontrol/controlkeithleypower.h \
     voltagecontrol/controlttipower.h \
@@ -82,4 +83,7 @@ HEADERS += \
     general/ComHandler.h \
     general/JulaboFP50.h \
     general/daqmodule.h \
-    gui/daqpage.h
+    gui/daqpage.h \
+    gui/commandlistpage.h \
+    general/commandprocessor.h \
+    gui/commandmodifydialog.h

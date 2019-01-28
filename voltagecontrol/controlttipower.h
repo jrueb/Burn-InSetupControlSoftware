@@ -19,6 +19,7 @@ public:
 
     /* Implementation of PowerControlClass pure virtual functions */
     void initialize() override;
+    inline int getNumOutputs() const override {return 2;}
     PowerControlClass::fVACvalues* getVoltAndCurr() override;
 
     void setVolt(double pVoltage , int pId) override;
