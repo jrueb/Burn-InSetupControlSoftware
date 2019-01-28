@@ -43,13 +43,13 @@ public:
     virtual ~ControlKeithleyPower();
 
     /* Implementation of PowerControlClass pure virtual functions */
-    void initialize();
-    PowerControlClass::fVACvalues* getVoltAndCurr();
-    void setVolt(double pVoltage, int = 0);
-    void setCurr(double pCurrent , int = 0);
-    void onPower(int = 0);
-    void offPower(int = 0);
-    void closeConnection();
+    void initialize() override;
+    PowerControlClass::fVACvalues* getVoltAndCurr() override;
+    void setVolt(double pVoltage, int = 0) override;
+    void setCurr(double pCurrent , int = 0) override;
+    void onPower(int = 0) override;
+    void offPower(int = 0) override;
+    void closeConnection() override;
     /* End of implementation of pure virtual functions */
     
 signals:

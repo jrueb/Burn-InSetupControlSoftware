@@ -253,7 +253,7 @@ void SystemControllerClass::_parseDaqModule() {
     }
 }
 
-int SystemControllerClass::countInstrument(string instrument_name) {
+int SystemControllerClass::countInstrument(string instrument_name) const {
     return fGenericInstrumentMap.count(instrument_name);
 }
 
@@ -323,6 +323,10 @@ std::vector<std::string> SystemControllerClass::getRaspSensorNames(size_t n) con
 
 QMap<QString, QString> SystemControllerClass::getRaspReadings(size_t n, int timeout) const {
     return fConnectRasps.at(n)->getReadings(timeout);
+}
+
+size_t SystemControllerClass::getNumVoltageSources() const {
+    return fMapSources.size();
 }
 
 //gets the value of key pStr

@@ -30,8 +30,9 @@ public:
     size_t getNumRasps() const;
     std::vector<std::string> getRaspSensorNames(size_t n) const;
     QMap<QString, QString> getRaspReadings(size_t n, int timeout = 5000) const;
+    
+    size_t getNumVoltageSources() const;
 
-    map<string , GenericInstrumentClass*> fGenericInstrumentMap;
     //struct for the vector which contains commands
     struct fParameters{
         string cName;
@@ -44,13 +45,15 @@ public:
     void startDoingList();
     void Wait(int pSec);
 
-    int countInstrument(string instrument_name);
+    int countInstrument(string instrument_name) const;
     PowerControlClass* getObject(string pStr);
     GenericInstrumentClass* getGenericInstrObj(string pStr);
     vector<string> getSourceNameVec();
     vector<QString>* readFile();
     
     DAQModule* getDaqModule() const;
+    
+    map<string , GenericInstrumentClass*> fGenericInstrumentMap;
 
 private:
     string _getIdentifierForDescription(const GenericInstrumentDescription_t& desc) const;

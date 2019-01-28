@@ -18,16 +18,17 @@ public:
     ControlTTiPower(string pAddress, int pPort, vector<double> pVolt, vector<double> pCurr);
 
     /* Implementation of PowerControlClass pure virtual functions */
-    void initialize();
-    PowerControlClass::fVACvalues* getVoltAndCurr();
+    void initialize() override;
+    PowerControlClass::fVACvalues* getVoltAndCurr() override;
 
-    void setVolt(double pVoltage , int pId);
-    void setCurr(double pCurrent , int pId);
-    void onPower(int pId);
-    void offPower(int pId);
-    bool getPower(int pId);
-    void closeConnection();
+    void setVolt(double pVoltage , int pId) override;
+    void setCurr(double pCurrent , int pId) override;
+    void onPower(int pId) override;
+    void offPower(int pId) override;
+    void closeConnection() override;
     /* End of implementation of pure virtual functions */
+    
+    bool getPower(int pId);
 
 private:
     string fAddress;
