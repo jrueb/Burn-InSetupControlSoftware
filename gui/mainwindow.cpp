@@ -29,13 +29,8 @@ MainWindow::MainWindow(QWidget *parent) :
     daqPage = new DAQPage(ui->DAQControl);
 
     fControl = nullptr;
-
-    // default disabled everything
+    
     ui->tabWidget->setEnabled(false);
-    ui->Down_pushButton->setEnabled(false);
-    ui->Up_pushButton->setEnabled(false);
-    ui->Start_pushButton->setEnabled(false);
-
 }
 
 MainWindow::~MainWindow()

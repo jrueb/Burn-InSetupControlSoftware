@@ -8,38 +8,40 @@ BurnInCommandType BurnInCommand::getType() const {
     return _type;
 }
 
-BurnInWaitCommand::BurnInWaitCommand(unsigned int wait):
+BurnInWaitCommand::BurnInWaitCommand(unsigned int wait_):
     BurnInCommand(COMMAND_WAIT) {
     
-    _wait = wait;
+    wait = wait_;
 }
 
-BurnInVoltageSourceOutputCommand::BurnInVoltageSourceOutputCommand(PowerControlClass* source, int output, bool on):
+BurnInVoltageSourceOutputCommand::BurnInVoltageSourceOutputCommand(PowerControlClass* source_, QString sourceName_, int output_, bool on_):
     BurnInCommand(COMMAND_VOLTAGESOURCEOUTPUT) {
     
-    _source = source;
-    _output = output;
-    _on = on;
+    source = source_;
+    sourceName = sourceName_;
+    output = output_;
+    on = on_;
 }
 
-BurnInVoltageSourceSetCommand::BurnInVoltageSourceSetCommand(PowerControlClass* source, int output, double value):
+BurnInVoltageSourceSetCommand::BurnInVoltageSourceSetCommand(PowerControlClass* source_, QString sourceName_, int output_, double value_):
     BurnInCommand(COMMAND_VOLTAGESOURCESET) {
     
-    _source = source;
-    _output = output;
-    _value = value;
+    source = source_;
+    sourceName = sourceName_;
+    output = output_;
+    value = value_;
 }
 
-BurnInChillerOutputCommand::BurnInChillerOutputCommand(bool on):
+BurnInChillerOutputCommand::BurnInChillerOutputCommand(bool on_):
     BurnInCommand(COMMAND_CHILLEROUTPUT) {
         
-    _on = on;
+    on = on_;
 }
 
-BurnInChillerSetCommand::BurnInChillerSetCommand(double value):
+BurnInChillerSetCommand::BurnInChillerSetCommand(double value_):
     BurnInCommand(COMMAND_CHILLERSET) {
         
-    _value = value;
+    value = value_;
 }
 
 CommandProcessor::CommandProcessor(const SystemControllerClass* controller, QObject *parent) : QObject(parent)

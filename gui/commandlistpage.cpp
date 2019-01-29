@@ -3,10 +3,45 @@
 #include <QtGlobal>
 #include "commandmodifydialog.h"
 
-CommandListItem::CommandListItem(const BurnInCommand& command_, const QString &text, QListWidget *parent)
-    : QListWidgetItem(text, parent), command(command_) {
+CommandListItem::CommandListItem(std::shared_ptr<BurnInCommand> command_, QListWidget *parent)
+    : QListWidgetItem(parent), command(command_) {
 
+    updateText();
+}
 
+void CommandListItem::updateText() {
+    DisplayCommandHandler handler;
+    command->accept(handler);
+    setText(handler.display);
+}
+
+void CommandListItem::DisplayCommandHandler::handleCommand(BurnInWaitCommand& command) {
+    if (command.wait == 1)
+        display = "Wait for 1 second";
+    else
+        display = "Wait for " + QString::number(command.wait) + " seconds";
+}
+
+void CommandListItem::DisplayCommandHandler::handleCommand(BurnInVoltageSourceOutputCommand& command) {
+    if (command.on)
+        display = "Turn on " + command.sourceName;
+    else
+        display = "Turn off " + command.sourceName;
+}
+
+void CommandListItem::DisplayCommandHandler::handleCommand(BurnInVoltageSourceSetCommand& command) {
+    display = "Set " + command.sourceName + " to " + QString::number(command.value) + " volts";
+}
+
+void CommandListItem::DisplayCommandHandler::handleCommand(BurnInChillerOutputCommand& command) {
+    if (command.on)
+        display = "Turn chiller output on";
+    else
+        display = "Turn chiller output off";
+}
+
+void CommandListItem::DisplayCommandHandler::handleCommand(BurnInChillerSetCommand& command) {
+    display = "Set chiller working temperature to " + QString::number(command.value) + " °C";
 }
 
 CommandListPage::CommandListPage(QWidget* commandListWidget, QObject *parent) : QObject(parent)
@@ -19,6 +54,17 @@ CommandListPage::CommandListPage(QWidget* commandListWidget, QObject *parent) : 
     _add_command_button->setEnabled(false);
     
     _commands_list = _commandListWidget->findChild<QListWidget*>("commands_list");
+    connect(_commands_list, SIGNAL(itemSelectionChanged()),
+        this, SLOT(onItemSelectionChanged()));
+    
+    _alter_command_buttons = _commandListWidget->findChild<QWidget*>("alter_command_buttons");
+    _alter_command_buttons->setEnabled(false);
+    
+    QPushButton* delete_command_button = _commandListWidget->findChild<QPushButton*>("delete_command_button");
+    connect(delete_command_button, SIGNAL(pressed()), this, SLOT(onDeleteButtonPressed()));
+    
+    _change_params_button = _commandListWidget->findChild<QPushButton*>("change_params_button");
+    connect(_change_params_button, SIGNAL(pressed()), this, SLOT(onChangeParamsButtonPressed()));
     
     _proc = nullptr;
     
@@ -69,19 +115,35 @@ void CommandListPage::setSystemController(const SystemControllerClass* controlle
     }
 }
 
+void CommandListPage::onItemSelectionChanged() {
+    int num_selected = _commands_list->selectedItems().size();
+    
+    _alter_command_buttons->setEnabled(num_selected > 0);
+    _change_params_button->setEnabled(num_selected == 1);
+}
+
+void CommandListPage::onDeleteButtonPressed() {
+    qDeleteAll(_commands_list->selectedItems());
+}
+
+void CommandListPage::onChangeParamsButtonPressed() {
+    CommandListItem* item = dynamic_cast<CommandListItem*>(_commands_list->currentItem());
+    bool ok;
+    QMap<QString, QPair<int, PowerControlClass*>> voltageSources = _buildVoltageSourcesVector();
+    CommandModifyDialog::modifyCommand(_commandListWidget->window(), &ok, item->command.get(), voltageSources);
+    item->updateText();
+    
+}
+
 void CommandListPage::onAddWait() {
     bool ok;
     int wait = CommandModifyDialog::commandWait(_commandListWidget->window(), &ok);
     if (not ok)
         return;
         
-    BurnInWaitCommand command(wait);
-    QString command_display;
-    if (wait == 1)
-        command_display = "Wait for 1 second";
-    else
-        command_display = "Wait for " + QString::number(wait) + " seconds";
-    CommandListItem* item = new CommandListItem(command, command_display);
+    auto command = std::make_shared<BurnInWaitCommand>(wait);
+    
+    CommandListItem* item = new CommandListItem(command);
     _commands_list->addItem(item);
 }
 
@@ -109,15 +171,12 @@ void CommandListPage::onAddVoltageSourceOutput() {
     if (not ok)
         return;
     
-    PowerControlClass* dev = voltageSources[std::get<0>(ret)].second;
-    int output = voltageSources[std::get<0>(ret)].first;
-    BurnInVoltageSourceOutputCommand command(dev, output, std::get<1>(ret));
-    QString command_display;
-    if (std::get<1>(ret))
-        command_display = "Turn on " + std::get<0>(ret);
-    else
-        command_display = "Turn off " + std::get<0>(ret);
-    CommandListItem* item = new CommandListItem(command, command_display);
+    QString name = std::get<0>(ret);
+    PowerControlClass* dev = voltageSources[name].second;
+    int output = voltageSources[name].first;
+    auto command = std::make_shared<BurnInVoltageSourceOutputCommand>(dev, name, output, std::get<1>(ret));
+    
+    CommandListItem* item = new CommandListItem(command);
     _commands_list->addItem(item);
 }
 
@@ -128,13 +187,13 @@ void CommandListPage::onAddVoltageSourceAdd() {
     if (not ok)
         return;
     
-    PowerControlClass* dev = voltageSources[std::get<0>(ret)].second;
-    int output = voltageSources[std::get<0>(ret)].first;
+    QString name = std::get<0>(ret);
+    PowerControlClass* dev = voltageSources[name].second;
+    int output = voltageSources[name].first;
     double value = std::get<1>(ret);
-    BurnInVoltageSourceSetCommand command(dev, output, value);
-    QString command_display = "Set " + std::get<0>(ret) + " to " + QString::number(value) + " volts";
+    auto command = std::make_shared<BurnInVoltageSourceSetCommand>(dev, name, output, value);
 
-    CommandListItem* item = new CommandListItem(command, command_display);
+    CommandListItem* item = new CommandListItem(command);
     _commands_list->addItem(item);
 }
 
@@ -144,14 +203,9 @@ void CommandListPage::onAddChillerOutput() {
     if (not ok)
         return;
         
-    BurnInChillerOutputCommand command(on);
-    QString command_display;
-    if (on)
-        command_display = "Turn chiller output on";
-    else
-        command_display = "Turn chiller output off";
+    auto command = std::make_shared<BurnInChillerOutputCommand>(on);
     
-    CommandListItem* item = new CommandListItem(command, command_display);
+    CommandListItem* item = new CommandListItem(command);
     _commands_list->addItem(item);
 }
 
@@ -161,9 +215,8 @@ void CommandListPage::onAddChillerSet() {
     if (not ok)
         return;
         
-    BurnInChillerSetCommand command(value);
-    QString command_display = "Set chiller working temperature to " + QString::number(value) + " °C";
+    auto command = std::make_shared<BurnInChillerSetCommand>(value);
     
-    CommandListItem* item = new CommandListItem(command, command_display);
+    CommandListItem* item = new CommandListItem(command);
     _commands_list->addItem(item);
 }

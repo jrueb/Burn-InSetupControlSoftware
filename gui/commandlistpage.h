@@ -1,6 +1,7 @@
 #ifndef COMMANDLISTPAGE_H
 #define COMMANDLISTPAGE_H
 
+#include <memory>
 #include <QAbstractListModel>
 #include <QObject>
 #include <QPushButton>
@@ -14,15 +15,29 @@ class CommandListItem : public QObject, public QListWidgetItem
     Q_OBJECT
 
 public:
-    CommandListItem(const BurnInCommand& command, const QString &text, QListWidget *parent = 0);
+    CommandListItem(std::shared_ptr<BurnInCommand> command_, QListWidget *parent = 0);
     
-    BurnInCommand command;
+    void updateText();
+    
+    std::shared_ptr<BurnInCommand> command;
 
 signals:
 
 public slots:
 
 private:
+    class DisplayCommandHandler : public AbstractCommandHandler {
+    public:
+        DisplayCommandHandler() {};
+        
+        void handleCommand(BurnInWaitCommand& command) override;
+        void handleCommand(BurnInVoltageSourceOutputCommand& command) override;
+        void handleCommand(BurnInVoltageSourceSetCommand& command) override;
+        void handleCommand(BurnInChillerOutputCommand& command) override;
+        void handleCommand(BurnInChillerSetCommand& command) override;
+        
+        QString display;
+    };
 };
 
 class CommandListPage : public QObject
@@ -37,6 +52,8 @@ private:
     QWidget* _commandListWidget;
     QPushButton* _add_command_button;
     QMenu* _add_command_menu;
+    QWidget* _alter_command_buttons;
+    QPushButton* _change_params_button;
     
     QListWidget* _commands_list;
     
@@ -47,6 +64,9 @@ private:
 signals:
 
 public slots:
+    void onItemSelectionChanged();
+    void onDeleteButtonPressed();
+    void onChangeParamsButtonPressed();
     void onAddWait();
     void onAddVoltageSourceOutput();
     void onAddVoltageSourceAdd();
