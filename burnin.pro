@@ -51,7 +51,8 @@ SOURCES += \
     gui/daqpage.cpp \
     gui/commandlistpage.cpp \
     general/commandprocessor.cpp \
-    gui/commandmodifydialog.cpp
+    gui/commandmodifydialog.cpp \
+    general/burnincommand.cpp
 
 
 
@@ -86,4 +87,5 @@ HEADERS += \
     gui/daqpage.h \
     gui/commandlistpage.h \
     general/commandprocessor.h \
-    gui/commandmodifydialog.h
+    gui/commandmodifydialog.h \
+    general/burnincommand.h
