@@ -67,6 +67,7 @@ public slots:
     void onItemSelectionChanged();
     void onDeleteButtonPressed();
     void onChangeParamsButtonPressed();
+    void onCommandUpPressed();
     void onAddWait();
     void onAddVoltageSourceOutput();
     void onAddVoltageSourceAdd();

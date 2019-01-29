@@ -1,6 +1,7 @@
 #include "commandlistpage.h"
 
 #include <QtGlobal>
+#include <algorithm>
 #include "commandmodifydialog.h"
 
 CommandListItem::CommandListItem(std::shared_ptr<BurnInCommand> command_, QListWidget *parent)
@@ -65,6 +66,9 @@ CommandListPage::CommandListPage(QWidget* commandListWidget, QObject *parent) : 
     
     _change_params_button = _commandListWidget->findChild<QPushButton*>("change_params_button");
     connect(_change_params_button, SIGNAL(pressed()), this, SLOT(onChangeParamsButtonPressed()));
+    
+    QPushButton* command_up_button = _commandListWidget->findChild<QPushButton*>("command_up_button");
+    connect(command_up_button, SIGNAL(pressed()), this, SLOT(onCommandUpPressed()));
     
     _proc = nullptr;
     
@@ -133,6 +137,31 @@ void CommandListPage::onChangeParamsButtonPressed() {
     CommandModifyDialog::modifyCommand(_commandListWidget->window(), &ok, item->command.get(), voltageSources);
     item->updateText();
     
+}
+
+void CommandListPage::onCommandUpPressed() {
+    QList<QListWidgetItem*> items = _commands_list->selectedItems();
+    
+    // Sort items by their row, lowest row number first
+    std::sort(items.begin(), items.end(), [this](QListWidgetItem* a, QListWidgetItem* b) -> bool {
+        return _commands_list->row(a) < _commands_list->row(b);
+    });
+    
+    int topRow = 0; // Do not move items past this row
+    for (const auto& item : items) {
+        int row = _commands_list->row(item);
+        int newRow = row - 1;
+        if (topRow >= newRow) {
+            newRow = topRow;
+            ++topRow;
+        }
+            
+        _commands_list->takeItem(row);
+        _commands_list->insertItem(newRow, item);
+        
+        // Select item again
+        _commands_list->setCurrentRow(newRow, QItemSelectionModel::Select);
+    }
 }
 
 void CommandListPage::onAddWait() {
