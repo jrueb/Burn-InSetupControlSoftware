@@ -1,6 +1,7 @@
 #ifndef BURNINCOMMAND_H
 #define BURNINCOMMAND_H
 
+#include "general/systemcontrollerclass.h"
 
 enum BurnInCommandType {
     COMMAND_WAIT,
