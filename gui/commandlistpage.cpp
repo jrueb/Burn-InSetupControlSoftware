@@ -70,6 +70,9 @@ CommandListPage::CommandListPage(QWidget* commandListWidget, QObject *parent) : 
     QPushButton* command_up_button = _commandListWidget->findChild<QPushButton*>("command_up_button");
     connect(command_up_button, SIGNAL(pressed()), this, SLOT(onCommandUpPressed()));
     
+    QPushButton* command_down_button = _commandListWidget->findChild<QPushButton*>("command_down_button");
+    connect(command_down_button, SIGNAL(pressed()), this, SLOT(onCommandDownPressed()));
+    
     _proc = nullptr;
     
 }
@@ -154,6 +157,31 @@ void CommandListPage::onCommandUpPressed() {
         if (topRow >= newRow) {
             newRow = topRow;
             ++topRow;
+        }
+            
+        _commands_list->takeItem(row);
+        _commands_list->insertItem(newRow, item);
+        
+        // Select item again
+        _commands_list->setCurrentRow(newRow, QItemSelectionModel::Select);
+    }
+}
+
+void CommandListPage::onCommandDownPressed() {
+    QList<QListWidgetItem*> items = _commands_list->selectedItems();
+    
+    // Sort items by their row, higest row number first
+    std::sort(items.begin(), items.end(), [this](QListWidgetItem* a, QListWidgetItem* b) -> bool {
+        return _commands_list->row(a) > _commands_list->row(b);
+    });
+    
+    int bottomRow = _commands_list->count() - 1; // Do not move items past this row
+    for (const auto& item : items) {
+        int row = _commands_list->row(item);
+        int newRow = row + 1;
+        if (bottomRow <= newRow) {
+            newRow = bottomRow;
+            --bottomRow;
         }
             
         _commands_list->takeItem(row);
