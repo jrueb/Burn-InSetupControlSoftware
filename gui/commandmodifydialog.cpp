@@ -4,6 +4,7 @@
 #include <QLabel>
 #include <QSpinBox>
 #include <QComboBox>
+#include "general/JulaboFP50.h"
 
 CommandModifyDialog::CommandModifyDialog(QWidget *parent) :
     QDialog(parent),
@@ -88,6 +89,7 @@ std::tuple<QString, double> CommandModifyDialog::commandVoltageSourceSet(QWidget
     QDoubleSpinBox* spin = new QDoubleSpinBox(&dialog);
     spin->setMinimumWidth(100);
     spin->setMinimum(-1000);
+    spin->setMaximum(1000);
     spin->setSuffix(" V");
     spin->setValue(value);
     dialog.ui->horizontalLayout->insertWidget(3, spin);
@@ -127,7 +129,8 @@ double CommandModifyDialog::commandChillerSet(QWidget *parent, bool* ok, double 
     
     QDoubleSpinBox* spin = new QDoubleSpinBox(&dialog);
     spin->setMinimumWidth(100);
-    spin->setMinimum(-28); // Julabo minimum temperature is -28 °C
+    spin->setMinimum(JulaboFP50::FP50LowerTempLimit);
+    spin->setMaximum(JulaboFP50::FP50UpperTempLimit);
     spin->setSuffix(" °C");
     spin->setValue(value);
     dialog.ui->horizontalLayout->insertWidget(1, spin);

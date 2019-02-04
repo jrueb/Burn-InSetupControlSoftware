@@ -571,7 +571,7 @@ void MainWindow::on_read_conf_button_clicked()
         if (fControl->getDaqModule() != nullptr)
             ui->DAQControl->setEnabled(true);
             
-    } catch (BurnInException e) {
+    } catch (const BurnInException& e) {
         cerr << "Error: " << e.what() << endl;
         QMessageBox dialog(this);
         dialog.critical(this, "Error", QString::fromStdString(e.what()));

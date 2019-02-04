@@ -53,8 +53,6 @@ public:
     DAQModule* getDaqModule() const;
     
     map<string , GenericInstrumentClass*> fGenericInstrumentMap;
-    
-    static const double JULABO_MIN_TEMP;
 
 private:
     string _getIdentifierForDescription(const GenericInstrumentDescription_t& desc) const;

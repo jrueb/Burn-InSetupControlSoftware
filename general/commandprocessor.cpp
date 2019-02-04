@@ -3,6 +3,7 @@
 #include <QFile>
 #include <QChar>
 #include <cmath>
+#include "JulaboFP50.h"
 
 CommandProcessor::CommandProcessor(const SystemControllerClass* controller, QObject *parent) : QObject(parent) {
     _controller = controller;
@@ -239,7 +240,7 @@ BurnInChillerSetCommand* CommandProcessor::_parseChillerSetCommand(const QString
     
     line_stream >> value_str;
     value = value_str.toDouble(&ok);
-    if (not ok or std::isnan(value) or value < SystemControllerClass::JULABO_MIN_TEMP or value > 100)
+    if (not ok or std::isnan(value) or value < JulaboFP50::FP50LowerTempLimit or value >JulaboFP50::FP50UpperTempLimit)
         throw BurnInException("Line " + std::to_string(line_count) + ": Invalid temperature value " + value_str.toStdString() + "");
     
     return new BurnInChillerSetCommand(value);
