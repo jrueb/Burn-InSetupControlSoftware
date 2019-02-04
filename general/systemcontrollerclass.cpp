@@ -16,6 +16,8 @@
 
 using namespace std;
 
+const double SystemControllerClass::JULABO_MIN_TEMP = -28.; // °C
+
 SystemControllerClass::SystemControllerClass()
 {
     _daqmodule = nullptr;

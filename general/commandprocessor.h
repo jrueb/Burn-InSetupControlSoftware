@@ -16,8 +16,10 @@ public:
     
     QVector<BurnInCommandType> getAvailableCommands() const;
     std::map<std::string, PowerControlClass*> getAvailableVoltageSources() const;
+    static QString getStringForType(BurnInCommandType type);
     
     void saveCommandList(const QVector<BurnInCommand*>& commandList, const QString& filePath) const;
+    QVector<BurnInCommand*> getCommandList(const QString& filePath, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources) const;
 
 signals:
 
@@ -25,6 +27,16 @@ public slots:
 
 private:
     const SystemControllerClass* _controller;
+    
+    BurnInWaitCommand* _parseWaitCommand(const QString& line, int line_count) const;
+    BurnInVoltageSourceOutputCommand* _parseVoltageSourceOutputCommand(const QString& line, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources, int line_count) const;
+    BurnInVoltageSourceSetCommand* _parseVoltageSourceSetCommand(const QString& line, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources, int line_count) const;
+    BurnInChillerOutputCommand* _parseChillerOutputCommand(const QString& line, int line_count) const;
+    BurnInChillerSetCommand* _parseChillerSetCommand(const QString& line, int line_count) const;
+    
+    static QString _escapeName(const QString& name);
+    static QString _getQuotedString(QTextStream& in);
+    static bool _parseOnOff(QTextStream& in, int line_count);
     
     class CommandSaver : public AbstractCommandHandler {
     public:
@@ -39,7 +51,6 @@ private:
     private:
         QTextStream* out;
         
-        QString escapeName(const QString& name) const;
     };
 };
 

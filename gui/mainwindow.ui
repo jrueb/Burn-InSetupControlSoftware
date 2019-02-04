@@ -141,9 +141,9 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
-           <widget class="QPushButton" name="read_list_button">
+           <widget class="QPushButton" name="open_list_button">
             <property name="text">
-             <string>Read command list from file </string>
+             <string>Open command list file</string>
             </property>
            </widget>
           </item>

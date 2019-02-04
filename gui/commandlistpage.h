@@ -56,6 +56,7 @@ private:
     QPushButton* _change_params_button;
     
     QListWidget* _commands_list;
+    bool _commands_list_modified;
     
     CommandProcessor* _proc;
     
@@ -70,6 +71,7 @@ public slots:
     void onCommandUpPressed();
     void onCommandDownPressed();
     void onSaveListPressed();
+    void onOpenListPressed();
     void onAddWait();
     void onAddVoltageSourceOutput();
     void onAddVoltageSourceAdd();

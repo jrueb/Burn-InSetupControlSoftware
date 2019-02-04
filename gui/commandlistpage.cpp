@@ -2,8 +2,10 @@
 
 #include <QtGlobal>
 #include <QFileDialog>
+#include <QMessageBox>
 #include <algorithm>
 #include "commandmodifydialog.h"
+#include "general/BurnInException.h"
 
 CommandListItem::CommandListItem(std::shared_ptr<BurnInCommand> command_, QListWidget *parent)
     : QListWidgetItem(parent), command(command_) {
@@ -58,6 +60,7 @@ CommandListPage::CommandListPage(QWidget* commandListWidget, QObject *parent) : 
     _commands_list = _commandListWidget->findChild<QListWidget*>("commands_list");
     connect(_commands_list, SIGNAL(itemSelectionChanged()),
         this, SLOT(onItemSelectionChanged()));
+    _commands_list_modified = false;
     
     _alter_command_buttons = _commandListWidget->findChild<QWidget*>("alter_command_buttons");
     _alter_command_buttons->setEnabled(false);
@@ -76,6 +79,9 @@ CommandListPage::CommandListPage(QWidget* commandListWidget, QObject *parent) : 
     
     QPushButton* save_list_button = _commandListWidget->findChild<QPushButton*>("save_list_button");
     connect(save_list_button, SIGNAL(pressed()), this, SLOT(onSaveListPressed()));
+    
+    QPushButton* open_list_button = _commandListWidget->findChild<QPushButton*>("open_list_button");
+    connect(open_list_button, SIGNAL(pressed()), this, SLOT(onOpenListPressed()));
     
     _proc = nullptr;
     
@@ -134,7 +140,9 @@ void CommandListPage::onItemSelectionChanged() {
 }
 
 void CommandListPage::onDeleteButtonPressed() {
-    qDeleteAll(_commands_list->selectedItems());
+    QList<QListWidgetItem*> items = _commands_list->selectedItems();
+    _commands_list_modified = items.length() > 0;
+    qDeleteAll(items);
 }
 
 void CommandListPage::onChangeParamsButtonPressed() {
@@ -142,8 +150,10 @@ void CommandListPage::onChangeParamsButtonPressed() {
     bool ok;
     QMap<QString, QPair<int, PowerControlClass*>> voltageSources = _buildVoltageSourcesVector();
     CommandModifyDialog::modifyCommand(_commandListWidget->window(), &ok, item->command.get(), voltageSources);
-    item->updateText();
-    
+    if (ok) {
+        item->updateText();
+        _commands_list_modified = true;
+    }
 }
 
 void CommandListPage::onCommandUpPressed() {
@@ -169,6 +179,7 @@ void CommandListPage::onCommandUpPressed() {
         // Select item again
         _commands_list->setCurrentRow(newRow, QItemSelectionModel::Select);
     }
+    _commands_list_modified = true;
 }
 
 void CommandListPage::onCommandDownPressed() {
@@ -194,6 +205,7 @@ void CommandListPage::onCommandDownPressed() {
         // Select item again
         _commands_list->setCurrentRow(newRow, QItemSelectionModel::Select);
     }
+    _commands_list_modified = true;
 }
 
 void CommandListPage::onSaveListPressed() {
@@ -209,6 +221,42 @@ void CommandListPage::onSaveListPressed() {
     }
     
     _proc->saveCommandList(commands, fileName);
+    _commands_list_modified = false;
+}
+
+void CommandListPage::onOpenListPressed() {
+    if (_commands_list_modified and _commands_list->count() != 0) {
+        QMessageBox dialog(_commandListWidget->window());
+        QMessageBox::StandardButton button = dialog.question(_commandListWidget->window(),
+            "Current command list not empty",
+            "The current command list is not empty and will be lost"
+            " unless it's saved. Open different list anyway?");
+        if (button != QMessageBox::Yes)
+            return;
+    }
+    
+    QString fileName = QFileDialog::getOpenFileName(_commandListWidget->window(), "Open command list");
+    if (fileName.isEmpty())
+        return;
+    
+    QVector<BurnInCommand*> commands;
+    try {
+        commands = _proc->getCommandList(fileName, _buildVoltageSourcesVector());
+    } catch (BurnInException& e) {
+        std::cerr << "Error: " << e.what() << endl;
+        QMessageBox dialog(_commandListWidget->window());
+        dialog.critical(_commandListWidget->window(), "Error", "Error while reading commands: " + QString::fromStdString(e.what()));
+        return;
+    }
+    
+    _commands_list->clear();
+    for (const auto& command: commands) {
+        std::shared_ptr<BurnInCommand> command_ptr(command);
+        CommandListItem* item = new CommandListItem(command_ptr);
+        _commands_list->addItem(item);
+    }
+    
+    _commands_list_modified = false;
 }
 
 void CommandListPage::onAddWait() {
