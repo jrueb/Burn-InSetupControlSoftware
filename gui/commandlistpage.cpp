@@ -1,6 +1,7 @@
 #include "commandlistpage.h"
 
 #include <QtGlobal>
+#include <QFileDialog>
 #include <algorithm>
 #include "commandmodifydialog.h"
 
@@ -72,6 +73,9 @@ CommandListPage::CommandListPage(QWidget* commandListWidget, QObject *parent) : 
     
     QPushButton* command_down_button = _commandListWidget->findChild<QPushButton*>("command_down_button");
     connect(command_down_button, SIGNAL(pressed()), this, SLOT(onCommandDownPressed()));
+    
+    QPushButton* save_list_button = _commandListWidget->findChild<QPushButton*>("save_list_button");
+    connect(save_list_button, SIGNAL(pressed()), this, SLOT(onSaveListPressed()));
     
     _proc = nullptr;
     
@@ -190,6 +194,21 @@ void CommandListPage::onCommandDownPressed() {
         // Select item again
         _commands_list->setCurrentRow(newRow, QItemSelectionModel::Select);
     }
+}
+
+void CommandListPage::onSaveListPressed() {
+    QString fileName = QFileDialog::getSaveFileName(_commandListWidget->window(), "Save command list");
+    if (fileName.isEmpty())
+        return;
+    
+    QVector<BurnInCommand*> commands;
+    
+    for (int i = 0; i < _commands_list->count(); ++i) {
+        CommandListItem* item = dynamic_cast<CommandListItem*>(_commands_list->item(i));
+        commands.push_back(item->command.get());
+    }
+    
+    _proc->saveCommandList(commands, fileName);
 }
 
 void CommandListPage::onAddWait() {
