@@ -91,11 +91,11 @@ void CommandProcessor::CommandSaver::handleCommand(BurnInVoltageSourceSetCommand
 }
 
 void CommandProcessor::CommandSaver::handleCommand(BurnInChillerOutputCommand& command) {
-    *out << getStringForType(COMMAND_CHILLEROUTPUT) << "chillerOutput " << (command.on ? "on" : "off") << "\n";
+    *out << getStringForType(COMMAND_CHILLEROUTPUT) << " " << (command.on ? "on" : "off") << "\n";
 }
 
 void CommandProcessor::CommandSaver::handleCommand(BurnInChillerSetCommand& command) {
-    *out << getStringForType(COMMAND_CHILLERSET) << "chillerSet " << command.value << "\n";
+    *out << getStringForType(COMMAND_CHILLERSET) << " " << command.value << "\n";
 }
 
 QString CommandProcessor::_escapeName(const QString& name) {
@@ -230,7 +230,7 @@ BurnInChillerOutputCommand* CommandProcessor::_parseChillerOutputCommand(const Q
 }
 
 BurnInChillerSetCommand* CommandProcessor::_parseChillerSetCommand(const QString& line, int line_count) const {
-    int cmdlen = getStringForType(COMMAND_CHILLEROUTPUT).length();
+    int cmdlen = getStringForType(COMMAND_CHILLERSET).length();
     QString args = line.right(line.length() - cmdlen - 1);
     QTextStream line_stream(&args);
     
