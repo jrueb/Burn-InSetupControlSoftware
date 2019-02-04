@@ -48,10 +48,10 @@ QString CommandProcessor::getStringForType(BurnInCommandType type) {
     case COMMAND_CHILLERSET:
         return "chillerSet";
         break;
-    default:
-        Q_ASSERT(false); // Should not reach.
-        break;
     }
+    
+    Q_ASSERT(false); // Should not reach.
+    return "";
 }
 
 void CommandProcessor::saveCommandList(const QVector<BurnInCommand*>& commandList, const QString& filePath) const {

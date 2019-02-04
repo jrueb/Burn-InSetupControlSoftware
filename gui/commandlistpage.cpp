@@ -125,9 +125,6 @@ void CommandListPage::setSystemController(const SystemControllerClass* controlle
             action = _add_command_menu->addAction("Set chiller working temperature");
             connect(action, SIGNAL(triggered()), this, SLOT(onAddChillerSet()));
             break;
-        default:
-            Q_ASSERT(false); // Should not reach
-            break;
         }
     }
 }
