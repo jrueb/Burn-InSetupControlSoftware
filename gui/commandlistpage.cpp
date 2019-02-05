@@ -159,20 +159,36 @@ void CommandListPage::onItemSelectionChanged() {
 
 void CommandListPage::onCommandsListContextMenu(const QPoint& pos) {
     QList<QListWidgetItem*> items = _commands_list->selectedItems();
-    if (items.length() == 0)
-        return;
     QWidget* win = _commandListWidget->window();
     QMenu contextMenu("Context menu", win);
+    
+    QAction cut("Cut", win);
+    connect(&cut, SIGNAL(triggered()), this, SLOT(onCommandsListCut()));
+    cut.setShortcut(QKeySequence::Cut);
+    contextMenu.addAction(&cut);
+    
+    QAction copy("Copy", win);
+    connect(&copy, SIGNAL(triggered()), this, SLOT(onCommandsListCopy()));
+    copy.setShortcut(QKeySequence::Copy);
+    contextMenu.addAction(&copy);
+    
+    QAction paste("Paste", win);
+    connect(&paste, SIGNAL(triggered()), this, SLOT(onCommandsListPaste()));
+    paste.setShortcut(QKeySequence::Paste);
+    contextMenu.addAction(&paste);
+    
+    QAction del("Delete", win);
+    connect(&del, SIGNAL(triggered()), this, SLOT(onDeleteButtonPressed()));
+    del.setShortcut(QKeySequence::Delete);
+    contextMenu.addAction(&del);
+    
+    contextMenu.addSeparator();
     
     QAction change("Change", win);
     connect(&change, SIGNAL(triggered()), this, SLOT(onChangeParamsButtonPressed()));
     contextMenu.addAction(&change);
     if (items.length() > 1)
         change.setEnabled(false);
-    
-    QAction del("Delete", win);
-    connect(&del, SIGNAL(triggered()), this, SLOT(onDeleteButtonPressed()));
-    contextMenu.addAction(&del);
     
     QAction moveUp("Move up", win);
     connect(&moveUp, SIGNAL(triggered()), this, SLOT(onCommandUpPressed()));
@@ -181,6 +197,22 @@ void CommandListPage::onCommandsListContextMenu(const QPoint& pos) {
     QAction moveDown("Move down", win);
     connect(&moveDown, SIGNAL(triggered()), this, SLOT(onCommandDownPressed()));
     contextMenu.addAction(&moveDown);
+    
+    if (items.length() == 0) {
+        cut.setEnabled(false);
+        copy.setEnabled(false);
+        del.setEnabled(false);
+        change.setEnabled(false);
+        moveUp.setEnabled(false);
+        moveDown.setEnabled(false);
+    } else if (items.length() > 1) {
+        change.setEnabled(false);
+    }
+    
+    const QClipboard* clipboard = QApplication::clipboard();
+    const QMimeData* mimeData = clipboard->mimeData();
+    if (not mimeData->hasText())
+        paste.setEnabled(false);
     
     contextMenu.exec(_commands_list->mapToGlobal(pos));
 }
