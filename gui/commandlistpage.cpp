@@ -60,6 +60,8 @@ CommandListPage::CommandListPage(QWidget* commandListWidget, QObject *parent) : 
     _commands_list = _commandListWidget->findChild<QListWidget*>("commands_list");
     connect(_commands_list, SIGNAL(itemSelectionChanged()),
         this, SLOT(onItemSelectionChanged()));
+    connect(_commands_list, SIGNAL(customContextMenuRequested(const QPoint&)),
+        this, SLOT(onCommandsListContextMenu(const QPoint&)));
     _commands_list_modified = false;
     
     _alter_command_buttons = _commandListWidget->findChild<QWidget*>("alter_command_buttons");
@@ -134,6 +136,32 @@ void CommandListPage::onItemSelectionChanged() {
     
     _alter_command_buttons->setEnabled(num_selected > 0);
     _change_params_button->setEnabled(num_selected == 1);
+}
+
+void CommandListPage::onCommandsListContextMenu(const QPoint& pos) {
+    QList<QListWidgetItem*> items = _commands_list->selectedItems();
+    if (items.length() == 0)
+        return;
+    QWidget* win = _commandListWidget->window();
+    QMenu contextMenu("Context menu", win);
+    
+    QAction del("Delete", win);
+    connect(&del, SIGNAL(triggered()), this, SLOT(onDeleteButtonPressed()));
+    contextMenu.addAction(&del);
+    
+    QAction change("Change", win);
+    connect(&change, SIGNAL(triggered()), this, SLOT(onChangeParamsButtonPressed()));
+    contextMenu.addAction(&change);
+    
+    QAction moveUp("Move up", win);
+    connect(&moveUp, SIGNAL(triggered()), this, SLOT(onCommandUpPressed()));
+    contextMenu.addAction(&moveUp);
+    
+    QAction moveDown("Move down", win);
+    connect(&moveDown, SIGNAL(triggered()), this, SLOT(onCommandDownPressed()));
+    contextMenu.addAction(&moveDown);
+    
+    contextMenu.exec(_commands_list->mapToGlobal(pos));
 }
 
 void CommandListPage::onDeleteButtonPressed() {

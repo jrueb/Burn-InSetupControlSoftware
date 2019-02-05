@@ -66,6 +66,7 @@ signals:
 
 public slots:
     void onItemSelectionChanged();
+    void onCommandsListContextMenu(const QPoint& pos);
     void onDeleteButtonPressed();
     void onChangeParamsButtonPressed();
     void onCommandUpPressed();
