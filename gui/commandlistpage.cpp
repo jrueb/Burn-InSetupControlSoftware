@@ -145,13 +145,15 @@ void CommandListPage::onCommandsListContextMenu(const QPoint& pos) {
     QWidget* win = _commandListWidget->window();
     QMenu contextMenu("Context menu", win);
     
-    QAction del("Delete", win);
-    connect(&del, SIGNAL(triggered()), this, SLOT(onDeleteButtonPressed()));
-    contextMenu.addAction(&del);
-    
     QAction change("Change", win);
     connect(&change, SIGNAL(triggered()), this, SLOT(onChangeParamsButtonPressed()));
     contextMenu.addAction(&change);
+    if (items.length() > 1)
+        change.setEnabled(false);
+    
+    QAction del("Delete", win);
+    connect(&del, SIGNAL(triggered()), this, SLOT(onDeleteButtonPressed()));
+    contextMenu.addAction(&del);
     
     QAction moveUp("Move up", win);
     connect(&moveUp, SIGNAL(triggered()), this, SLOT(onCommandUpPressed()));
