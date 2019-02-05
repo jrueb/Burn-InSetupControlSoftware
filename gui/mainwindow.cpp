@@ -565,7 +565,6 @@ void MainWindow::on_read_conf_button_clicked()
             
         // enable back
         ui->tabWidget->setEnabled(true);
-        ui->Start_pushButton->setEnabled(true);
         ui->read_conf_button->setEnabled(false);
         
         if (fControl->getDaqModule() != nullptr)

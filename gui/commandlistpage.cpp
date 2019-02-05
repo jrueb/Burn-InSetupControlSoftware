@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <algorithm>
 #include "commandmodifydialog.h"
+#include "commandsrundialog.h"
 #include "general/BurnInException.h"
 
 CommandListItem::CommandListItem(std::shared_ptr<BurnInCommand> command_, QListWidget *parent)
@@ -103,6 +104,9 @@ CommandListPage::CommandListPage(QWidget* commandListWidget, QObject *parent) : 
     
     QPushButton* open_list_button = _commandListWidget->findChild<QPushButton*>("open_list_button");
     connect(open_list_button, SIGNAL(pressed()), this, SLOT(onOpenListPressed()));
+    
+    _run_button = _commandListWidget->findChild<QPushButton*>("run_button");
+    connect(_run_button, SIGNAL(pressed()), this, SLOT(onRunPressed()));
     
     _proc = nullptr;
     
@@ -382,6 +386,21 @@ void CommandListPage::_addCommands(const QVector<BurnInCommand*>& commands) {
         CommandListItem* item = new CommandListItem(command_ptr);
         _commands_list->addItem(item);
     }
+}
+
+void CommandListPage::onRunPressed() {
+    CommandsRunDialog* dialog = new CommandsRunDialog(_commandListWidget->window());
+    
+    connect(dialog, SIGNAL(finished(int)), this, SLOT(onRunFinished(int)));
+    
+    dialog->open();
+    _run_button->setText("Running...");
+    _run_button->setEnabled(false);
+}
+
+void CommandListPage::onRunFinished(int result) {
+    _run_button->setEnabled(true);
+    _run_button->setText("Run");
 }
 
 void CommandListPage::onAddWait() {

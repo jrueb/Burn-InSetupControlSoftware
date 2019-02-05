@@ -53,14 +53,16 @@ SOURCES += \
     gui/commandlistpage.cpp \
     general/commandprocessor.cpp \
     gui/commandmodifydialog.cpp \
-    general/burnincommand.cpp
+    general/burnincommand.cpp \
+    gui/commandsrundialog.cpp
 
 
 
 
 FORMS += \
     gui/mainwindow.ui \
-    gui/commandmodifydialog.ui
+    gui/commandmodifydialog.ui \
+    gui/commandsrundialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/
@@ -89,4 +91,5 @@ HEADERS += \
     gui/commandlistpage.h \
     general/commandprocessor.h \
     gui/commandmodifydialog.h \
-    general/burnincommand.h
+    general/burnincommand.h \
+    gui/commandsrundialog.h
