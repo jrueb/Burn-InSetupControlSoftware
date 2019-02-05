@@ -68,6 +68,17 @@ void CommandProcessor::saveCommandList(const QVector<BurnInCommand*>& commandLis
     file.close();
 }
 
+QString CommandProcessor::getCommandListAsString(const QVector<BurnInCommand*>& commandList) const {
+    QString s;
+    QTextStream out(&s);
+    CommandSaver saver(&out);
+    
+    for (const auto& command: commandList)
+        command->accept(saver);
+        
+    return s;
+}
+
 CommandProcessor::CommandSaver::CommandSaver(QTextStream* out_) {
     out = out_;
 }
@@ -109,12 +120,26 @@ QString CommandProcessor::_escapeName(const QString& name) {
     return ret;
 }
 
-QVector<BurnInCommand*> CommandProcessor::getCommandList(const QString& filePath, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources) const {
+QVector<BurnInCommand*> CommandProcessor::getCommandListFromFile(const QString& filePath, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources) const {
     QFile file(filePath);
     
     if (not file.open(QIODevice::ReadOnly | QIODevice::Text))
         throw BurnInException("Could not open file");
     QTextStream in(&file);
+    QVector<BurnInCommand*> list = _parseCommands(in, voltageSources);
+    
+    file.close();
+    
+    return list;
+}
+
+QVector<BurnInCommand*> CommandProcessor::getCommandListFromString(const QString& commandString, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources) const {
+    QString cpy = commandString;
+    QTextStream in(&cpy);
+    return _parseCommands(in, voltageSources);
+}
+
+QVector<BurnInCommand*> CommandProcessor::_parseCommands(QTextStream& in, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources) const {
     QVector<BurnInCommand*> list;
     
     int line_count = 0;
@@ -146,8 +171,6 @@ QVector<BurnInCommand*> CommandProcessor::getCommandList(const QString& filePath
             throw BurnInException("Line " + std::to_string(line_count) + ": Unknown command or missing arguments \"" + cmd.toStdString() + "\"");
         }
     }
-    
-    file.close();
     
     return list;
 }

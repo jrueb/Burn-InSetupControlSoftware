@@ -1,6 +1,9 @@
 #include "commandlistpage.h"
 
 #include <QtGlobal>
+#include <QApplication>
+#include <QClipboard>
+#include <QMimeData>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <algorithm>
@@ -62,6 +65,22 @@ CommandListPage::CommandListPage(QWidget* commandListWidget, QObject *parent) : 
         this, SLOT(onItemSelectionChanged()));
     connect(_commands_list, SIGNAL(customContextMenuRequested(const QPoint&)),
         this, SLOT(onCommandsListContextMenu(const QPoint&)));
+    
+    QAction* cutAction = new QAction(_commands_list);
+    cutAction->setShortcut(QKeySequence::Cut);
+    connect(cutAction, SIGNAL(triggered()), this, SLOT(onCommandsListCut()));
+    _commands_list->addAction(cutAction);
+    
+    QAction* copyAction = new QAction(_commands_list);
+    copyAction->setShortcut(QKeySequence::Copy);
+    connect(copyAction, SIGNAL(triggered()), this, SLOT(onCommandsListCopy()));
+    _commands_list->addAction(copyAction);
+    
+    QAction* pasteAction = new QAction(_commands_list);
+    pasteAction->setShortcut(QKeySequence::Paste);
+    connect(pasteAction, SIGNAL(triggered()), this, SLOT(onCommandsListPaste()));
+    _commands_list->addAction(pasteAction);
+    
     _commands_list_modified = false;
     
     _alter_command_buttons = _commandListWidget->findChild<QWidget*>("alter_command_buttons");
@@ -166,6 +185,49 @@ void CommandListPage::onCommandsListContextMenu(const QPoint& pos) {
     contextMenu.exec(_commands_list->mapToGlobal(pos));
 }
 
+void CommandListPage::onCommandsListCut() {
+    QList<QListWidgetItem*> items = _commands_list->selectedItems();
+    if (items.length() == 0)
+        return;
+        
+    onCommandsListCopy();
+    
+    qDeleteAll(items);
+    _commands_list_modified = true;
+}
+
+void CommandListPage::onCommandsListCopy() {
+    QList<QListWidgetItem*> items = _commands_list->selectedItems();
+    if (items.length() == 0)
+        return;
+    QClipboard* clipboard = QApplication::clipboard();
+        
+    QVector<BurnInCommand*> commands;
+    for (const auto& item: items)
+        commands.push_back(dynamic_cast<CommandListItem*>(item)->command.get());
+    clipboard->setText(_proc->getCommandListAsString(commands));
+}
+
+void CommandListPage::onCommandsListPaste() {
+    const QClipboard* clipboard = QApplication::clipboard();
+    const QMimeData* mimeData = clipboard->mimeData();
+    if (not mimeData->hasText())
+        return;
+    
+    const QMap<QString, QPair<int, PowerControlClass*>> voltageSources = _buildVoltageSourcesVector();
+    QVector<BurnInCommand*> commands;
+    try {
+        commands = _proc->getCommandListFromString(mimeData->text(), voltageSources);
+    } catch (const BurnInException& e) {
+        // Error during parsing of clipboard text. Do nothing
+        return;
+    }
+    if (commands.length() > 0) {
+        _addCommands(commands);
+        _commands_list_modified = true;
+    }
+}
+
 void CommandListPage::onDeleteButtonPressed() {
     QList<QListWidgetItem*> items = _commands_list->selectedItems();
     _commands_list_modified = items.length() > 0;
@@ -268,7 +330,7 @@ void CommandListPage::onOpenListPressed() {
     
     QVector<BurnInCommand*> commands;
     try {
-        commands = _proc->getCommandList(fileName, _buildVoltageSourcesVector());
+        commands = _proc->getCommandListFromFile(fileName, _buildVoltageSourcesVector());
     } catch (BurnInException& e) {
         std::cerr << "Error: " << e.what() << endl;
         QMessageBox dialog(_commandListWidget->window());
@@ -277,13 +339,17 @@ void CommandListPage::onOpenListPressed() {
     }
     
     _commands_list->clear();
+    _addCommands(commands);
+    
+    _commands_list_modified = false;
+}
+
+void CommandListPage::_addCommands(const QVector<BurnInCommand*>& commands) {
     for (const auto& command: commands) {
         std::shared_ptr<BurnInCommand> command_ptr(command);
         CommandListItem* item = new CommandListItem(command_ptr);
         _commands_list->addItem(item);
     }
-    
-    _commands_list_modified = false;
 }
 
 void CommandListPage::onAddWait() {

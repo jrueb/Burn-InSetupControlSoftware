@@ -19,7 +19,9 @@ public:
     static QString getStringForType(BurnInCommandType type);
     
     void saveCommandList(const QVector<BurnInCommand*>& commandList, const QString& filePath) const;
-    QVector<BurnInCommand*> getCommandList(const QString& filePath, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources) const;
+    QString getCommandListAsString(const QVector<BurnInCommand*>& commandList) const;
+    QVector<BurnInCommand*> getCommandListFromFile(const QString& filePath, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources) const;
+    QVector<BurnInCommand*> getCommandListFromString(const QString& commandString, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources) const;
 
 signals:
 
@@ -28,6 +30,7 @@ public slots:
 private:
     const SystemControllerClass* _controller;
     
+    QVector<BurnInCommand*> _parseCommands(QTextStream& in, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources) const;
     BurnInWaitCommand* _parseWaitCommand(const QString& line, int line_count) const;
     BurnInVoltageSourceOutputCommand* _parseVoltageSourceOutputCommand(const QString& line, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources, int line_count) const;
     BurnInVoltageSourceSetCommand* _parseVoltageSourceSetCommand(const QString& line, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources, int line_count) const;

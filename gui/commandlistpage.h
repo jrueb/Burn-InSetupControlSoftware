@@ -61,12 +61,16 @@ private:
     CommandProcessor* _proc;
     
     QMap<QString, QPair<int, PowerControlClass*>> _buildVoltageSourcesVector() const;
+    void _addCommands(const QVector<BurnInCommand*>& commands);
 
 signals:
 
 public slots:
     void onItemSelectionChanged();
     void onCommandsListContextMenu(const QPoint& pos);
+    void onCommandsListCut();
+    void onCommandsListCopy();
+    void onCommandsListPaste();
     void onDeleteButtonPressed();
     void onChangeParamsButtonPressed();
     void onCommandUpPressed();
