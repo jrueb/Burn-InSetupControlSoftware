@@ -26,18 +26,6 @@ signals:
 public slots:
 
 private:
-    class DisplayCommandHandler : public AbstractCommandHandler {
-    public:
-        DisplayCommandHandler() {};
-        
-        void handleCommand(BurnInWaitCommand& command) override;
-        void handleCommand(BurnInVoltageSourceOutputCommand& command) override;
-        void handleCommand(BurnInVoltageSourceSetCommand& command) override;
-        void handleCommand(BurnInChillerOutputCommand& command) override;
-        void handleCommand(BurnInChillerSetCommand& command) override;
-        
-        QString display;
-    };
 };
 
 class CommandListPage : public QObject
@@ -59,6 +47,7 @@ private:
     QListWidget* _commands_list;
     bool _commands_list_modified;
     
+    const SystemControllerClass* _controller;
     CommandProcessor* _proc;
     
     QMap<QString, QPair<int, PowerControlClass*>> _buildVoltageSourcesVector() const;

@@ -54,7 +54,8 @@ SOURCES += \
     general/commandprocessor.cpp \
     gui/commandmodifydialog.cpp \
     general/burnincommand.cpp \
-    gui/commandsrundialog.cpp
+    gui/commandsrundialog.cpp \
+    gui/commanddisplayer.cpp
 
 
 
@@ -92,4 +93,5 @@ HEADERS += \
     general/commandprocessor.h \
     gui/commandmodifydialog.h \
     general/burnincommand.h \
-    gui/commandsrundialog.h
+    gui/commandsrundialog.h \
+    gui/commanddisplayer.h

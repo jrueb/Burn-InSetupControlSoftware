@@ -173,8 +173,8 @@ void SystemControllerClass::_parseChiller()
             if (cAddress == "")
                 throw BurnInException("Invalid address for ChillerControl device of class " + fHWDescription[i].classOfInstr + ".");
 
-            GenericInstrumentClass* fJulabo = new JulaboFP50(cAddress);
-            fGenericInstrumentMap.insert(pair<string , GenericInstrumentClass*>(ident, fJulabo));
+            fChiller = new JulaboFP50(cAddress);
+            fGenericInstrumentMap.insert(pair<string , GenericInstrumentClass*>(ident, fChiller));
 
         }
     }
@@ -284,6 +284,10 @@ size_t SystemControllerClass::getNumVoltageSources() const {
 
 map<string, PowerControlClass* > SystemControllerClass::getVoltageSources() const {
     return fMapSources;
+}
+
+JulaboFP50* SystemControllerClass::getChiller() const {
+    return fChiller;
 }
 
 //gets the value of key pStr

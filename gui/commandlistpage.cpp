@@ -9,6 +9,7 @@
 #include <algorithm>
 #include "commandmodifydialog.h"
 #include "commandsrundialog.h"
+#include "commanddisplayer.h"
 #include "general/BurnInException.h"
 
 CommandListItem::CommandListItem(std::shared_ptr<BurnInCommand> command_, QListWidget *parent)
@@ -18,38 +19,9 @@ CommandListItem::CommandListItem(std::shared_ptr<BurnInCommand> command_, QListW
 }
 
 void CommandListItem::updateText() {
-    DisplayCommandHandler handler;
-    command->accept(handler);
-    setText(handler.display);
-}
-
-void CommandListItem::DisplayCommandHandler::handleCommand(BurnInWaitCommand& command) {
-    if (command.wait == 1)
-        display = "Wait for 1 second";
-    else
-        display = "Wait for " + QString::number(command.wait) + " seconds";
-}
-
-void CommandListItem::DisplayCommandHandler::handleCommand(BurnInVoltageSourceOutputCommand& command) {
-    if (command.on)
-        display = "Turn on " + command.sourceName;
-    else
-        display = "Turn off " + command.sourceName;
-}
-
-void CommandListItem::DisplayCommandHandler::handleCommand(BurnInVoltageSourceSetCommand& command) {
-    display = "Set " + command.sourceName + " to " + QString::number(command.value) + " volts";
-}
-
-void CommandListItem::DisplayCommandHandler::handleCommand(BurnInChillerOutputCommand& command) {
-    if (command.on)
-        display = "Turn chiller output on";
-    else
-        display = "Turn chiller output off";
-}
-
-void CommandListItem::DisplayCommandHandler::handleCommand(BurnInChillerSetCommand& command) {
-    display = "Set chiller working temperature to " + QString::number(command.value) + " °C";
+    CommandDisplayer displayer;
+    command->accept(displayer);
+    setText(displayer.display);
 }
 
 CommandListPage::CommandListPage(QWidget* commandListWidget, QObject *parent) : QObject(parent)
@@ -119,6 +91,7 @@ CommandListPage::~CommandListPage() {
 }
 
 void CommandListPage::setSystemController(const SystemControllerClass* controller) {
+    _controller = controller;
     if (_proc != nullptr)
         delete _proc;
     _proc = new CommandProcessor(controller);
@@ -389,11 +362,17 @@ void CommandListPage::_addCommands(const QVector<BurnInCommand*>& commands) {
 }
 
 void CommandListPage::onRunPressed() {
-    CommandsRunDialog* dialog = new CommandsRunDialog(_commandListWidget->window());
+    QVector<BurnInCommand*> commands;
+    for (int i = 0; i < _commands_list->count(); ++i) {
+        CommandListItem* item = dynamic_cast<CommandListItem*>(_commands_list->item(i));
+        commands.push_back(item->command.get());
+    }
+    
+    CommandsRunDialog* dialog = new CommandsRunDialog(commands, _controller, _commandListWidget->window());
     
     connect(dialog, SIGNAL(finished(int)), this, SLOT(onRunFinished(int)));
     
-    dialog->open();
+    dialog->show();
     _run_button->setText("Running...");
     _run_button->setEnabled(false);
 }

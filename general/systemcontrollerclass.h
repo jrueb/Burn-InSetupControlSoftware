@@ -31,6 +31,8 @@ public:
     std::vector<std::string> getRaspSensorNames(size_t n) const;
     QMap<QString, QString> getRaspReadings(size_t n, int timeout = 5000) const;
     
+    JulaboFP50* getChiller() const;
+    
     size_t getNumVoltageSources() const;
     map<string, PowerControlClass* > getVoltageSources() const;
 
@@ -67,6 +69,7 @@ private:
     DAQModule* _daqmodule;
     
     vector<Thermorasp*> fConnectRasps;
+    JulaboFP50* fChiller;
     
     vector<GenericInstrumentDescription_t> fHWDescription;
     map<string, PowerControlClass* > fMapSources;
