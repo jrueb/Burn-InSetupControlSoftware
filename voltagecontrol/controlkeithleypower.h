@@ -58,11 +58,6 @@ public:
     /* End of implementation of pure virtual functions */
     
     void refreshAppliedValues();
-    
-signals:
-    void voltSetChanged(double volts);
-    void voltAppChanged(double volts);
-    void outputStateChanged(bool state);
 
 private:
     friend class KeithleyPowerSweepWorker;

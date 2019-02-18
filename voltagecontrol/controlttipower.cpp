@@ -65,6 +65,8 @@ void ControlTTiPower::setVolt(double pVoltage , int pId)
     _commMutex.unlock();
     
     _volt[pId - 1] = pVoltage;
+    
+    emit voltSetChanged(pVoltage, pId);
 }
 
 void ControlTTiPower::setCurr(double pCurrent , int pId)
@@ -77,6 +79,7 @@ void ControlTTiPower::setCurr(double pCurrent , int pId)
     _commMutex.unlock();
     
     _curr[pId - 1] = pCurrent;
+    emit currSetChanged(pCurrent, pId);
 }
 
 void ControlTTiPower::onPower(int pId)
@@ -90,6 +93,8 @@ void ControlTTiPower::onPower(int pId)
     _commMutex.lock();
     lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
     _commMutex.unlock();
+    
+    emit powerStateChanged(true, pId);
 }
 
 void ControlTTiPower::offPower(int pId)
@@ -106,6 +111,8 @@ void ControlTTiPower::offPower(int pId)
         lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
     }
     _commMutex.unlock();
+    
+    emit powerStateChanged(false, pId);
 }
 
 bool ControlTTiPower::getPower(int pId) const {
@@ -130,7 +137,11 @@ void ControlTTiPower::_refreshPowerStatus(int pId)
     }
     _commMutex.unlock();
     
+    bool changed = _power[pId - 1] == (buf[0] == '1');
     _power[pId - 1] = buf[0] == '1';
+    
+    if (changed)
+        emit powerStateChanged(_power[pId - 1], pId);
 }
 
 double ControlTTiPower::getVolt(int pId) const {
@@ -176,11 +187,26 @@ void ControlTTiPower::refreshAppliedValues() {
     cBuff[len] = 0;
     QString res = cBuff;
     QStringList lines = res.split(RMT);
-        
-    _voltApp[0] = lines[0].left(lines[0].length() - 1).toDouble();
-    _currApp[0] = lines[1].left(lines[1].length() - 1).toDouble();
-    _voltApp[1] = lines[2].left(lines[2].length() - 1).toDouble();
-    _currApp[1] = lines[3].left(lines[3].length() - 1).toDouble();
+    
+    _setAndEmitIfChanged(&(_voltApp[0]),
+        lines[0].left(lines[0].length() - 1).toDouble(), 1,
+        &ControlTTiPower::voltAppChanged);
+    _setAndEmitIfChanged(&(_currApp[0]),
+        lines[1].left(lines[1].length() - 1).toDouble(), 1,
+        &ControlTTiPower::currAppChanged);
+    _setAndEmitIfChanged(&(_voltApp[1]),
+        lines[2].left(lines[2].length() - 1).toDouble(), 2,
+        &ControlTTiPower::voltAppChanged);
+    _setAndEmitIfChanged(&(_currApp[1]),
+        lines[3].left(lines[3].length() - 1).toDouble(), 2,
+        &ControlTTiPower::currAppChanged);
+}
+
+void ControlTTiPower::_setAndEmitIfChanged(double* target, double val, int id, void (ControlTTiPower::*signal)(double, int)) {
+    bool changed = *target == val;
+    *target = val;
+    if (changed)
+        emit (this->*signal)(val, id);
 }
 
 void ControlTTiPower::closeConnection()

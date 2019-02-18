@@ -49,5 +49,6 @@ private:
     double _currApp[2];
     
     void _refreshPowerStatus(int pId);
+    void _setAndEmitIfChanged(double* target, double val, int id, void (ControlTTiPower::*signal)(double, int));
 };
 #endif // CONTROLTTIPOWER_H

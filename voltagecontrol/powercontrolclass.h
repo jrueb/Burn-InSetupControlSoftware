@@ -14,6 +14,8 @@ using namespace std;
 
 class PowerControlClass: public GenericInstrumentClass
 {
+    Q_OBJECT
+
 public:
     PowerControlClass();
 
@@ -29,6 +31,13 @@ public:
     virtual void onPower(int pId) = 0;
     virtual void offPower(int pId) = 0;
     virtual void closeConnection() = 0;
+    
+signals:
+    void voltSetChanged(double volt, int id);
+    void currSetChanged(double curr, int id);
+    void voltAppChanged(double volt, int id);
+    void currAppChanged(double curr, int id);
+    void powerStateChanged(bool state, int id);
 };
 
 #endif // POWERCONTROLCLASS_H

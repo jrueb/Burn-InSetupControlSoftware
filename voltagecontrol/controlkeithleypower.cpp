@@ -87,7 +87,7 @@ ControlKeithleyPower::ControlKeithleyPower(string pConnection, double pSetVolt, 
     connect(&_sweepThread, &QThread::finished, worker, &QObject::deleteLater);
     connect(this, &ControlKeithleyPower::voltSetChanged, worker, &KeithleyPowerSweepWorker::doVoltSet);
     connect(this, &ControlKeithleyPower::voltAppChanged, worker, &KeithleyPowerSweepWorker::doVoltApp);
-    connect(this, &ControlKeithleyPower::outputStateChanged, worker, &KeithleyPowerSweepWorker::doOutputState);
+    connect(this, &ControlKeithleyPower::powerStateChanged, worker, &KeithleyPowerSweepWorker::doOutputState);
     connect(worker, &KeithleyPowerSweepWorker::targetReached, this, &ControlKeithleyPower::onTargetVoltageReached);
     _sweepThread.start();
 }
@@ -124,7 +124,7 @@ void ControlKeithleyPower::initialize(){
 	_outputOn = true;
 	refreshAppliedValues();
 	offPower();
-	emit outputStateChanged(_outputOn);
+	emit powerStateChanged(_outputOn, 0);
 	fVoltSet = setvolt;
     }
 }
@@ -148,7 +148,7 @@ void ControlKeithleyPower::offPower(int)
 void ControlKeithleyPower::setVolt(double pVoltage , int)
 {
     fVoltSet = pVoltage;
-    emit voltSetChanged(fVoltSet);
+    emit voltSetChanged(fVoltSet, 0);
 }
 
 void ControlKeithleyPower::sendVoltageCommand(double pVoltage) {
@@ -174,6 +174,7 @@ void ControlKeithleyPower::setCurr(double pCurrent, int)
     comHandler_->SendCommand(stringinput);
     _commMutex.unlock();
     fCurrCompliance = pCurrent;
+    emit currSetChanged(fCurrCompliance, 0);
 }
 
 double ControlKeithleyPower::getVolt(int) const {
@@ -194,8 +195,16 @@ double ControlKeithleyPower::getCurrApp(int) const {
 
 void ControlKeithleyPower::refreshAppliedValues()
 {
-    if (not getKeithleyOutputState())
+    if (not getKeithleyOutputState()) {
+	if (fVolt != 0)
+	    emit voltAppChanged(0, 0);
+	if (fCurr != 0)
+	    emit currAppChanged(0, 0);
+	fVolt = 0;
+	fCurr = 0;
 	return;
+    }
+    
     char buffer[1024];
     buffer[0] = 0;
 
@@ -213,14 +222,16 @@ void ControlKeithleyPower::refreshAppliedValues()
     str = str.substr(cPos+1, cPos + 13);
     QString fCurrStr = QString::fromStdString(str.substr(0 , 13));
 
-    bool changed = fVolt == fVoltStr.toDouble();
+    bool voltchanged = fVolt == fVoltStr.toDouble();
+    bool currchanged = fCurr == fCurrStr.toDouble();
 
     fVolt = fVoltStr.toDouble();
-
     fCurr = fCurrStr.toDouble();
 
-    if (changed)
-	emit voltAppChanged(fVolt);
+    if (voltchanged)
+	emit voltAppChanged(fVolt, 0);
+    if (currchanged)
+	emit currAppChanged(fVolt, 0);
 }
 
 void ControlKeithleyPower::closeConnection()
@@ -257,7 +268,7 @@ void ControlKeithleyPower::setKeithleyOutputState ( int outputsetting )
 	_outputOn = true;
     }
     
-    emit outputStateChanged(_outputOn);
+    emit powerStateChanged(_outputOn, 0);
 }
 
 bool ControlKeithleyPower::getKeithleyOutputState() const

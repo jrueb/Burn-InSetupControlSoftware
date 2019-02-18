@@ -603,7 +603,7 @@ void MainWindow::app_quit() {
     if (fControl != nullptr and fControl->countInstrument("Keithley2410")) {
         ControlKeithleyPower* keithley = dynamic_cast<ControlKeithleyPower*>(fControl->getGenericInstrObj("Keithley2410"));
         QEventLoop loop;
-        connect(keithley, SIGNAL(outputStateChanged(bool)), &loop, SLOT(quit()));
+        connect(keithley, SIGNAL(powerStateChanged(bool, int)), &loop, SLOT(quit()));
         keithley->offPower();
         
         // Wait for power off
