@@ -23,6 +23,7 @@ using namespace std;
 
 const int SWEEP_INTERVAL = 500; //ms
 const double SWEEP_STEP = 10; //V
+const double SWEEP_EPSILON = 0.00001; //V
 
 KeithleyPowerSweepWorker::KeithleyPowerSweepWorker(ControlKeithleyPower* keithley):
     _keithley(keithley),
@@ -31,15 +32,13 @@ KeithleyPowerSweepWorker::KeithleyPowerSweepWorker(ControlKeithleyPower* keithle
     connect(&_timer, SIGNAL(timeout()), this, SLOT(doSweeping()));
     _timer.start(SWEEP_INTERVAL);
     
-    PowerControlClass::fVACvalues *vals = _keithley->getVoltAndCurr();
-    _voltTarget = vals->pVSet1;
-    _voltApplied = vals->pVApp1;
-    delete vals;
+    _voltTarget = _keithley->getVolt();
+    _voltApplied = _keithley->getVoltApp();
     _outputState = _keithley->getKeithleyOutputState();
 }
 
 void KeithleyPowerSweepWorker::doSweeping() {
-    if (not _outputState or _voltTarget == _voltApplied) {
+    if (not _outputState or abs(_voltApplied - _voltTarget) < SWEEP_EPSILON) {
 	// No sweeping needed
 	
 	if (_voltTarget == _voltApplied)
@@ -55,7 +54,7 @@ void KeithleyPowerSweepWorker::doSweeping() {
 	_voltApplied += copysign(SWEEP_STEP, _voltTarget - _voltApplied);
     
     _keithley->sendVoltageCommand(_voltApplied);
-    if (_voltApplied == _voltTarget)
+    if (abs(_voltApplied - _voltTarget) < SWEEP_EPSILON)
 	emit targetReached(_voltTarget);
     
     _timer.start(SWEEP_INTERVAL);
@@ -78,8 +77,10 @@ ControlKeithleyPower::ControlKeithleyPower(string pConnection, double pSetVolt, 
     fConnection = pConnection;
     fVoltSet = pSetVolt;
     fCurrCompliance = pSetCurr;
+    fVolt = 0;
+    fCurr = 0;
     _turnOffScheduled = false;
-    keithleyOutputOn = false;
+    _outputOn = false;
     
     KeithleyPowerSweepWorker* worker = new KeithleyPowerSweepWorker(this);
     worker->moveToThread(&_sweepThread);
@@ -117,17 +118,20 @@ void ControlKeithleyPower::initialize(){
     comHandler_->ReceiveString(buf);
     
     if (buf[0] == '0')
-	keithleyOutputOn = false;
+	_outputOn = false;
     else {
 	double setvolt = fVoltSet;
-	keithleyOutputOn = true;
-	checkVAC();
+	_outputOn = true;
+	refreshAppliedValues();
 	offPower();
-	emit outputStateChanged(keithleyOutputOn);
+	emit outputStateChanged(_outputOn);
 	fVoltSet = setvolt;
     }
 }
 
+bool ControlKeithleyPower::getPower(int) const {
+    return not _turnOffScheduled and getKeithleyOutputState();
+}
 
 void ControlKeithleyPower::onPower(int)
 {
@@ -172,28 +176,26 @@ void ControlKeithleyPower::setCurr(double pCurrent, int)
     fCurrCompliance = pCurrent;
 }
 
-PowerControlClass::fVACvalues *ControlKeithleyPower::getVoltAndCurr()
-{
-    PowerControlClass::fVACvalues *cObject = new PowerControlClass::fVACvalues();
-    memset(cObject, 0, sizeof(PowerControlClass::fVACvalues));
-    
-    cObject->pVSet1 = fVoltSet;
-    cObject->pISet1 = fCurrCompliance;
-
-    if ( getKeithleyOutputState ( ) )
-    {
-	checkVAC();
-
-	cObject->pVApp1 = fVolt;
-	cObject->pIApp1 = fCurr;
-    }
-
-    return cObject;
-
+double ControlKeithleyPower::getVolt(int) const {
+    return fVoltSet;
 }
 
-void ControlKeithleyPower::checkVAC()
+double ControlKeithleyPower::getVoltApp(int) const {
+    return fVolt;
+}
+
+double ControlKeithleyPower::getCurr(int) const {
+    return fCurrCompliance;
+}
+
+double ControlKeithleyPower::getCurrApp(int) const {
+    return fCurr;
+}
+
+void ControlKeithleyPower::refreshAppliedValues()
 {
+    if (not getKeithleyOutputState())
+	return;
     char buffer[1024];
     buffer[0] = 0;
 
@@ -211,11 +213,14 @@ void ControlKeithleyPower::checkVAC()
     str = str.substr(cPos+1, cPos + 13);
     QString fCurrStr = QString::fromStdString(str.substr(0 , 13));
 
+    bool changed = fVolt == fVoltStr.toDouble();
+
     fVolt = fVoltStr.toDouble();
 
     fCurr = fCurrStr.toDouble();
 
-    emit voltAppChanged(fVolt);
+    if (changed)
+	emit voltAppChanged(fVolt);
 }
 
 void ControlKeithleyPower::closeConnection()
@@ -225,15 +230,15 @@ void ControlKeithleyPower::closeConnection()
 
 void ControlKeithleyPower::setKeithleyOutputState ( int outputsetting )
 {
-    if ( outputsetting == 0 and keithleyOutputOn)
+    if (outputsetting == 0 and _outputOn)
     {
 	_commMutex.lock();
 	comHandler_->SendCommand(":OUTPUT1:STATE OFF");
 	usleep(1000);
 	_commMutex.unlock();
-	keithleyOutputOn = false;
+	_outputOn = false;
     }
-    else if ( outputsetting == 1 and not keithleyOutputOn)
+    else if (outputsetting == 1 and not _outputOn)
     {
 	_commMutex.lock();
 	comHandler_->SendCommand(":*RST");
@@ -249,13 +254,13 @@ void ControlKeithleyPower::setKeithleyOutputState ( int outputsetting )
 	usleep(1000);
 	_commMutex.unlock();
 
-	keithleyOutputOn = true;
+	_outputOn = true;
     }
     
-    emit outputStateChanged(keithleyOutputOn);
+    emit outputStateChanged(_outputOn);
 }
 
-bool ControlKeithleyPower::getKeithleyOutputState ( )
+bool ControlKeithleyPower::getKeithleyOutputState() const
 {
-    return ( keithleyOutputOn );
+    return _outputOn;
 }

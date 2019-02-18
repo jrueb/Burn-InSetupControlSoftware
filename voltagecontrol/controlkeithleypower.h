@@ -34,24 +34,30 @@ private:
     bool _outputState;
 };
 
-class ControlKeithleyPower: public QObject, public PowerControlClass
+class ControlKeithleyPower: public PowerControlClass
 {
     Q_OBJECT
-    
+
 public:
     ControlKeithleyPower(string pConnection, double pSetVolt, double pSetCurr);
     virtual ~ControlKeithleyPower();
 
     /* Implementation of PowerControlClass pure virtual functions */
     void initialize() override;
-    inline int getNumOutputs() const override {return 1;}
-    PowerControlClass::fVACvalues* getVoltAndCurr() override;
+    constexpr int getNumOutputs() const override {return 1;}
+    double getVolt(int = 0) const override;
+    double getVoltApp(int = 0) const override;
+    double getCurr(int = 0) const override;
+    double getCurrApp(int = 0) const override;
     void setVolt(double pVoltage, int = 0) override;
-    void setCurr(double pCurrent , int = 0) override;
+    void setCurr(double pCurrent, int = 0) override;
+    bool getPower(int = 0) const override;
     void onPower(int = 0) override;
     void offPower(int = 0) override;
     void closeConnection() override;
     /* End of implementation of pure virtual functions */
+    
+    void refreshAppliedValues();
     
 signals:
     void voltSetChanged(double volts);
@@ -62,10 +68,9 @@ private:
     friend class KeithleyPowerSweepWorker;
 
     void onTargetVoltageReached(double voltage);
-    void checkVAC();
     void sendVoltageCommand(double pVoltage);
     void setKeithleyOutputState ( int outputsetting );
-    bool getKeithleyOutputState ( );
+    bool getKeithleyOutputState() const;
     
     double fVolt;
     double fVoltSet;
@@ -75,7 +80,7 @@ private:
 
     ComHandler* comHandler_;
 
-    bool keithleyOutputOn;
+    bool _outputOn;
 
     QThread _sweepThread;
     QMutex _commMutex;

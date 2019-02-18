@@ -9,9 +9,9 @@
 #include <QVector>
 #include <initializer_list>
 
-class DAQModule : public QObject, public GenericInstrumentClass
+class DAQModule : public GenericInstrumentClass
 {
-Q_OBJECT
+    Q_OBJECT
     
 public:
     DAQModule(const QString& fc7Port, const QString& controlhubPath, const QString& ph2acfPath, const QString& daqHwdescFile, const QString& daqImage);

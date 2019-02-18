@@ -259,11 +259,10 @@ void MainWindow::getVoltAndCurr()
             continue;
             
         ControlTTiPower* ttidev = dynamic_cast<ControlTTiPower*>(fControl->getGenericInstrObj(name));
-        PowerControlClass::fVACvalues* vals = ttidev->getVoltAndCurr();
-        gui_pointers_low_voltage[dev_num][1].i_set->setValue(vals->pISet1);
-        gui_pointers_low_voltage[dev_num][1].v_set->setValue(vals->pVSet1);
-        gui_pointers_low_voltage[dev_num][0].i_set->setValue(vals->pISet2);
-        gui_pointers_low_voltage[dev_num][0].v_set->setValue(vals->pVSet2);
+        gui_pointers_low_voltage[dev_num][1].i_set->setValue(ttidev->getCurr(1));
+        gui_pointers_low_voltage[dev_num][1].v_set->setValue(ttidev->getVolt(1));
+        gui_pointers_low_voltage[dev_num][0].i_set->setValue(ttidev->getCurr(2));
+        gui_pointers_low_voltage[dev_num][0].v_set->setValue(ttidev->getVolt(2));
         
         for (int i = 0; i < 2; ++i) {
             bool power_status = ttidev->getPower(2 - i);
@@ -283,8 +282,8 @@ void MainWindow::getVoltAndCurr()
     AdditionalThread *cThread  = new AdditionalThread("A", fControl);
     QThread *cQThread = new QThread();
     connect(cQThread , SIGNAL(started()), cThread, SLOT(getVAC()));
-    connect(cThread, SIGNAL(sendToThread(PowerControlClass::fVACvalues*, int)),this,
-            SLOT(updateTTiIWidget(PowerControlClass::fVACvalues*, int)));
+    connect(cThread, SIGNAL(sendToThread(double, double, double, double, int)),this,
+            SLOT(updateTTiIWidget(double, double, double, double, int)));
     cThread->moveToThread(cQThread);
     cQThread->start();
 }
@@ -314,23 +313,22 @@ void MainWindow::getVoltAndCurrKeithley()
     
     ControlKeithleyPower* keihleydev = dynamic_cast<ControlKeithleyPower*>(fControl->getGenericInstrObj("Keithley2410"));
     // Keithley is supposed to turn off on init so no need to set onoff_button
-    PowerControlClass::fVACvalues* vals = keihleydev->getVoltAndCurr();
     
     bool blocked = gui_pointers_high_voltage[0]->i_set->signalsBlocked();
     gui_pointers_high_voltage[0]->i_set->blockSignals(true);
-    gui_pointers_high_voltage[0]->i_set->setValue(vals->pISet1);
+    gui_pointers_high_voltage[0]->i_set->setValue(keihleydev->getCurr());
     gui_pointers_high_voltage[0]->i_set->blockSignals(blocked);
     
     blocked = gui_pointers_high_voltage[0]->v_set->signalsBlocked();
     gui_pointers_high_voltage[0]->v_set->blockSignals(true);
-    gui_pointers_high_voltage[0]->v_set->setValue(vals->pVSet1);
+    gui_pointers_high_voltage[0]->v_set->setValue(keihleydev->getVolt());
     gui_pointers_high_voltage[0]->v_set->blockSignals(blocked);
     
     AdditionalThread *cThread  = new AdditionalThread("C", fControl);
     QThread *cQThread = new QThread();
     connect(cQThread , SIGNAL(started()), cThread, SLOT(getVACKeithley()));
-    connect(cThread, SIGNAL(sendToThreadKeithley(PowerControlClass::fVACvalues*)),this,
-            SLOT(updateKeithleyWidget(PowerControlClass::fVACvalues*)));
+    connect(cThread, SIGNAL(sendToThreadKeithley(double, double)), this,
+            SLOT(updateKeithleyWidget(double, double)));
     cThread->moveToThread(cQThread);
     cQThread->start();
 }
@@ -447,25 +445,21 @@ void MainWindow::on_I_set_doubleSpinBox_valueChanged(string pSourceName , int pI
     QThread::sleep(0.5);
 }
 
-void MainWindow::updateTTiIWidget(PowerControlClass::fVACvalues* pObject, int dev_num)
+void MainWindow::updateTTiIWidget(double currApp1, double voltApp1, double currApp2, double voltApp2, int dev_num)
 {
     // The TTis can not output negative voltages. Sometimes they report small
     // negative values like -0.005 V. Use abs refresh the display anyway.
-    gui_pointers_low_voltage[dev_num][1].i_applied->display(abs(pObject->pIApp1));
-    gui_pointers_low_voltage[dev_num][1].v_applied->display(abs(pObject->pVApp1));
+    gui_pointers_low_voltage[dev_num][1].i_applied->display(abs(currApp1));
+    gui_pointers_low_voltage[dev_num][1].v_applied->display(abs(voltApp1));
 
-    gui_pointers_low_voltage[dev_num][0].i_applied->display(abs(pObject->pIApp2));
-    gui_pointers_low_voltage[dev_num][0].v_applied->display(abs(pObject->pVApp2));
-    
-    delete pObject;
+    gui_pointers_low_voltage[dev_num][0].i_applied->display(abs(currApp2));
+    gui_pointers_low_voltage[dev_num][0].v_applied->display(abs(voltApp2));
 }
 
-void MainWindow::updateKeithleyWidget(PowerControlClass::fVACvalues* pObject)
+void MainWindow::updateKeithleyWidget(double currApp, double voltApp)
 {
-    gui_pointers_high_voltage[0]->i_applied->display(pObject->pIApp1);
-    gui_pointers_high_voltage[0]->v_applied->display(pObject->pVApp1);
-    
-    delete pObject;
+    gui_pointers_high_voltage[0]->i_applied->display(currApp);
+    gui_pointers_high_voltage[0]->v_applied->display(voltApp);
 }
 
 void MainWindow::initHard()

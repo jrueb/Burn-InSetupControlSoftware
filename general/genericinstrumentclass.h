@@ -1,12 +1,14 @@
 #ifndef GENERICINSTRUMENTCLASS_H
 #define GENERICINSTRUMENTCLASS_H
 
+#include <QObject>
 #include <string>
 
 using namespace std;
 
-class GenericInstrumentClass
+class GenericInstrumentClass: public QObject
 {
+    Q_OBJECT
 public:
     GenericInstrumentClass();
     

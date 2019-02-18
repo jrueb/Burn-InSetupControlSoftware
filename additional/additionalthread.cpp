@@ -16,15 +16,20 @@ void AdditionalThread::getVAC()
 {
     const vector<string> sources = fAddControl->getSourceNameVec();
     while (true) {
-        PowerControlClass *cPowerObj;
+        ControlTTiPower* ttidev;
         int dev_num = 0;
         for (const string& name: sources) {
             if (name.substr(0, 3) != "TTI")
                 continue;
             
-            cPowerObj = dynamic_cast<PowerControlClass*>(fAddControl->getGenericInstrObj(name));
-            if (cPowerObj != nullptr) {
-                emit sendToThread(cPowerObj->getVoltAndCurr(), dev_num);
+            ttidev = dynamic_cast<ControlTTiPower*>(fAddControl->getGenericInstrObj(name));
+            if (ttidev != nullptr) {
+                ttidev->refreshAppliedValues();
+                double currApp1 = ttidev->getCurrApp(1);
+                double voltApp1 = ttidev->getVoltApp(1);
+                double currApp2 = ttidev->getCurrApp(2);
+                double voltApp2 = ttidev->getVoltApp(2);
+                emit sendToThread(currApp1, voltApp1, currApp2, voltApp2, dev_num);
             }
             ++dev_num;
         }
@@ -48,11 +53,10 @@ void AdditionalThread::getRaspSensors()
 void AdditionalThread::getVACKeithley()
 {
     while(true){
-        PowerControlClass *cPowerObj;
-        //cPowerObj = fAddControl->getObject("Keithley2410");
-        cPowerObj = dynamic_cast<PowerControlClass*>(fAddControl->getGenericInstrObj("Keithley2410"));
-
-        emit sendToThreadKeithley(cPowerObj->getVoltAndCurr());
+        ControlKeithleyPower* keithley = dynamic_cast<ControlKeithleyPower*>(fAddControl->getGenericInstrObj("Keithley2410"));
+        keithley->refreshAppliedValues();
+        
+        emit sendToThreadKeithley(keithley->getCurrApp(), keithley->getVoltApp());
         QThread::sleep(3);
     }
 }

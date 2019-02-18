@@ -102,7 +102,7 @@ void SystemControllerClass::_parseVSources()
             } catch (logic_error) {
                 throw BurnInException("Invalid output setting for TTi.");
             }
-            dev = new ControlTTiPower(address, cPort, cVolt, cCurr);
+            dev = new ControlTTiPower(address, cPort, cVolt[0], cCurr[0], cVolt[1], cCurr[1]);
         } else if (desc.classOfInstr == "Keithley2410") {
             if (fGenericInstrumentMap.count(desc.classOfInstr) != 0) {
                 cerr << "Can only use one Keithley at a time. Ignoring others." << endl;

@@ -13,8 +13,9 @@
 
 using namespace std;
 
-class Thermorasp : public QObject, public GenericInstrumentClass {
+class Thermorasp : public GenericInstrumentClass {
     Q_OBJECT
+
 public:
     Thermorasp(const QString& address, quint16 port);
     Thermorasp(const string& address, quint16 port);
