@@ -43,15 +43,10 @@ private:
     
     bool _power[2];
     
-    double _volt1;
-    double _curr1;
-    double _volt2;
-    double _curr2;
-    
-    double _voltApp1;
-    double _currApp1;
-    double _voltApp2;
-    double _currApp2;
+    double _volt[2];
+    double _curr[2];
+    double _voltApp[2];
+    double _currApp[2];
     
     void _refreshPowerStatus(int pId);
 };

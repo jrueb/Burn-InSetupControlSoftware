@@ -21,18 +21,16 @@ ControlTTiPower::ControlTTiPower(string pAddress, int pPort, double pSetVolt1, d
 
     fDevice = 0;
     
-    _power[0] = false;
-    _power[1] = false;
+    for (int i = 0; i < 2; ++i) {
+        _power[i] = false;
+        _voltApp[i] = 0;
+        _currApp[i] = 0;
+    }
     
-    _volt1 = pSetVolt1;
-    _curr1 = pSetCurr1;
-    _volt2 = pSetVolt2;
-    _curr2 = pSetCurr2;
-    
-    _voltApp1 = 0;
-    _currApp1 = 0;
-    _voltApp2 = 0;
-    _currApp2 = 0;
+    _volt[0] = pSetVolt1;
+    _curr[0] = pSetCurr1;
+    _volt[1] = pSetVolt2;
+    _curr[1] = pSetCurr2;
 }
 
 void ControlTTiPower::initialize()
@@ -49,13 +47,11 @@ void ControlTTiPower::initialize()
         throw BurnInException("Could not open connection to TTi");
     }
     
-    _refreshPowerStatus(1);
-    _refreshPowerStatus(2);
-
-    setVolt(_volt1, 1);
-    setCurr(_curr1, 1);
-    setVolt(_volt2, 2);
-    setCurr(_curr2, 2);
+    for (int i = 0; i < 2; ++i) {
+        _refreshPowerStatus(i + 1);
+        setVolt(_volt[i], i + 1);
+        setCurr(_curr[i], i + 1);
+    }
 }
 
 void ControlTTiPower::setVolt(double pVoltage , int pId)
@@ -68,14 +64,7 @@ void ControlTTiPower::setVolt(double pVoltage , int pId)
     lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
     _commMutex.unlock();
     
-    switch (pId) {
-    case 1:
-        _volt1 = pVoltage;
-        break;
-    case 2:
-        _volt2 = pVoltage;
-        break;
-    }
+    _volt[pId - 1] = pVoltage;
 }
 
 void ControlTTiPower::setCurr(double pCurrent , int pId)
@@ -87,14 +76,7 @@ void ControlTTiPower::setCurr(double pCurrent , int pId)
     lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
     _commMutex.unlock();
     
-    switch (pId) {
-    case 1:
-        _curr1 = pCurrent;
-        break;
-    case 2:
-        _curr2 = pCurrent;
-        break;
-    }
+    _curr[pId - 1] = pCurrent;
 }
 
 void ControlTTiPower::onPower(int pId)
@@ -153,46 +135,22 @@ void ControlTTiPower::_refreshPowerStatus(int pId)
 
 double ControlTTiPower::getVolt(int pId) const {
     Q_ASSERT(pId == 1 or pId == 2);
-    switch (pId) {
-    case 1:
-        return _volt1;
-    case 2:
-        return _volt2;
-    }
-    return 0;
+    return _volt[pId - 1];
 }
 
 double ControlTTiPower::getCurr(int pId) const {
     Q_ASSERT(pId == 1 or pId == 2);
-    switch (pId) {
-    case 1:
-        return _curr1;
-    case 2:
-        return _curr2;
-    }
-    return 0;
+    return _curr[pId - 1];
 }
 
 double ControlTTiPower::getVoltApp(int pId) const {
     Q_ASSERT(pId == 1 or pId == 2);
-    switch (pId) {
-    case 1:
-        return _voltApp1;
-    case 2:
-        return _voltApp2;
-    }
-    return 0;
+    return _voltApp[pId - 1];
 }
 
 double ControlTTiPower::getCurrApp(int pId) const {
     Q_ASSERT(pId == 1 or pId == 2);
-    switch (pId) {
-    case 1:
-        return _currApp1;
-    case 2:
-        return _currApp2;
-    }
-    return 0;
+    return _currApp[pId - 1];
 }
 
 void ControlTTiPower::refreshAppliedValues() {
@@ -219,10 +177,10 @@ void ControlTTiPower::refreshAppliedValues() {
     QString res = cBuff;
     QStringList lines = res.split(RMT);
         
-    _voltApp1 = lines[0].left(lines[0].length() - 1).toDouble();
-    _currApp1 = lines[1].left(lines[1].length() - 1).toDouble();
-    _voltApp2 = lines[2].left(lines[2].length() - 1).toDouble();
-    _currApp2 = lines[3].left(lines[3].length() - 1).toDouble();
+    _voltApp[0] = lines[0].left(lines[0].length() - 1).toDouble();
+    _currApp[0] = lines[1].left(lines[1].length() - 1).toDouble();
+    _voltApp[1] = lines[2].left(lines[2].length() - 1).toDouble();
+    _currApp[1] = lines[3].left(lines[3].length() - 1).toDouble();
 }
 
 void ControlTTiPower::closeConnection()
