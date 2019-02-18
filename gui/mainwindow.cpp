@@ -572,6 +572,10 @@ void MainWindow::on_read_conf_button_clicked()
             
     } catch (const BurnInException& e) {
         cerr << "Error: " << e.what() << endl;
+        
+        commandListPage->setSystemController(nullptr);
+        daqPage->setDAQModule(nullptr);
+        
         QMessageBox dialog(this);
         dialog.critical(this, "Error", QString::fromStdString(e.what()));
         

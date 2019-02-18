@@ -217,6 +217,7 @@ GenericInstrumentClass* SystemControllerClass::getGenericInstrObj(string pStr)
 
 void SystemControllerClass::_removeAllDevices() {
     // Clear vectors and pointers
+    cout << "Removing devices" << endl;
     _daqmodule = nullptr;
     fConnectRasps.clear();
     fNamesVoltageSources.clear();

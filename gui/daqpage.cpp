@@ -38,6 +38,8 @@ void DAQPage::setDAQModule(DAQModule* module) {
         disconnect(_module, SIGNAL(fc7PowerChanged(bool)), this, SLOT(onFc4PowerChanged(bool)));
     
     _module = module;
+    if (module == nullptr)
+        return;
     
     connect(_module, SIGNAL(fc7PowerChanged(bool)), this, SLOT(onFc4PowerChanged(bool)));
 }

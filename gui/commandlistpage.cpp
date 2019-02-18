@@ -92,11 +92,17 @@ CommandListPage::~CommandListPage() {
 
 void CommandListPage::setSystemController(const SystemControllerClass* controller) {
     _controller = controller;
-    if (_proc != nullptr)
+    _add_command_menu->clear();
+    
+    if (_proc != nullptr) {
         delete _proc;
+        _proc = nullptr;
+    }
+    if (controller == nullptr)
+        return;
+    
     _proc = new CommandProcessor(controller);
     
-    _add_command_menu->clear();
     QVector<BurnInCommandType> commands = _proc->getAvailableCommands();
     if (commands.size() > 0)
         _add_command_button->setEnabled(true);
