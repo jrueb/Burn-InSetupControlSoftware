@@ -21,6 +21,9 @@ ControlTTiPower::ControlTTiPower(string pAddress, int pPort, double pSetVolt1, d
 
     fDevice = 0;
     
+    _power[0] = false;
+    _power[1] = false;
+    
     _volt1 = pSetVolt1;
     _curr1 = pSetCurr1;
     _volt2 = pSetVolt2;
@@ -45,6 +48,9 @@ void ControlTTiPower::initialize()
         std::cerr << "Could not open ControlTTiPower on " << fAddress << " and port " << fPort << std::endl;
         throw BurnInException("Could not open connection to TTi");
     }
+    
+    _refreshPowerStatus(1);
+    _refreshPowerStatus(2);
 
     setVolt(_volt1, 1);
     setCurr(_curr1, 1);
@@ -58,7 +64,9 @@ void ControlTTiPower::setVolt(double pVoltage , int pId)
 //    viPrintf(fVi , "V%d %f\n" , pId , pVoltage);
     char cCommand[BUFLEN];
     snprintf(cCommand, sizeof(cCommand), "V%d %.4f\n", pId, pVoltage);
+    _commMutex.lock();
     lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
+    _commMutex.unlock();
     
     switch (pId) {
     case 1:
@@ -75,7 +83,9 @@ void ControlTTiPower::setCurr(double pCurrent , int pId)
     Q_ASSERT(pId == 1 or pId == 2);
     char cCommand[BUFLEN];
     snprintf(cCommand, sizeof(cCommand), "I%d %.4f\n", pId, pCurrent);
+    _commMutex.lock();
     lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
+    _commMutex.unlock();
     
     switch (pId) {
     case 1:
@@ -95,13 +105,16 @@ void ControlTTiPower::onPower(int pId)
         snprintf(cCommand, sizeof(cCommand), "OP%d 1 \n", pId);
     else
         snprintf(cCommand, sizeof(cCommand), "OPALL 1\n");
+    _commMutex.lock();
     lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
+    _commMutex.unlock();
 }
 
 void ControlTTiPower::offPower(int pId)
 {
     Q_ASSERT(pId == 0 or pId == 1 or pId == 2);
     char cCommand[BUFLEN];
+    _commMutex.lock();
     if(pId){
         snprintf(cCommand, sizeof(cCommand), "OP%d 0 \n", pId);
         lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
@@ -110,27 +123,32 @@ void ControlTTiPower::offPower(int pId)
         snprintf(cCommand, sizeof(cCommand), "OPALL 0\n");
         lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
     }
+    _commMutex.unlock();
 }
 
-bool ControlTTiPower::getPower(int pId) const
+bool ControlTTiPower::getPower(int pId) const {
+    Q_ASSERT(pId == 1 or pId == 2);
+    return _power[pId - 1];
+}
+
+void ControlTTiPower::_refreshPowerStatus(int pId)
 {
     Q_ASSERT(pId == 1 or pId == 2);
     char buf[BUFLEN];
     snprintf(buf, sizeof(buf), "OP%d?\n", pId);
+    _commMutex.lock();
     lxi_send(fDevice, buf, strlen(buf), TIMEOUT);
     QThread::msleep(50);
     
     int len;
     if ((len = lxi_receive(fDevice, buf, sizeof(buf), TIMEOUT)) == LXI_ERROR) {
-        cerr << "ControlTTiPower::getPower: Could not receive value." << endl;
+        cerr << "ControlTTiPower::_refreshPowerStatus: Could not receive value." << endl;
         
         throw BurnInException("Could not receive TTi power status");
     }
+    _commMutex.unlock();
     
-    if (buf[0] == '0')
-        return false;
-    else
-        return true;
+    _power[pId - 1] = buf[0] == '1';
 }
 
 double ControlTTiPower::getVolt(int pId) const {
@@ -181,6 +199,7 @@ void ControlTTiPower::refreshAppliedValues() {
     char cCommand[BUFLEN];
     char cBuff[256];
     
+    _commMutex.lock();
     for (int i = 1; i <= 2; i++) {
         snprintf(cCommand, sizeof(cCommand), "V%dO? \n", i);
         lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
@@ -194,6 +213,7 @@ void ControlTTiPower::refreshAppliedValues() {
         cerr << "ControlTTiPower::refreshAppliedValues: Could not receive values." << endl;
         return;
     }
+    _commMutex.unlock();
     
     cBuff[len] = 0;
     QString res = cBuff;

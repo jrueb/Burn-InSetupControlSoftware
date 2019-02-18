@@ -1,7 +1,7 @@
 #ifndef CONTROLTTIPOWER_H
 #define CONTROLTTIPOWER_H
 
-#include <QObject>
+#include <QMutex>
 
 extern "C" {
 	#include "lxi.h"
@@ -39,6 +39,9 @@ private:
     int fPort;
 
     int fDevice;
+    QMutex _commMutex;
+    
+    bool _power[2];
     
     double _volt1;
     double _curr1;
@@ -49,5 +52,7 @@ private:
     double _currApp1;
     double _voltApp2;
     double _currApp2;
+    
+    void _refreshPowerStatus(int pId);
 };
 #endif // CONTROLTTIPOWER_H
