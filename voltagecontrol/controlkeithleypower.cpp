@@ -107,7 +107,7 @@ void ControlKeithleyPower::initialize(){
     comHandler_->SendCommand("*IDN?");
     comHandler_->ReceiveString(buf);
     if (memcmp(buf, "KEITHLEY INSTRUMENTS INC.,MODEL 2410", 36) != 0)
-	throw BurnInException("Device at address of Keithley is not a Keithley 2410");
+	throw BurnInException("Invalid or no device at address of Keithley 2410");
     
     setCurr(fCurrCompliance);
     
