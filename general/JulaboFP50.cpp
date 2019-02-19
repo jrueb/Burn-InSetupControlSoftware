@@ -27,6 +27,8 @@
 // query error codes
 //#####################
 
+const double TEMP_EPSILON = 1.e-3;
+
 ///
 ///
 ///
@@ -36,23 +38,48 @@ JulaboFP50::JulaboFP50( const ioport_t ioPort )
   ioPort_ = ioPort;
   comHandler_ = nullptr;
   isCommunication_ = false;
+  
+  alwaysEmit_ = true;
+  circulatorOn_ = false;
+  workingTemperature_ = 0;
+  bathTemperature_ = 0;
+  sensorTemperature_ = 0;
+  pumpPressure_ = 0;
 }
 
 JulaboFP50::JulaboFP50(const std::string& ioPort) {
   ioPort_ = ioPort;
   comHandler_ = nullptr;
   isCommunication_ = false;
+  
+  alwaysEmit_ = true;
+  circulatorOn_ = false;
+  workingTemperature_ = 0;
+  bathTemperature_ = 0;
+  sensorTemperature_ = 0;
+  pumpPressure_ = 0;
 }
 
 void JulaboFP50::initialize() {
+  alwaysEmit_ = true;
   comHandler_ = new ComHandler( ioPort_.c_str() );
   Device_Init();
+  refreshDeviceState();
+  alwaysEmit_ = false;
+}
+
+void JulaboFP50::refreshDeviceState() {
+  GetBathTemperature();
+  GetSafetySensorTemperature();
+  GetWorkingTemperature();
+  GetPumpPressure();
+  GetCirculatorStatus();
 }
 
 ///
 /// returns success flag
 ///
-bool JulaboFP50::SetWorkingTemperature( const float workingTemp ) const {
+bool JulaboFP50::SetWorkingTemperature( const float workingTemp ) {
 
   #ifdef __JULABOFP50_DEBUG
   std::cout << "[JulaboFP50::SetWorkingTemp] -- DEBUG: Called." << std::endl;
@@ -75,13 +102,18 @@ bool JulaboFP50::SetWorkingTemperature( const float workingTemp ) const {
   usleep( 10000 );
   comHandler_->ReceiveString( buffer );
   StripBuffer( buffer );
+  float newtemp = atof( buffer );
 
-  if( fabs( workingTemp - atof( buffer ) ) > 1.e-3 ) {
+  if( fabs( workingTemp - newtemp ) > TEMP_EPSILON ) {
     std::cerr << " [JulaboFP50::SetWorkingTemp] ** ERROR: check failed." << std::endl;
     std::cerr << "  > Expected: T=" << workingTemp << " but received (string):"
               << buffer << "." << std::endl;
     return false;
   }
+  
+  if (alwaysEmit_ or std::abs(workingTemperature_ - newtemp) > TEMP_EPSILON)
+    emit workingTemperatureChanged(newtemp);
+  workingTemperature_ = newtemp;
 
   return true;
 }
@@ -90,7 +122,7 @@ bool JulaboFP50::SetWorkingTemperature( const float workingTemp ) const {
 /// return success flag
 /// pressureStage = 1..4
 ///
-bool JulaboFP50::SetPumpPressure( const unsigned int pressureStage ) const {
+bool JulaboFP50::SetPumpPressure( const unsigned int pressureStage ) {
 
   #ifdef __JULABOFP50_DEBUG
   std::cout << "[JulaboFP50::SetPumpPressure] -- DEBUG: Called." << std::endl;
@@ -119,6 +151,10 @@ bool JulaboFP50::SetPumpPressure( const unsigned int pressureStage ) const {
               << buffer << "." << std::endl;
     return false;
   }
+  
+  if (alwaysEmit_ or pumpPressure_ != pressureStage)
+    emit pumpPressureChanged(pressureStage);
+  pumpPressure_ = pressureStage;
 
   return true;
 }
@@ -126,7 +162,7 @@ bool JulaboFP50::SetPumpPressure( const unsigned int pressureStage ) const {
 ///
 /// return success flag
 ///
-bool JulaboFP50::SetCirculatorOn( void ) const {
+bool JulaboFP50::SetCirculatorOn( void ) {
 
   #ifdef __JULABOFP50_DEBUG
   std::cout << "[JulaboFP50::SetCirculatorOn] -- DEBUG: Called." << std::endl;
@@ -146,6 +182,10 @@ bool JulaboFP50::SetCirculatorOn( void ) const {
     std::cerr << "  > Expected: ON (1) but received (string):" << buffer << "." << std::endl;
     return false;
   }
+  
+  if (alwaysEmit_ or not circulatorOn_)
+    emit circulatorStatusChanged(true);
+  circulatorOn_ = true;
 
   return true;
 }
@@ -153,7 +193,7 @@ bool JulaboFP50::SetCirculatorOn( void ) const {
 ///
 /// return success flag
 ///
-bool JulaboFP50::SetCirculatorOff( void ) const {
+bool JulaboFP50::SetCirculatorOff( void ) {
 
   #ifdef __JULABOFP50_DEBUG
   std::cout << "[JulaboFP50::SetCirculatorOf] -- DEBUG: Called." << std::endl;
@@ -173,6 +213,10 @@ bool JulaboFP50::SetCirculatorOff( void ) const {
     std::cerr << "  > Expected: OFF (0) but received (string):" << buffer << "." << std::endl;
     return false;
   }
+  
+  if (alwaysEmit_ or circulatorOn_)
+    emit circulatorStatusChanged(false);
+  circulatorOn_ = false;
 
   return true;
 }
@@ -182,7 +226,7 @@ bool JulaboFP50::SetCirculatorOff( void ) const {
 /// return success flag
 /// xp = prop. / tn = int / tv = diff
 ///
-bool JulaboFP50::SetControlParameters( float xp, int tn, int tv ) const {
+bool JulaboFP50::SetControlParameters( float xp, int tn, int tv ) {
 
   #ifdef __JULABOFP50_DEBUG
   std::cout << "[JulaboFP50::SetControlParameters] -- DEBUG: Called." << std::endl;
@@ -283,7 +327,13 @@ float JulaboFP50::GetBathTemperature( void ) const {
   usleep( 10000 );
   comHandler_->ReceiveString( buffer );
   StripBuffer( buffer );
-  return( atof( buffer ) );
+  float temp = atof( buffer );
+  
+  if (alwaysEmit_ or abs(temp - bathTemperature_) > TEMP_EPSILON)
+    emit bathTemperatureChanged(temp);
+  bathTemperature_ = temp;
+  
+  return temp;
 }
 
 ///
@@ -301,8 +351,13 @@ float JulaboFP50::GetSafetySensorTemperature( void ) const {
   usleep( 10000 );
   comHandler_->ReceiveString( buffer );
   StripBuffer( buffer );
+  float temp = atof( buffer );
+  
+  if (alwaysEmit_ or abs(temp - sensorTemperature_) > TEMP_EPSILON)
+    emit safetySensorTemperatureChanged(temp);
+  sensorTemperature_ = temp;
 
-  return( atof( buffer ) );
+  return temp;
 }
 
 ///
@@ -320,8 +375,13 @@ float JulaboFP50::GetWorkingTemperature( void ) const {
   usleep( 10000 );
   comHandler_->ReceiveString( buffer );
   StripBuffer( buffer );
+  float temp = atof( buffer );
+  
+  if (alwaysEmit_ or abs(temp - workingTemperature_) > TEMP_EPSILON)
+    emit workingTemperatureChanged(temp);
+  workingTemperature_ = temp;
 
-  return( atof( buffer ) );
+  return temp;
 }
 
 ///
@@ -358,8 +418,13 @@ unsigned int JulaboFP50::GetPumpPressure( void ) const {
   usleep( 10000 );
   comHandler_->ReceiveString( buffer );
   StripBuffer( buffer );
+  unsigned int pressure = stoi( buffer );
+  
+  if (alwaysEmit_ or pressure != pumpPressure_)
+    emit pumpPressureChanged(pressure);
+  pumpPressure_ = pressure;
 
-  return( atoi( buffer ) );
+  return pressure;
 }
 
 ///
@@ -378,10 +443,13 @@ bool JulaboFP50::GetCirculatorStatus( void ) const {
   comHandler_->ReceiveString( buffer );
   StripBuffer( buffer );
 
-  unsigned int status = atoi( buffer );
+  bool status = atoi( buffer );
 
-  if( status ) return true;
-  else return false;
+  if (alwaysEmit_ or circulatorOn_ != status)
+    emit circulatorStatusChanged(status);
+  circulatorOn_ = status;
+  
+  return status;
 }
 
 ///
@@ -511,7 +579,7 @@ bool JulaboFP50::SaveControlParameters( const std::string& filepath ) const {
 /// load pid parameters from file & pass to the machine;
 /// return success flag
 ///
-bool JulaboFP50::LoadControlParametersAndApply( const std::string& filepath ) const {
+bool JulaboFP50::LoadControlParametersAndApply( const std::string& filepath ) {
 
   #ifdef __JULABOFP50_DEBUG
   std::cout << "[JulaboFP50::LoadControlParametersAndApply] -- DEBUG: Called."

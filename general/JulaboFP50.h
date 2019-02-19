@@ -26,18 +26,22 @@ typedef const char* ioport_t;
 class ComHandler;
 class JulaboFP50: public GenericInstrumentClass
 {
+  Q_OBJECT
+  
  public:
 
   JulaboFP50( ioport_t );
   JulaboFP50( const std::string& ioPort );
   
   void initialize();
+  
+  void refreshDeviceState();
 
-  bool SetWorkingTemperature( const float ) const;
-  bool SetPumpPressure( const unsigned int ) const;
-  bool SetCirculatorOn( void ) const;
-  bool SetCirculatorOff( void ) const;
-  bool SetControlParameters( float, int, int ) const;
+  bool SetWorkingTemperature( const float );
+  bool SetPumpPressure( const unsigned int );
+  bool SetCirculatorOn( void );
+  bool SetCirculatorOff( void );
+  bool SetControlParameters( float, int, int );
 
   bool IsCommunication( void ) const { return isCommunication_; }
   float GetBathTemperature( void ) const;
@@ -52,11 +56,18 @@ class JulaboFP50: public GenericInstrumentClass
   int GetDifferentialParameter( void ) const;
   
   bool SaveControlParameters( const std::string& ) const;
-  bool LoadControlParametersAndApply( const std::string& ) const;
+  bool LoadControlParametersAndApply( const std::string& );
   void StripBuffer( char* ) const;
   
   static constexpr int FP50LowerTempLimit = -50;
   static constexpr int FP50UpperTempLimit =  55;
+  
+signals:
+  void circulatorStatusChanged(bool on) const;
+  void workingTemperatureChanged(float temperature) const;
+  void bathTemperatureChanged(float temperature) const;
+  void safetySensorTemperatureChanged(float temperature) const;
+  void pumpPressureChanged(unsigned int pressureStage) const;
 
  private:
 
@@ -64,6 +75,13 @@ class JulaboFP50: public GenericInstrumentClass
   void Device_Init( void );
   ComHandler* comHandler_;
   bool isCommunication_;
+  
+  bool alwaysEmit_;
+  mutable bool circulatorOn_;
+  mutable float workingTemperature_;
+  mutable float bathTemperature_;
+  mutable float sensorTemperature_;
+  mutable unsigned int pumpPressure_;
 
 };
 
