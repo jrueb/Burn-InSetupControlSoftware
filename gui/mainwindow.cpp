@@ -58,9 +58,11 @@ output_pointer_t MainWindow::SetSourceOutputLayout() const
     cOutputPointers.i_applied = new QLCDNumber();
     cOutputPointers.i_applied->setMaximumHeight(20);
     cOutputPointers.i_applied->setSegmentStyle(QLCDNumber::Flat);
+    cOutputPointers.i_applied->setDigitCount(8);
     cOutputPointers.v_applied = new QLCDNumber();
     cOutputPointers.v_applied->setMaximumHeight(20);
     cOutputPointers.v_applied->setSegmentStyle(QLCDNumber::Flat);
+    cOutputPointers.v_applied->setDigitCount(8);
 
     // on off
     cOutputPointers.onoff_button = new QCheckBox("On");
@@ -410,12 +412,19 @@ void MainWindow::_connectTTi() {
         connect(ttidev, &ControlTTiPower::voltAppChanged, [widgets, dev_num](double volt, int id) {
             QLCDNumber* num = widgets[2 - id].v_applied;
             QSignalBlocker blocker(num);
-            num->display(volt);
+            // If a small number needs too many digits, display() seems to do nothing.
+            if (abs(volt) < 0.0001)
+                num->display(0.);
+            else
+                num->display(volt);
         });
         connect(ttidev, &ControlTTiPower::currAppChanged, [widgets, dev_num](double curr, int id) {
             QLCDNumber* num = widgets[2 - id].i_applied;
             QSignalBlocker blocker(num);
-            num->display(curr);
+            if (abs(curr) < 0.0001)
+                num->display(0.);
+            else
+                num->display(curr);
         });
         connect(ttidev, &ControlTTiPower::powerStateChanged, [widgets, dev_num](bool on, int id) {
             QCheckBox* box = widgets[2 - id].onoff_button;
@@ -450,11 +459,17 @@ void MainWindow::_connectKeithley() {
     });
     connect(keihleydev, &ControlKeithleyPower::voltAppChanged, [widget](double volt, int) {
         QSignalBlocker blocker(widget->v_applied);
-        widget->v_applied->display(volt);
+        if (abs(volt) < 0.0001)
+            widget->v_applied->display(0.);
+        else
+            widget->v_applied->display(volt);
     });
     connect(keihleydev, &ControlKeithleyPower::currAppChanged, [widget](double curr, int) {
         QSignalBlocker blocker(widget->i_applied);
-        widget->i_applied->display(curr);
+        if (abs(curr) < 0.0001)
+            widget->i_applied->display(0.);
+        else
+            widget->i_applied->display(curr);
     });
     connect(keihleydev, &ControlKeithleyPower::powerStateChanged, [widget](bool on, int) {
         QSignalBlocker blocker(widget->onoff_button);

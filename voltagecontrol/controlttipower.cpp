@@ -211,7 +211,7 @@ void ControlTTiPower::refreshAppliedValues() {
 }
 
 void ControlTTiPower::_setAndEmitIfChanged(double* target, double val, int id, void (ControlTTiPower::*signal)(double, int)) {
-    bool changed = *target == val;
+    bool changed = *target != val;
     *target = val;
     if (changed)
         emit (this->*signal)(val, id);
