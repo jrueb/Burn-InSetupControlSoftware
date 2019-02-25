@@ -38,6 +38,7 @@ KeithleyPowerSweepWorker::KeithleyPowerSweepWorker(ControlKeithleyPower* keithle
 }
 
 void KeithleyPowerSweepWorker::doSweeping() {
+    _keithley->refreshAppliedValues();
     if (not _outputState or abs(_voltApplied - _voltTarget) < SWEEP_EPSILON) {
 	// No sweeping needed
 	
@@ -222,8 +223,8 @@ void ControlKeithleyPower::refreshAppliedValues()
     str = str.substr(cPos+1, cPos + 13);
     QString fCurrStr = QString::fromStdString(str.substr(0 , 13));
 
-    bool voltchanged = fVolt == fVoltStr.toDouble();
-    bool currchanged = fCurr == fCurrStr.toDouble();
+    bool voltchanged = fVolt != fVoltStr.toDouble();
+    bool currchanged = fCurr != fCurrStr.toDouble();
 
     fVolt = fVoltStr.toDouble();
     fCurr = fCurrStr.toDouble();
@@ -231,7 +232,7 @@ void ControlKeithleyPower::refreshAppliedValues()
     if (voltchanged)
 	emit voltAppChanged(fVolt, 0);
     if (currchanged)
-	emit currAppChanged(fVolt, 0);
+	emit currAppChanged(fCurr, 0);
 }
 
 void ControlKeithleyPower::closeConnection()

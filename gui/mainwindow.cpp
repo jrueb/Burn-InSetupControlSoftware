@@ -249,46 +249,6 @@ output_Raspberry* MainWindow::SetRaspberryOutput(QLayout *pMainLayout , vector<s
     return cOutputPointers;
 }
 
-//reads out TTi once and creates a new thread to take info from TTi
-void MainWindow::getVoltAndCurr()
-{
-    const vector<string> sources = fControl->getSourceNameVec();
-    int dev_num = 0;
-    for (const string& name: sources) {
-        if (name.substr(0, 3) != "TTI")
-            continue;
-            
-        ControlTTiPower* ttidev = dynamic_cast<ControlTTiPower*>(fControl->getGenericInstrObj(name));
-        gui_pointers_low_voltage[dev_num][1].i_set->setValue(ttidev->getCurr(1));
-        gui_pointers_low_voltage[dev_num][1].v_set->setValue(ttidev->getVolt(1));
-        gui_pointers_low_voltage[dev_num][0].i_set->setValue(ttidev->getCurr(2));
-        gui_pointers_low_voltage[dev_num][0].v_set->setValue(ttidev->getVolt(2));
-        
-        for (int i = 0; i < 2; ++i) {
-            bool power_status = ttidev->getPower(2 - i);
-            bool blocked = gui_pointers_low_voltage[dev_num][i].onoff_button->signalsBlocked();
-            gui_pointers_low_voltage[dev_num][i].onoff_button->blockSignals(true);
-            gui_pointers_low_voltage[dev_num][i].onoff_button->setChecked(power_status);
-            gui_pointers_low_voltage[dev_num][i].onoff_button->blockSignals(blocked);
-        }        
-        
-        ++dev_num;
-    }
-    if (dev_num == 0) {
-        ui->groupBox->setEnabled(false);
-        return;
-    }
-    
-    AdditionalThread *cThread  = new AdditionalThread("A", fControl);
-    QThread *cQThread = new QThread();
-    connect(cQThread , SIGNAL(started()), cThread, SLOT(getVAC()));
-    connect(cThread, SIGNAL(sendToThread(double, double, double, double, int)),this,
-            SLOT(updateTTiIWidget(double, double, double, double, int)));
-    cThread->moveToThread(cQThread);
-    cQThread->start();
-}
-
-
 void MainWindow::getMeasurments()
 {
     if (fControl->countInstrument("Thermorasp") == 0) {
@@ -300,35 +260,6 @@ void MainWindow::getMeasurments()
     QThread *cQThread = new QThread();
     connect(cQThread , SIGNAL(started()), cThread, SLOT(getRaspSensors()));
     connect(cThread, SIGNAL(updatedThermorasp(quint64, QMap<QString, QString>)), this, SLOT(updateRaspWidget(quint64, QMap<QString, QString>)));
-    cThread->moveToThread(cQThread);
-    cQThread->start();
-}
-
-void MainWindow::getVoltAndCurrKeithley()
-{
-    if (fControl->countInstrument("Keithley2410") == 0) {
-        ui->groupBox_2->setEnabled(false);
-        return;
-    }
-    
-    ControlKeithleyPower* keihleydev = dynamic_cast<ControlKeithleyPower*>(fControl->getGenericInstrObj("Keithley2410"));
-    // Keithley is supposed to turn off on init so no need to set onoff_button
-    
-    bool blocked = gui_pointers_high_voltage[0]->i_set->signalsBlocked();
-    gui_pointers_high_voltage[0]->i_set->blockSignals(true);
-    gui_pointers_high_voltage[0]->i_set->setValue(keihleydev->getCurr());
-    gui_pointers_high_voltage[0]->i_set->blockSignals(blocked);
-    
-    blocked = gui_pointers_high_voltage[0]->v_set->signalsBlocked();
-    gui_pointers_high_voltage[0]->v_set->blockSignals(true);
-    gui_pointers_high_voltage[0]->v_set->setValue(keihleydev->getVolt());
-    gui_pointers_high_voltage[0]->v_set->blockSignals(blocked);
-    
-    AdditionalThread *cThread  = new AdditionalThread("C", fControl);
-    QThread *cQThread = new QThread();
-    connect(cQThread , SIGNAL(started()), cThread, SLOT(getVACKeithley()));
-    connect(cThread, SIGNAL(sendToThreadKeithley(double, double)), this,
-            SLOT(updateKeithleyWidget(double, double)));
     cThread->moveToThread(cQThread);
     cQThread->start();
 }
@@ -462,16 +393,93 @@ void MainWindow::updateKeithleyWidget(double currApp, double voltApp)
     gui_pointers_high_voltage[0]->v_applied->display(voltApp);
 }
 
-void MainWindow::initHard()
-{
-    // init hard
-    fControl->Initialize();
+void MainWindow::_connectTTi() {
+    const vector<string> sources = fControl->getSourceNameVec();
+    int dev_num = 0;
+    for (const string& name: sources) {
+        if (name.substr(0, 3) != "TTI")
+            continue;
+            
+        ControlTTiPower* ttidev = dynamic_cast<ControlTTiPower*>(fControl->getGenericInstrObj(name));
+        output_pointer_t* widgets = gui_pointers_low_voltage[dev_num];
+        
+        connect(ttidev, &ControlTTiPower::voltSetChanged, [widgets, dev_num](double volt, int id) {
+            QDoubleSpinBox* box = widgets[2 - id].v_set;
+            QSignalBlocker blocker(box);
+            box->setValue(volt);
+        });
+        connect(ttidev, &ControlTTiPower::currSetChanged, [widgets, dev_num](double curr, int id) {
+            QDoubleSpinBox* box = widgets[2 - id].i_set;
+            QSignalBlocker blocker(box);
+            box->setValue(curr);
+        });
+        connect(ttidev, &ControlTTiPower::voltAppChanged, [widgets, dev_num](double volt, int id) {
+            QLCDNumber* num = widgets[2 - id].v_applied;
+            QSignalBlocker blocker(num);
+            num->display(volt);
+        });
+        connect(ttidev, &ControlTTiPower::currAppChanged, [widgets, dev_num](double curr, int id) {
+            QLCDNumber* num = widgets[2 - id].i_applied;
+            QSignalBlocker blocker(num);
+            num->display(curr);
+        });
+        connect(ttidev, &ControlTTiPower::powerStateChanged, [widgets, dev_num](bool on, int id) {
+            QCheckBox* box = widgets[2 - id].onoff_button;
+            QSignalBlocker blocker(box);
+            box->setChecked(on);
+        });
+        
+        ++dev_num;
+    }
+    if (dev_num == 0) {
+        ui->groupBox->setEnabled(false);
+        return;
+    }
+}
 
-    // init the controls and start threads
-    this->getMeasurments();
-    this->getVoltAndCurr();
-    this->getVoltAndCurrKeithley();
-    this->getChillerStatus();
+void MainWindow::_connectKeithley() {
+    if (fControl->countInstrument("Keithley2410") == 0) {
+        ui->groupBox_2->setEnabled(false);
+        return;
+    }
+    
+    ControlKeithleyPower* keihleydev = dynamic_cast<ControlKeithleyPower*>(fControl->getGenericInstrObj("Keithley2410"));
+    output_pointer_t* widget = gui_pointers_high_voltage[0];
+
+    connect(keihleydev, &ControlKeithleyPower::voltSetChanged, [widget](double volt, int) {
+        QSignalBlocker blocker(widget->v_set);
+        widget->v_set->setValue(volt);
+    });
+    connect(keihleydev, &ControlKeithleyPower::currSetChanged, [widget](double curr, int) {
+        QSignalBlocker blocker(widget->i_set);
+        widget->i_set->setValue(curr);
+    });
+    connect(keihleydev, &ControlKeithleyPower::voltAppChanged, [widget](double volt, int) {
+        QSignalBlocker blocker(widget->v_applied);
+        widget->v_applied->display(volt);
+    });
+    connect(keihleydev, &ControlKeithleyPower::currAppChanged, [widget](double curr, int) {
+        QSignalBlocker blocker(widget->i_applied);
+        widget->i_applied->display(curr);
+    });
+    connect(keihleydev, &ControlKeithleyPower::powerStateChanged, [widget](bool on, int) {
+        QSignalBlocker blocker(widget->onoff_button);
+        widget->onoff_button->setChecked(on);
+    });
+}
+
+void MainWindow::initialize()
+{
+    _connectTTi();
+    _connectKeithley();
+    
+    fControl->Initialize();
+    
+    AdditionalThread *cThread  = new AdditionalThread("A", fControl);
+    QThread *cQThread = new QThread();
+    connect(cQThread , SIGNAL(started()), cThread, SLOT(getVAC()));
+    cThread->moveToThread(cQThread);
+    cQThread->start();
 }
 
 bool MainWindow::readXmlFile()
@@ -554,7 +562,7 @@ void MainWindow::on_read_conf_button_clicked()
             return;
         xml_was_read = true;
         
-        initHard();
+        initialize();
             
             
         // enable back
@@ -592,6 +600,7 @@ void MainWindow::on_read_conf_button_clicked()
 }
 
 void MainWindow::app_quit() {
+    cout << "quitting" << endl;
     // Set chillder temperature and turn off
     if (fControl != nullptr and fControl->countInstrument("JulaboFP50") > 0) {
         JulaboFP50* chiller = dynamic_cast<JulaboFP50*>(fControl->getGenericInstrObj("JulaboFP50"));

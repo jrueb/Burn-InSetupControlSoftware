@@ -65,7 +65,7 @@ private slots:
 
     void updateChillerWidget(QString pStr);
 
-    void initHard();
+    void initialize();
 
     bool readXmlFile();
 
@@ -84,8 +84,6 @@ private:
 
     vector<output_pointer_t*> gui_pointers_high_voltage;
 
-    void getVoltAndCurr();
-    void getVoltAndCurrKeithley();
     void getChillerStatus();
     void getMeasurments();
     output_pointer_t SetSourceOutputLayout() const;
@@ -108,6 +106,9 @@ private:
     void on_OnOff_button_stateChanged(string pSourceName, int dev_num, int pId, bool pArg);
 
     void on_I_set_doubleSpinBox_valueChanged(string pSourceName , int pId, double pCurr);
+    
+    void _connectTTi();
+    void _connectKeithley();
 
 };
 
