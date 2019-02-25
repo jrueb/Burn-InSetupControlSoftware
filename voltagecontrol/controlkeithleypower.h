@@ -24,7 +24,7 @@ public slots:
     void doDeviceStateChanged(bool state, double volt);
     
 signals:
-    void targetReached(double voltage);
+    void shutdownSafe();
     
 private:
     ControlKeithleyPower* _keithley;
@@ -59,6 +59,7 @@ public:
     /* End of implementation of pure virtual functions */
     
     void refreshAppliedValues();
+    void waitForSafeShutdown();
 
 private:
     friend class KeithleyPowerSweepWorker;
@@ -76,12 +77,12 @@ private:
     string fConnection;
 
     ComHandler* comHandler_;
+    QMutex _commMutex;
 
     bool _outputOn;
 
+    KeithleyPowerSweepWorker* _worker;
     QThread _sweepThread;
-    QMutex _commMutex;
-    bool _turnOffScheduled;
     
 signals:
     void deviceStateChanged(bool on, double volt);

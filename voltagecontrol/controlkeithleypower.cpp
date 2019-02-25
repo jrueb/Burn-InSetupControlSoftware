@@ -1,18 +1,13 @@
-
-#include <stdio.h>
-#include <sstream>
-#include <locale>
-
 #include <iostream>
 #include <string>
-#include <sstream>
 #include <cstdlib>
 #include <utility>
-#include <fstream>
 #include <cmath>
 
 #include <QDebug>
 #include <QThread>
+#include <QTimer>
+#include <QEventLoop>
 
 #include "controlkeithleypower.h"
 #include "general/BurnInException.h"
@@ -40,7 +35,7 @@ KeithleyPowerSweepWorker::KeithleyPowerSweepWorker(ControlKeithleyPower* keithle
 
 void KeithleyPowerSweepWorker::doSweeping() {
     if (not _outputStateTarget and not _outputStateApplied) {
-	_timer.start(SWEEP_INTERVAL);
+	emit shutdownSafe();
 	return;
     } else if (_outputStateTarget and not _outputStateApplied) {
 	_keithley->sendVoltageCommand(0);
@@ -63,8 +58,6 @@ void KeithleyPowerSweepWorker::doSweeping() {
 	_keithley->sendOutputStateCommand(false);
 	_outputStateApplied = false;
     }
-    
-    _timer.start(SWEEP_INTERVAL);
 }
 
 void KeithleyPowerSweepWorker::doVoltSet(double volts) {
@@ -88,15 +81,14 @@ ControlKeithleyPower::ControlKeithleyPower(string pConnection, double pSetVolt, 
     fCurrCompliance = pSetCurr;
     fVolt = 0;
     fCurr = 0;
-    _turnOffScheduled = false;
     _outputOn = false;
     
-    KeithleyPowerSweepWorker* worker = new KeithleyPowerSweepWorker(this);
-    worker->moveToThread(&_sweepThread);
-    connect(&_sweepThread, &QThread::finished, worker, &QObject::deleteLater);
-    connect(this, &ControlKeithleyPower::voltSetChanged, worker, &KeithleyPowerSweepWorker::doVoltSet);
-    connect(this, &ControlKeithleyPower::powerStateChanged, worker, &KeithleyPowerSweepWorker::doOutputState);
-    connect(this, &ControlKeithleyPower::deviceStateChanged, worker, &KeithleyPowerSweepWorker::doDeviceStateChanged);
+    _worker = new KeithleyPowerSweepWorker(this);
+    _worker->moveToThread(&_sweepThread);
+    connect(&_sweepThread, &QThread::finished, _worker, &QObject::deleteLater);
+    connect(this, &ControlKeithleyPower::voltSetChanged, _worker, &KeithleyPowerSweepWorker::doVoltSet);
+    connect(this, &ControlKeithleyPower::powerStateChanged, _worker, &KeithleyPowerSweepWorker::doOutputState);
+    connect(this, &ControlKeithleyPower::deviceStateChanged, _worker, &KeithleyPowerSweepWorker::doDeviceStateChanged);
     _sweepThread.start();
 }
 
@@ -219,6 +211,17 @@ double ControlKeithleyPower::getCurrApp(int) const {
 
 void ControlKeithleyPower::refreshAppliedValues()
 {
+    if (not _outputOn) {
+	if (fVolt != 0) {
+	    fVolt = 0;
+	    emit voltAppChanged(fVolt, 0);
+	}
+	if (fCurr != 0) {
+	    fCurr = 0;
+	    emit voltAppChanged(fCurr, 0);
+	}
+	return;
+    }
     char buffer[1024];
     buffer[0] = 0;
 
@@ -251,4 +254,11 @@ void ControlKeithleyPower::refreshAppliedValues()
 void ControlKeithleyPower::closeConnection()
 {
     offPower();
+}
+
+void ControlKeithleyPower::waitForSafeShutdown() {
+    Q_ASSERT(_outputOn == false);
+    QEventLoop loop;
+    connect(_worker, SIGNAL(shutdownSafe()), &loop, SLOT(quit()));
+    loop.exec();
 }

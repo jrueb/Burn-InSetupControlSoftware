@@ -94,7 +94,11 @@ void ControlTTiPower::onPower(int pId)
     lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
     _commMutex.unlock();
     
-    emit powerStateChanged(true, pId);
+    if (pId == 0) {
+        emit powerStateChanged(true, 1);
+        emit powerStateChanged(true, 2);
+    } else
+        emit powerStateChanged(true, pId);
 }
 
 void ControlTTiPower::offPower(int pId)
@@ -112,7 +116,11 @@ void ControlTTiPower::offPower(int pId)
     }
     _commMutex.unlock();
     
-    emit powerStateChanged(false, pId);
+    if (pId == 0) {
+        emit powerStateChanged(false, 1);
+        emit powerStateChanged(false, 2);
+    } else
+        emit powerStateChanged(false, pId);
 }
 
 bool ControlTTiPower::getPower(int pId) const {
