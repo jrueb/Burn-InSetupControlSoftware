@@ -677,7 +677,7 @@ void JulaboFP50::Device_Init( void ) {
     std::cerr << "  > (could not read software version string)" << std::endl;
     isCommunication_ = false;
     
-    throw BurnInException("Device at address of Julabo is not a Julabo chiller");
+    throw BurnInException("Invalid or no device at address of Julabo chiller");
   }
 
   isCommunication_ = true;
