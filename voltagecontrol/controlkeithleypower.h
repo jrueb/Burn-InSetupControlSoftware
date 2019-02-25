@@ -20,8 +20,8 @@ public:
 public slots:
     void doSweeping();
     void doVoltSet(double volts);
-    void doVoltApp(double volts);
     void doOutputState(bool state);
+    void doDeviceStateChanged(bool state, double volt);
     
 signals:
     void targetReached(double voltage);
@@ -31,7 +31,8 @@ private:
     QTimer _timer;
     double _voltTarget;
     double _voltApplied;
-    bool _outputState;
+    bool _outputStateTarget;
+    bool _outputStateApplied;
 };
 
 class ControlKeithleyPower: public PowerControlClass
@@ -64,6 +65,7 @@ private:
 
     void onTargetVoltageReached(double voltage);
     void sendVoltageCommand(double pVoltage);
+    void sendOutputStateCommand(bool on);
     void setKeithleyOutputState ( int outputsetting );
     bool getKeithleyOutputState() const;
     
@@ -80,6 +82,9 @@ private:
     QThread _sweepThread;
     QMutex _commMutex;
     bool _turnOffScheduled;
+    
+signals:
+    void deviceStateChanged(bool on, double volt);
 };
 
 #endif // CONTROLKEITHLEYPOWER_H

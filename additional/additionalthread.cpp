@@ -11,7 +11,7 @@ AdditionalThread::AdditionalThread(QString pName, SystemControllerClass *pContro
     fAddControl = pControl;
 }
 
-//sends info from TTi to thread
+// Refreshes TTi and Keithley values
 void AdditionalThread::getVAC()
 {
     const vector<string> sources = fAddControl->getSourceNameVec();
@@ -33,6 +33,10 @@ void AdditionalThread::getVAC()
             }
             ++dev_num;
         }
+        
+        ControlKeithleyPower* keithley = dynamic_cast<ControlKeithleyPower*>(fAddControl->getGenericInstrObj("Keithley2410"));
+        keithley->refreshAppliedValues();
+        
         QThread::sleep(2);
     }
 }
