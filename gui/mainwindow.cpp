@@ -333,17 +333,11 @@ void MainWindow::on_OnOff_button_stateChanged(string pSourceName, int dev_num, i
     if(pSourceName == "Keithley2410"){
 
         if(pArg){
-            gui_pointers_high_voltage[0]->v_set->setEnabled(false);
-            gui_pointers_high_voltage[0]->i_set->setEnabled(false);
-            
             fControl->getObject(pSourceName)->setVolt(gui_pointers_high_voltage[dev_num]->v_set->value(), pId);
             fControl->getObject(pSourceName)->setCurr(gui_pointers_high_voltage[dev_num]->i_set->value(), pId);
             fControl->getObject(pSourceName)->onPower(0);
         }
         else{
-            gui_pointers_high_voltage[0]->v_set->setEnabled(true);
-            gui_pointers_high_voltage[0]->i_set->setEnabled(true);
-            
             fControl->getObject(pSourceName)->offPower(0);
         }
     }
@@ -465,6 +459,8 @@ void MainWindow::_connectKeithley() {
     connect(keihleydev, &ControlKeithleyPower::powerStateChanged, [widget](bool on, int) {
         QSignalBlocker blocker(widget->onoff_button);
         widget->onoff_button->setChecked(on);
+        widget->v_set->setEnabled(not on);
+        widget->i_set->setEnabled(not on);
     });
 }
 
