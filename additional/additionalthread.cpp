@@ -11,7 +11,7 @@ AdditionalThread::AdditionalThread(QString pName, SystemControllerClass *pContro
     fAddControl = pControl;
 }
 
-// Refreshes TTi and Keithley values
+// Refreshes TTi, Keithley and Julabo values
 void AdditionalThread::getVAC()
 {
     const vector<string> sources = fAddControl->getSourceNameVec();
@@ -36,6 +36,9 @@ void AdditionalThread::getVAC()
         
         ControlKeithleyPower* keithley = dynamic_cast<ControlKeithleyPower*>(fAddControl->getGenericInstrObj("Keithley2410"));
         keithley->refreshAppliedValues();
+        
+        JulaboFP50* julabo = dynamic_cast<JulaboFP50*>(fAddControl->getGenericInstrObj("JulaboFP50"));
+        julabo->refreshDeviceState();
         
         QThread::sleep(2);
     }

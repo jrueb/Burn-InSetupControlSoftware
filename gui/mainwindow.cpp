@@ -479,10 +479,44 @@ void MainWindow::_connectKeithley() {
     });
 }
 
+void MainWindow::_connectJulabo() {
+    if (fControl->countInstrument("JulaboFP50") == 0) {
+        ui->groupBox_Chiller->setEnabled(false);
+        return;
+    }
+    
+    JulaboFP50* chiller = dynamic_cast<JulaboFP50*>(fControl->getGenericInstrObj("JulaboFP50"));
+    output_Chiller* widget = gui_chiller;
+    
+    connect(chiller, &JulaboFP50::circulatorStatusChanged, [widget](bool on) {
+        QSignalBlocker blocker(widget->onoff_button);
+        widget->onoff_button->setChecked(on);
+        widget->setTemperature->setEnabled(not on);
+    });
+    connect(chiller, &JulaboFP50::workingTemperatureChanged, [widget](float temperature) {
+        QSignalBlocker blocker(widget->setTemperature);
+        widget->setTemperature->setValue(temperature);
+    });
+    connect(chiller, &JulaboFP50::bathTemperatureChanged, [widget](float temperature) {
+        QSignalBlocker blocker(widget->bathTemperature);
+        widget->bathTemperature->display(temperature);
+    });
+    connect(chiller, &JulaboFP50::safetySensorTemperatureChanged, [widget](float temperature) {
+        QSignalBlocker blocker(widget->sensorTemperature);
+        widget->sensorTemperature->display(temperature);
+    });
+    connect(chiller, &JulaboFP50::pumpPressureChanged, [widget](unsigned int pressureStage) {
+        QSignalBlocker blocker(widget->pressure);
+        widget->pressure->display(QString::number(pressureStage));
+    });
+}
+
 void MainWindow::initialize()
 {
+    // Connect devices to GUI widgets
     _connectTTi();
     _connectKeithley();
+    _connectJulabo();
     
     fControl->Initialize();
     
