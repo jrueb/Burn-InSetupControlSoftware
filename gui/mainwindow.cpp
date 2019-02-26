@@ -290,7 +290,7 @@ void MainWindow::getChillerStatus()
 //reads sensor on rasp and sets info to Raspberry sensors
 void MainWindow::updateRaspWidget(quint64 n, QMap<QString, QString> readings) {
     int i = 0;
-    for (const string& name: fControl->getRaspSensorNames(n)) {
+    for (const string& name: fControl->getThermorasp(n)->getSensorNames()) {
         gui_raspberrys[n][i].value->display(readings[QString::fromStdString(name)]);
         ++i;
     }
@@ -503,12 +503,29 @@ void MainWindow::_connectJulabo() {
     });
 }
 
+void MainWindow::_connectThermorasp() {
+    for (size_t n = 0; n < fControl->getNumRasps(); ++n) {
+        Thermorasp* thermorasp = fControl->getThermorasp(n);
+        output_Raspberry* widget = gui_raspberrys[n];
+        std::vector<std::string> names = thermorasp->getSensorNames();
+        
+        connect(thermorasp, &Thermorasp::gotNewReadings, [widget, names](const QMap<QString, QString>& readings) {
+            int i = 0;
+            for (const string& name: names) {
+                widget[i].value->display(readings[QString::fromStdString(name)]);
+                ++i;
+            }
+        });
+    }
+}
+
 void MainWindow::initialize()
 {
     // Connect devices to GUI widgets
     _connectTTi();
     _connectKeithley();
     _connectJulabo();
+    _connectThermorasp();
     
     fControl->Initialize();
     

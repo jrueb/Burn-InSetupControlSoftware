@@ -67,7 +67,11 @@ QMap<QString, QString> Thermorasp::_parseReplyForReadings(QByteArray buffer) con
     return ret;
 }
 
-QMap<QString, QString> Thermorasp::getReadings(int timeout) const {
+QMap<QString, QString> Thermorasp::getLastReadings() const {
+    return _lastReadings;
+}
+
+QMap<QString, QString> Thermorasp::fetchReadings(int timeout) {
     QTcpSocket* sock = new QTcpSocket(nullptr);
     QMap<QString, QString> ret;
     sock->connectToHost(_address, _port);
@@ -81,5 +85,7 @@ QMap<QString, QString> Thermorasp::getReadings(int timeout) const {
     sock->close();
     delete sock;
     
+    _lastReadings = ret;
+    emit gotNewReadings(_lastReadings);
     return ret;
 }

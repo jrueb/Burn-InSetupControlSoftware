@@ -11,7 +11,7 @@ AdditionalThread::AdditionalThread(QString pName, SystemControllerClass *pContro
     fAddControl = pControl;
 }
 
-// Refreshes TTi, Keithley and Julabo values
+// Refreshes TTi, Keithley, Julabo and Thermorasp values
 void AdditionalThread::getVAC()
 {
     const vector<string> sources = fAddControl->getSourceNameVec();
@@ -37,8 +37,11 @@ void AdditionalThread::getVAC()
         ControlKeithleyPower* keithley = dynamic_cast<ControlKeithleyPower*>(fAddControl->getGenericInstrObj("Keithley2410"));
         keithley->refreshAppliedValues();
         
-        JulaboFP50* julabo = dynamic_cast<JulaboFP50*>(fAddControl->getGenericInstrObj("JulaboFP50"));
+        JulaboFP50* julabo = fAddControl->getChiller();
         julabo->refreshDeviceState();
+        
+        for (size_t n = 0; n < fAddControl->getNumRasps(); ++n)
+            fAddControl->getThermorasp(n)->fetchReadings();
         
         QThread::sleep(2);
     }
@@ -49,7 +52,7 @@ void AdditionalThread::getRaspSensors()
 {
     while (true){
         for (size_t n = 0; n < fAddControl->getNumRasps(); ++n) {
-            QMap<QString, QString> readings = fAddControl->getRaspReadings(n);
+            QMap<QString, QString> readings = fAddControl->getThermorasp(n)->fetchReadings();
             emit updatedThermorasp(n, readings);
         }
         QThread::sleep(10);

@@ -28,8 +28,7 @@ public:
     SystemControllerClass& operator=(const SystemControllerClass&) = delete;
     
     size_t getNumRasps() const;
-    std::vector<std::string> getRaspSensorNames(size_t n) const;
-    QMap<QString, QString> getRaspReadings(size_t n, int timeout = 5000) const;
+    Thermorasp* getThermorasp(size_t n) const;
     
     JulaboFP50* getChiller() const;
     

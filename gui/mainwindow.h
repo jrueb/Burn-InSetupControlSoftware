@@ -109,6 +109,7 @@ private:
     void _connectTTi();
     void _connectKeithley();
     void _connectJulabo();
+    void _connectThermorasp();
 
 };
 

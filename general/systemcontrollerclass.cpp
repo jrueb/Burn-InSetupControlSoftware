@@ -271,12 +271,8 @@ size_t SystemControllerClass::getNumRasps() const {
     return fConnectRasps.size();
 }
 
-std::vector<std::string> SystemControllerClass::getRaspSensorNames(size_t n) const {
-    return fConnectRasps.at(n)->getSensorNames();
-}
-
-QMap<QString, QString> SystemControllerClass::getRaspReadings(size_t n, int timeout) const {
-    return fConnectRasps.at(n)->getReadings(timeout);
+Thermorasp* SystemControllerClass::getThermorasp(size_t n) const {
+    return fConnectRasps.at(n);
 }
 
 size_t SystemControllerClass::getNumVoltageSources() const {

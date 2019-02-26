@@ -23,15 +23,18 @@ public:
     void setSensorNames(const std::vector<std::string>& names);
     void addSensorName(const std::string& name);
     std::vector<std::string> getSensorNames() const;
-    QMap<QString, QString> getReadings(int timeout = 5000) const;
+    QMap<QString, QString> getLastReadings() const;
+    QMap<QString, QString> fetchReadings(int timeout = 5000);
 
 signals:
+    void gotNewReadings(QMap<QString, QString> readings) const;
 
 public slots:
 private:
     quint16 _port;
     QString _address;
     std::vector<std::string> _sensorNames;
+    QMap<QString, QString> _lastReadings;
     
     QMap<QString, QString> _parseReplyForReadings(QByteArray buffer) const;
 };
