@@ -98,6 +98,10 @@ void ComHandler::ReceiveString( char *receiveString ) {
     return;
   } else {
     int len = read(fIoPortFileDescriptor, receiveString, 1023);
+    if (len == -1) {
+      std::cerr << "Error occured when reading (read call) from " << fIoPort << std::endl;
+      return;
+    }
     receiveString[len] = 0;
     std::cout << "Read " << len << " bytes from " << fIoPort << ": " << receiveString << std::endl;
   }
