@@ -96,12 +96,7 @@ bool JulaboFP50::SetWorkingTemperature( const float workingTemp ) {
 
   std::stringstream theCommand;
   theCommand << "out_sp_00 " << workingTemp;
-  comHandler_->SendCommand( theCommand.str().c_str() );
-  usleep( 20000 );
-  comHandler_->SendCommand( "in_sp_00" );
-  usleep( 10000 );
-  comHandler_->ReceiveString( buffer );
-  StripBuffer( buffer );
+  SetAndConfirm(theCommand.str().c_str(), "in_sp_00", buffer);
   float newtemp = atof( buffer );
 
   if( fabs( workingTemp - newtemp ) > TEMP_EPSILON ) {
@@ -138,12 +133,7 @@ bool JulaboFP50::SetPumpPressure( const unsigned int pressureStage ) {
 
   std::stringstream theCommand;
   theCommand << "out_sp_07 " << pressureStage;
-  comHandler_->SendCommand( theCommand.str().c_str() );
-  usleep( 20000 );
-  comHandler_->SendCommand( "in_sp_07" );
-  usleep( 10000 );
-  comHandler_->ReceiveString( buffer );
-  StripBuffer( buffer );
+  SetAndConfirm(theCommand.str().c_str(), "in_sp_07", buffer);
 
   if( static_cast<unsigned int>( atoi( buffer ) ) != pressureStage ) {
     std::cerr << " [JulaboFP50::SetPumpPressure] ** ERROR: check failed." << std::endl;
@@ -170,11 +160,14 @@ bool JulaboFP50::SetCirculatorOn( void ) {
 
   char buffer[1000];
   
+  SetAndConfirm("out_mode_05 1", "in_mode_05", buffer);
+  comMutex_.lock();
   comHandler_->SendCommand( "out_mode_05 1" );
   usleep( 20000 );
   comHandler_->SendCommand( "in_mode_05" );
   usleep( 10000 );
   comHandler_->ReceiveString( buffer );
+  comMutex_.unlock();
   StripBuffer( buffer );
 
   if( static_cast<unsigned int>( atoi( buffer ) ) != 1 ) {
@@ -201,12 +194,7 @@ bool JulaboFP50::SetCirculatorOff( void ) {
 
   char buffer[1000];
   
-  comHandler_->SendCommand( "out_mode_05 0" );
-  usleep( 20000 );
-  comHandler_->SendCommand( "in_mode_05" );
-  usleep( 10000 );
-  comHandler_->ReceiveString( buffer );
-  StripBuffer( buffer );
+  SetAndConfirm("out_mode_05 0", "in_mode_05", buffer);
 
   if( static_cast<unsigned int>( atoi( buffer ) ) != 0 ) {
     std::cerr << " [JulaboFP50::SetCirculatorOff] ** ERROR: check failed." << std::endl;
@@ -252,17 +240,9 @@ bool JulaboFP50::SetControlParameters( float xp, int tn, int tv ) {
 
   std::stringstream theCommand;
   char buffer[200];
-
+  
   // proportional
-  theCommand << "out_par_06 " << xp;
-  comHandler_->SendCommand( theCommand.str().c_str() );
-  usleep( 10000 );
-
-  // verify
-  comHandler_->SendCommand( "in_par_06" );
-  usleep( 10000 );
-  comHandler_->ReceiveString( buffer );
-  StripBuffer( buffer );
+  SetAndConfirm(theCommand.str().c_str(), "in_par_06", buffer);
 
   if( fabs( atof( buffer ) - xp ) > 1.e-3 ) {
     std::cerr << " [JulaboFP50::SetControlParameters] ** ERROR: check failed." << std::endl;
@@ -272,16 +252,7 @@ bool JulaboFP50::SetControlParameters( float xp, int tn, int tv ) {
   }
 
   // integral
-  theCommand.str( "" );
-  theCommand << "out_par_07 " << tn;
-  comHandler_->SendCommand( theCommand.str().c_str() );
-  usleep( 10000 );
-
-  // verify
-  comHandler_->SendCommand( "in_par_07" );
-  usleep( 10000 );
-  comHandler_->ReceiveString( buffer );
-  StripBuffer( buffer );
+  SetAndConfirm(theCommand.str().c_str(), "in_par_07", buffer);
 
   if( atoi( buffer ) !=  tn ) {
     std::cerr << " [JulaboFP50::SetControlParameters] ** ERROR: check failed." << std::endl;
@@ -291,16 +262,7 @@ bool JulaboFP50::SetControlParameters( float xp, int tn, int tv ) {
   }
 
   // differential
-  theCommand.str( "" );
-  theCommand << "out_par_08 " << tv;
-  comHandler_->SendCommand( theCommand.str().c_str() );
-  usleep( 10000 );
-
-  // verify
-  comHandler_->SendCommand( "in_par_08" );
-  usleep( 10000 );
-  comHandler_->ReceiveString( buffer );
-  StripBuffer( buffer );
+  SetAndConfirm(theCommand.str().c_str(), "in_par_08", buffer);
 
   if( atoi( buffer ) !=  tv ) {
     std::cerr << " [JulaboFP50::SetControlParameters] ** ERROR: check failed." << std::endl;
@@ -323,10 +285,7 @@ float JulaboFP50::GetBathTemperature( void ) const {
 
   char buffer[1000];
 
-  comHandler_->SendCommand( "in_pv_00" );
-  usleep( 10000 );
-  comHandler_->ReceiveString( buffer );
-  StripBuffer( buffer );
+  GetValue("in_pv_00", buffer);
   float temp = atof( buffer );
   
   if (alwaysEmit_ or abs(temp - bathTemperature_) > TEMP_EPSILON)
@@ -347,10 +306,7 @@ float JulaboFP50::GetSafetySensorTemperature( void ) const {
 
   char buffer[1000];
   
-  comHandler_->SendCommand( "in_pv_03" );
-  usleep( 10000 );
-  comHandler_->ReceiveString( buffer );
-  StripBuffer( buffer );
+  GetValue("in_pv_03", buffer);
   float temp = atof( buffer );
   
   if (alwaysEmit_ or abs(temp - sensorTemperature_) > TEMP_EPSILON)
@@ -371,10 +327,7 @@ float JulaboFP50::GetWorkingTemperature( void ) const {
 
   char buffer[1000];
   
-  comHandler_->SendCommand( "in_sp_00" );
-  usleep( 10000 );
-  comHandler_->ReceiveString( buffer );
-  StripBuffer( buffer );
+  GetValue("in_sp_00", buffer);
   float temp = atof( buffer );
   
   if (alwaysEmit_ or abs(temp - workingTemperature_) > TEMP_EPSILON)
@@ -395,10 +348,7 @@ int JulaboFP50::GetHeatingPower( void ) const
 
   char buffer[1000];
 
-  comHandler_->SendCommand( "in_pv_01" );
-  usleep( 10000 );
-  comHandler_->ReceiveString( buffer );
-  StripBuffer( buffer );
+  GetValue("in_pv_01", buffer);
 
   return( atoi( buffer ) );
 }
@@ -414,10 +364,7 @@ unsigned int JulaboFP50::GetPumpPressure( void ) const {
 
   char buffer[1000];
   
-  comHandler_->SendCommand( "in_sp_07" );
-  usleep( 10000 );
-  comHandler_->ReceiveString( buffer );
-  StripBuffer( buffer );
+  GetValue("in_sp_07", buffer);
   unsigned int pressure = stoi( buffer );
   
   if (alwaysEmit_ or pressure != pumpPressure_)
@@ -438,10 +385,7 @@ bool JulaboFP50::GetCirculatorStatus( void ) const {
 
   char buffer[1000];
   
-  comHandler_->SendCommand( "in_mode_05" );
-  usleep( 10000 );
-  comHandler_->ReceiveString( buffer );
-  StripBuffer( buffer );
+  GetValue("in_mode_05", buffer);
 
   bool status = atoi( buffer );
 
@@ -465,10 +409,7 @@ std::pair<int,std::string> JulaboFP50::GetStatus( void ) const {
   std::pair<int,std::string> returnValue;
 
   char buffer[1000];
-  comHandler_->SendCommand( "status" );
-  usleep( 10000 );
-  comHandler_->ReceiveString( buffer );
-  StripBuffer( buffer );
+  GetValue("status", buffer);
 
   std::string message( buffer );
 
@@ -505,10 +446,7 @@ float JulaboFP50::GetProportionalParameter( void ) const {
 
   char buffer[1000];
 
-  comHandler_->SendCommand( "in_par_06" );
-  usleep( 10000 );
-  comHandler_->ReceiveString( buffer );
-  StripBuffer( buffer );
+  GetValue("in_par_06", buffer);
   return( atof( buffer ) );
 }
 
@@ -523,10 +461,7 @@ int JulaboFP50::GetIntegralParameter( void ) const {
 
   char buffer[1000];
 
-  comHandler_->SendCommand( "in_par_07" );
-  usleep( 10000 );
-  comHandler_->ReceiveString( buffer );
-  StripBuffer( buffer );
+  GetValue("in_par_07", buffer);
 
   return( atoi( buffer ) );
 }
@@ -542,10 +477,7 @@ int JulaboFP50::GetDifferentialParameter( void ) const {
 
   char buffer[1000];
 
-  comHandler_->SendCommand( "in_par_08" );
-  usleep( 10000 );
-  comHandler_->ReceiveString( buffer );
-  StripBuffer( buffer );
+  GetValue("in_par_08", buffer);
 
   return( atoi( buffer ) );
 }
@@ -652,6 +584,26 @@ void JulaboFP50::StripBuffer( char* buffer ) const {
       break;
     }
   }
+}
+
+void JulaboFP50::GetValue(const char* command, char* buffer) const {
+  comMutex_.lock();
+  comHandler_->SendCommand( command );
+  usleep( 10000 );
+  comHandler_->ReceiveString( buffer );
+  comMutex_.unlock();
+  StripBuffer( buffer );
+}
+
+void JulaboFP50::SetAndConfirm(const char* first, const char* second, char* buffer) const {
+  comMutex_.lock();
+  comHandler_->SendCommand( first );
+  usleep( 20000 );
+  comHandler_->SendCommand( second );
+  usleep( 10000 );
+  comHandler_->ReceiveString( buffer );
+  comMutex_.unlock();
+  StripBuffer( buffer );
 }
 
 ///

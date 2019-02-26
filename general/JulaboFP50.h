@@ -20,6 +20,8 @@
 #include <utility>
 #include <fstream>
 
+#include <QMutex>
+
 #include "genericinstrumentclass.h"
 
 typedef const char* ioport_t;
@@ -70,10 +72,13 @@ signals:
   void pumpPressureChanged(unsigned int pressureStage) const;
 
  private:
+  void GetValue(const char* command, char* buffer) const;
+  void SetAndConfirm(const char* first, const char* second, char* buffer) const;
 
   std::string ioPort_;
   void Device_Init( void );
   ComHandler* comHandler_;
+  mutable QMutex comMutex_;
   bool isCommunication_;
   
   bool alwaysEmit_;
