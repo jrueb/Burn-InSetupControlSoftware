@@ -183,7 +183,7 @@
       </widget>
       <widget class="QWidget" name="VoltageControl">
        <attribute name="title">
-        <string>VoltageControl</string>
+        <string>Voltage</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
@@ -213,7 +213,7 @@
         </size>
        </property>
        <attribute name="title">
-        <string>EnvironmentControl</string>
+        <string>Environment</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_8" stretch="0">
         <item>
