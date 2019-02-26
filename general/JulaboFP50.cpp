@@ -17,6 +17,8 @@
 #include <utility>
 #include <fstream>
 
+#include <QMutexLocker> 
+
 #include "ComHandler.h"
 
 #include "JulaboFP50.h"
@@ -587,22 +589,20 @@ void JulaboFP50::StripBuffer( char* buffer ) const {
 }
 
 void JulaboFP50::GetValue(const char* command, char* buffer) const {
-  comMutex_.lock();
+  QMutexLocker locker(&comMutex_);
   comHandler_->SendCommand( command );
   usleep( 10000 );
   comHandler_->ReceiveString( buffer );
-  comMutex_.unlock();
   StripBuffer( buffer );
 }
 
 void JulaboFP50::SetAndConfirm(const char* first, const char* second, char* buffer) const {
-  comMutex_.lock();
+  QMutexLocker locker(&comMutex_);
   comHandler_->SendCommand( first );
   usleep( 20000 );
   comHandler_->SendCommand( second );
   usleep( 10000 );
   comHandler_->ReceiveString( buffer );
-  comMutex_.unlock();
   StripBuffer( buffer );
 }
 
