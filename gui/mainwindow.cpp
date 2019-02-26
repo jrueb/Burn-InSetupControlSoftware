@@ -101,15 +101,16 @@ output_Chiller MainWindow::setChilerLayout()
     cOutputPointers.bathTemperature = new QLCDNumber();
     cOutputPointers.bathTemperature->setMaximumHeight(20);
     cOutputPointers.bathTemperature->setSegmentStyle(QLCDNumber::Flat);
+    cOutputPointers.bathTemperature->setDigitCount(6);
 
     cOutputPointers.sensorTemperature = new QLCDNumber();
     cOutputPointers.sensorTemperature->setMaximumHeight(20);
     cOutputPointers.sensorTemperature->setSegmentStyle(QLCDNumber::Flat);
+    cOutputPointers.sensorTemperature->setDigitCount(6);
 
     cOutputPointers.pressure = new QLCDNumber();
     cOutputPointers.pressure->setMaximumHeight(20);
     cOutputPointers.pressure->setSegmentStyle(QLCDNumber::Flat);
-
 
     // on off
     cOutputPointers.onoff_button = new QCheckBox("On");
@@ -130,16 +131,16 @@ output_Chiller* MainWindow::SetChillerOutput(QLayout *pMainLayout, string pName)
     QSize size(80,20);
 
     // set the labels
-    QLabel *label_t_set = new QLabel("T(set), °C:");
+    QLabel *label_t_set = new QLabel("Temperature set, °C:");
     label_t_set->setMinimumSize(size);
     group_box_layout->addWidget(label_t_set, 0, 0);
-    QLabel *label_t_bath = new QLabel("T(bath), °C:");
+    QLabel *label_t_bath = new QLabel("Temperature bath, °C:");
     label_t_bath->setMinimumSize(size);
     group_box_layout->addWidget(label_t_bath, 1, 0);
-    QLabel *label_t_sensor = new QLabel("T(sensor), °C:");
+    QLabel *label_t_sensor = new QLabel("Temperature sensor, °C:");
     label_t_sensor->setMinimumSize(size);
     group_box_layout->addWidget(label_t_sensor, 2, 0);
-    QLabel *label_pressure = new QLabel("P, Pa:");
+    QLabel *label_pressure = new QLabel("Pressure stage");
     label_pressure->setMinimumSize(size);
     group_box_layout->addWidget(label_pressure, 3, 0);
     QLabel *label_on_off = new QLabel("On/Off:");
