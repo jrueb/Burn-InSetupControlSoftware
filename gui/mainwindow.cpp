@@ -102,10 +102,6 @@ output_Chiller MainWindow::setChilerLayout()
     cOutputPointers.bathTemperature->setMaximumHeight(20);
     cOutputPointers.bathTemperature->setSegmentStyle(QLCDNumber::Flat);
 
-    cOutputPointers.workingTemperature = new QLCDNumber();
-    cOutputPointers.workingTemperature->setMaximumHeight(20);
-    cOutputPointers.workingTemperature->setSegmentStyle(QLCDNumber::Flat);
-
     cOutputPointers.sensorTemperature = new QLCDNumber();
     cOutputPointers.sensorTemperature->setMaximumHeight(20);
     cOutputPointers.sensorTemperature->setSegmentStyle(QLCDNumber::Flat);
@@ -140,26 +136,22 @@ output_Chiller* MainWindow::SetChillerOutput(QLayout *pMainLayout, string pName)
     QLabel *label_t_bath = new QLabel("T(bath), °C:");
     label_t_bath->setMinimumSize(size);
     group_box_layout->addWidget(label_t_bath, 1, 0);
-    QLabel *label_t_working = new QLabel("T(working), °C:");
-    label_t_working->setMinimumSize(size);
-    group_box_layout->addWidget(label_t_working, 2, 0);
     QLabel *label_t_sensor = new QLabel("T(sensor), °C:");
     label_t_sensor->setMinimumSize(size);
-    group_box_layout->addWidget(label_t_sensor, 3, 0);
+    group_box_layout->addWidget(label_t_sensor, 2, 0);
     QLabel *label_pressure = new QLabel("P, Pa:");
     label_pressure->setMinimumSize(size);
-    group_box_layout->addWidget(label_pressure, 4, 0);
+    group_box_layout->addWidget(label_pressure, 3, 0);
     QLabel *label_on_off = new QLabel("On/Off:");
     label_on_off->setMinimumSize(size);
-    group_box_layout->addWidget(label_on_off, 5, 0);
+    group_box_layout->addWidget(label_on_off, 4, 0);
 
     cOutputPointers[0] = setChilerLayout();
     group_box_layout->addWidget(cOutputPointers[0].setTemperature, 0, 1);
     group_box_layout->addWidget(cOutputPointers[0].bathTemperature, 1, 1);
-    group_box_layout->addWidget(cOutputPointers[0].workingTemperature, 2, 1);
-    group_box_layout->addWidget(cOutputPointers[0].sensorTemperature, 3, 1);
-    group_box_layout->addWidget(cOutputPointers[0].pressure, 4, 1);
-    group_box_layout->addWidget(cOutputPointers[0].onoff_button, 5, 1);
+    group_box_layout->addWidget(cOutputPointers[0].sensorTemperature, 2, 1);
+    group_box_layout->addWidget(cOutputPointers[0].pressure, 3, 1);
+    group_box_layout->addWidget(cOutputPointers[0].onoff_button, 4, 1);
 
     group_box->setLayout(group_box_layout);
 
@@ -316,7 +308,6 @@ void MainWindow::updateChillerWidget(QString pStr)
     gui_chiller->bathTemperature->display(cVec[0].toDouble());
     gui_chiller->pressure->display(cVec[1].toDouble());
     gui_chiller->sensorTemperature->display(cVec[2].toDouble());
-    gui_chiller->workingTemperature->display(cVec[3].toDouble());
 }
 
 void MainWindow::on_OnOff_button_stateChanged(string pSourceName, int dev_num, int pId, bool pArg)

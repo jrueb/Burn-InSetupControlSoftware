@@ -42,7 +42,6 @@ struct output_Chiller{
      QLCDNumber *bathTemperature;
      QLCDNumber *sensorTemperature;
      QLCDNumber *pressure;
-     QLCDNumber *workingTemperature;
      QCheckBox *onoff_button;
 };
 
