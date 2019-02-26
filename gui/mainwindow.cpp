@@ -244,73 +244,6 @@ output_Raspberry* MainWindow::SetRaspberryOutput(QLayout *pMainLayout , vector<s
     return cOutputPointers;
 }
 
-void MainWindow::getMeasurments()
-{
-    if (fControl->countInstrument("Thermorasp") == 0) {
-        ui->groupBox_3->setEnabled(false);
-        return;
-    }
-    
-    AdditionalThread *cThread = new AdditionalThread("B" , fControl);
-    QThread *cQThread = new QThread();
-    connect(cQThread , SIGNAL(started()), cThread, SLOT(getRaspSensors()));
-    connect(cThread, SIGNAL(updatedThermorasp(quint64, QMap<QString, QString>)), this, SLOT(updateRaspWidget(quint64, QMap<QString, QString>)));
-    cThread->moveToThread(cQThread);
-    cQThread->start();
-}
-
-void MainWindow::getChillerStatus()
-{
-    if (fControl->countInstrument("JulaboFP50") == 0) {
-        ui->groupBox_Chiller->setEnabled(false);
-        return;
-    }
-    
-    JulaboFP50* chiller = dynamic_cast<JulaboFP50*>(fControl->getGenericInstrObj("JulaboFP50"));
-    bool state = chiller->GetCirculatorStatus();
-    bool blocked = gui_chiller->onoff_button->signalsBlocked();
-    gui_chiller->onoff_button->blockSignals(true);
-    gui_chiller->onoff_button->setChecked(state);
-    gui_chiller->onoff_button->blockSignals(blocked);
-    if (state) {
-        float temperature = chiller->GetWorkingTemperature();
-        gui_chiller->setTemperature->setValue(temperature);
-        gui_chiller->setTemperature->setEnabled(false);
-    }
-    
-    AdditionalThread *cThread  = new AdditionalThread("C", fControl);
-    QThread *cQThread = new QThread();
-    connect(cQThread , SIGNAL(started()), cThread, SLOT(getChillerStatus()));
-    connect(cThread, SIGNAL(sendFromChiller(QString)),this,
-            SLOT(updateChillerWidget(QString)));
-    cThread->moveToThread(cQThread);
-    cQThread->start();
-}
-
-//reads sensor on rasp and sets info to Raspberry sensors
-void MainWindow::updateRaspWidget(quint64 n, QMap<QString, QString> readings) {
-    int i = 0;
-    for (const string& name: fControl->getThermorasp(n)->getSensorNames()) {
-        gui_raspberrys[n][i].value->display(readings[QString::fromStdString(name)]);
-        ++i;
-    }
-}
-
-void MainWindow::updateChillerWidget(QString pStr)
-{
-    vector<QString> cVec;
-
-    std::istringstream ist(pStr.toStdString());
-    std::string tmp;
-
-    while ( ist >> tmp )
-        cVec.push_back(QString::fromStdString(tmp));
-
-    gui_chiller->bathTemperature->display(cVec[0].toDouble());
-    gui_chiller->pressure->display(cVec[1].toDouble());
-    gui_chiller->sensorTemperature->display(cVec[2].toDouble());
-}
-
 void MainWindow::on_OnOff_button_stateChanged(string pSourceName, int dev_num, int pId, bool pArg)
 {
     if(pSourceName.substr(0, 3) == "TTI"){
@@ -362,23 +295,6 @@ void MainWindow::on_I_set_doubleSpinBox_valueChanged(string pSourceName , int pI
 {
     fControl->getObject(pSourceName)->setCurr(pCurr, pId);
     QThread::sleep(0.5);
-}
-
-void MainWindow::updateTTiIWidget(double currApp1, double voltApp1, double currApp2, double voltApp2, int dev_num)
-{
-    // The TTis can not output negative voltages. Sometimes they report small
-    // negative values like -0.005 V. Use abs refresh the display anyway.
-    gui_pointers_low_voltage[dev_num][1].i_applied->display(abs(currApp1));
-    gui_pointers_low_voltage[dev_num][1].v_applied->display(abs(voltApp1));
-
-    gui_pointers_low_voltage[dev_num][0].i_applied->display(abs(currApp2));
-    gui_pointers_low_voltage[dev_num][0].v_applied->display(abs(voltApp2));
-}
-
-void MainWindow::updateKeithleyWidget(double currApp, double voltApp)
-{
-    gui_pointers_high_voltage[0]->i_applied->display(currApp);
-    gui_pointers_high_voltage[0]->v_applied->display(voltApp);
 }
 
 void MainWindow::_connectTTi() {
@@ -529,7 +445,7 @@ void MainWindow::initialize()
     
     fControl->Initialize();
     
-    AdditionalThread *cThread  = new AdditionalThread("A", fControl);
+    AdditionalThread *cThread  = new AdditionalThread(fControl);
     QThread *cQThread = new QThread();
     connect(cQThread , SIGNAL(started()), cThread, SLOT(getVAC()));
     cThread->moveToThread(cQThread);

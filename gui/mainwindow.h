@@ -56,14 +56,6 @@ public:
 
 private slots:
 
-    void updateRaspWidget(quint64 n, QMap<QString, QString>);
-
-    void updateTTiIWidget(double currApp1, double voltApp1, double currApp2, double voltApp2, int dev_num);
-
-    void updateKeithleyWidget(double currApp, double voltApp);
-
-    void updateChillerWidget(QString pStr);
-
     void initialize();
 
     bool readXmlFile();
@@ -83,8 +75,6 @@ private:
 
     vector<output_pointer_t*> gui_pointers_high_voltage;
 
-    void getChillerStatus();
-    void getMeasurments();
     output_pointer_t SetSourceOutputLayout() const;
     output_pointer_t *SetVoltageSource(QLayout *pMainLayout, std::string pName, std::string pType,
                                        int pNoutputs);
