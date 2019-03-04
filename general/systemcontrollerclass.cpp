@@ -219,11 +219,13 @@ GenericInstrumentClass* SystemControllerClass::getGenericInstrObj(string pStr) c
 }
 
 void SystemControllerClass::_removeAllDevices() {
-    // Stop refresh thread
-    _refreshThread->quit();
-    _refreshThread->wait();
-    delete _refreshThread;
-    _refreshThread = nullptr;
+    if (_refreshThread) {
+        // Stop refresh thread
+        _refreshThread->quit();
+        _refreshThread->wait();
+        delete _refreshThread;
+        _refreshThread = nullptr;
+    }
     
     // Clear vectors and pointers
     cout << "Removing devices" << endl;
