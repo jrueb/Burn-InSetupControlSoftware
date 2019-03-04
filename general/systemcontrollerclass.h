@@ -46,9 +46,9 @@ public:
     void ReadXmlFile(std::string pFileName);
 
     int countInstrument(string instrument_name) const;
-    PowerControlClass* getObject(string pStr);
-    GenericInstrumentClass* getGenericInstrObj(string pStr);
-    vector<string> getSourceNameVec();
+    PowerControlClass* getObject(string pStr) const;
+    GenericInstrumentClass* getGenericInstrObj(string pStr) const;
+    vector<string> getSourceNameVec() const;
     vector<QString>* readFile();
     
     DAQModule* getDaqModule() const;

@@ -210,7 +210,7 @@ int SystemControllerClass::countInstrument(string instrument_name) const {
     return fGenericInstrumentMap.count(instrument_name);
 }
 
-GenericInstrumentClass* SystemControllerClass::getGenericInstrObj(string pStr)
+GenericInstrumentClass* SystemControllerClass::getGenericInstrObj(string pStr) const
 {
     return fGenericInstrumentMap.at(pStr);
 }
@@ -288,12 +288,12 @@ JulaboFP50* SystemControllerClass::getChiller() const {
 }
 
 //gets the value of key pStr
-PowerControlClass* SystemControllerClass::getObject(string pStr)
+PowerControlClass* SystemControllerClass::getObject(string pStr) const
 {
-    return fMapSources[pStr];
+    return fMapSources.at(pStr);
 }
 
-vector<string> SystemControllerClass::getSourceNameVec()
+vector<string> SystemControllerClass::getSourceNameVec() const
 {
     return fNamesVoltageSources;
 }
