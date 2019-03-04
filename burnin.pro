@@ -34,7 +34,6 @@ UI_DIR = obj
 LIBS += -L/usr/local/lib/ -llxi
 
 SOURCES += \
-    additional/additionalthread.cpp \
     additional/hwdescriptionparser.cpp \
     general/ComHandler.cpp \
     general/JulaboFP50.cpp \
@@ -74,7 +73,6 @@ DISTFILES += \
     settings/hardware_description_desy.xml
 
 HEADERS += \
-    additional/additionalthread.h \
     additional/hwdescriptionparser.h \
     general/thermorasp.h \
     general/databaseinterfaceclass.h \

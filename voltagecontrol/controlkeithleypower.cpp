@@ -11,7 +11,6 @@
 
 #include "controlkeithleypower.h"
 #include "general/BurnInException.h"
-#include "additional/additionalthread.h"
 #include "general/systemcontrollerclass.h"
 
 using namespace std;

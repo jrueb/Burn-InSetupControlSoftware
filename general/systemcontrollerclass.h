@@ -54,6 +54,8 @@ public:
     DAQModule* getDaqModule() const;
     
     map<string , GenericInstrumentClass*> fGenericInstrumentMap;
+    
+    void startRefreshingReadings();
 
 private:
     string _getIdentifierForDescription(const GenericInstrumentDescription_t& desc) const;
@@ -65,6 +67,8 @@ private:
     void _parseRaspberry();
     void _parseDaqModule();
     
+    void _refreshingReadings();
+    
     DAQModule* _daqmodule;
     
     vector<Thermorasp*> fConnectRasps;
@@ -73,6 +77,8 @@ private:
     vector<GenericInstrumentDescription_t> fHWDescription;
     map<string, PowerControlClass* > fMapSources;
     vector<string> fNamesVoltageSources;
+    
+    QThread* _refreshThread;
 
 };
 

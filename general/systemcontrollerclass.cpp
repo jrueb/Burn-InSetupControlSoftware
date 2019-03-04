@@ -16,9 +16,12 @@
 
 using namespace std;
 
+const unsigned int DEVICE_REFRESH_INTERVAL = 1; // s
+
 SystemControllerClass::SystemControllerClass()
 {
     _daqmodule = nullptr;
+    _refreshThread = nullptr;
 }
 
 SystemControllerClass::~SystemControllerClass() {
@@ -216,6 +219,12 @@ GenericInstrumentClass* SystemControllerClass::getGenericInstrObj(string pStr) c
 }
 
 void SystemControllerClass::_removeAllDevices() {
+    // Stop refresh thread
+    _refreshThread->quit();
+    _refreshThread->wait();
+    delete _refreshThread;
+    _refreshThread = nullptr;
+    
     // Clear vectors and pointers
     cout << "Removing devices" << endl;
     _daqmodule = nullptr;
@@ -300,4 +309,47 @@ vector<string> SystemControllerClass::getSourceNameVec() const
 
 DAQModule* SystemControllerClass::getDaqModule() const {
     return _daqmodule;
+}
+
+void SystemControllerClass::_refreshingReadings() {
+    const vector<string> sources = getSourceNameVec();
+    
+    ControlTTiPower* ttidev;
+    int dev_num = 0;
+    for (const string& name: sources) {
+        if (name.substr(0, 3) == "TTI") {
+            ttidev = dynamic_cast<ControlTTiPower*>(getGenericInstrObj(name));
+            if (ttidev != nullptr)
+                ttidev->refreshAppliedValues();
+            ++dev_num;
+        } else if (name == "Keithley2410") {
+            ControlKeithleyPower* keithley = dynamic_cast<ControlKeithleyPower*>(getGenericInstrObj("Keithley2410"));
+            keithley->refreshAppliedValues();
+        }
+    }
+    
+    JulaboFP50* julabo = getChiller();
+    if (julabo)
+        julabo->refreshDeviceState();
+    
+    for (size_t n = 0; n < getNumRasps(); ++n)
+        getThermorasp(n)->fetchReadings();
+
+}
+
+void SystemControllerClass::startRefreshingReadings() {
+    if (_refreshThread) {
+        _refreshThread->quit();
+        _refreshThread->wait();
+        delete _refreshThread;
+    }
+    
+    _refreshThread = new QThread();
+    QTimer* refreshTimer = new QTimer();
+    refreshTimer->moveToThread(_refreshThread);
+    refreshTimer->setInterval(DEVICE_REFRESH_INTERVAL * 1000);
+    connect(_refreshThread, &QThread::started, refreshTimer, static_cast<void (QTimer::*)()>(&QTimer::start));
+    connect(_refreshThread, &QThread::finished, refreshTimer, &QObject::deleteLater);
+    connect(refreshTimer, &QTimer::timeout, this, &SystemControllerClass::_refreshingReadings);
+    _refreshThread->start();
 }

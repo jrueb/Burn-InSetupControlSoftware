@@ -14,7 +14,6 @@
 #include "general/systemcontrollerclass.h"
 #include "general/environmentcontrolclass.h"
 #include "voltagecontrol/powercontrolclass.h"
-#include "additional/additionalthread.h"
 #include "commandlistpage.h"
 #include "daqpage.h"
 

@@ -16,7 +16,6 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "additional/additionalthread.h"
 #include "general/JulaboFP50.h"
 #include "general/BurnInException.h"
 
@@ -444,13 +443,11 @@ void MainWindow::initialize()
     _connectJulabo();
     _connectThermorasp();
     
+    // Initialize the hardware devices
     fControl->Initialize();
     
-    AdditionalThread *cThread  = new AdditionalThread(fControl);
-    QThread *cQThread = new QThread();
-    connect(cQThread , SIGNAL(started()), cThread, SLOT(getVAC()));
-    cThread->moveToThread(cQThread);
-    cQThread->start();
+    // Setup thread to refresh the readings from the devices
+    fControl->startRefreshingReadings();
 }
 
 bool MainWindow::readXmlFile()
