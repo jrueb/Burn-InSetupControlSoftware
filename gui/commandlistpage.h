@@ -68,7 +68,7 @@ public slots:
     void onSaveListPressed();
     void onOpenListPressed();
     void onRunPressed();
-    void onRunFinished(int result);
+    void onRunFinished();
     void onAddWait();
     void onAddVoltageSourceOutput();
     void onAddVoltageSourceAdd();

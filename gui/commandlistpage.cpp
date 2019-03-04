@@ -376,14 +376,14 @@ void CommandListPage::onRunPressed() {
     
     CommandsRunDialog* dialog = new CommandsRunDialog(commands, _controller, _commandListWidget->window());
     
-    connect(dialog, SIGNAL(finished(int)), this, SLOT(onRunFinished(int)));
+    connect(dialog, SIGNAL(finished(int)), this, SLOT(onRunFinished()));
     
     dialog->show();
     _run_button->setText("Running...");
     _run_button->setEnabled(false);
 }
 
-void CommandListPage::onRunFinished(int result) {
+void CommandListPage::onRunFinished() {
     _run_button->setEnabled(true);
     _run_button->setText("Run");
 }
