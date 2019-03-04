@@ -7,9 +7,12 @@ CommandExecuter::CommandExecuter(const QVector<BurnInCommand*>& commands, const 
 {
     _commands = commands;
     _controller = controller;
+    _shouldAbort = false;
+    _shouldPause = false;
 }
 
 void CommandExecuter::start() {
+    _shouldAbort = false;
     int n = 0;
     for (const auto& command: _commands) {
         CommandExecuteHandler handler(this, n, _controller);
@@ -20,10 +23,30 @@ void CommandExecuter::start() {
         if (handler.error)
             break; // Halt on errors
         
+        if (_shouldAbort)
+            break;
+        if (_shouldPause)
+            emit commandStatusUpdate(n, "Paused");
+        while (_shouldPause)
+            QThread::msleep(100);
+        emit commandStatusUpdate(n, "Unpaused");
+        
         ++n;
     }
     
     emit allFinished();
+}
+
+bool CommandExecuter::isPaused() const {
+    return _shouldPause;
+}
+
+void CommandExecuter::togglePause() {
+    _shouldPause = not _shouldPause;
+}
+
+void CommandExecuter::abort() {
+    _shouldAbort = true;
 }
 
 CommandExecuter::CommandExecuteHandler::CommandExecuteHandler(CommandExecuter* executer, int n, const SystemControllerClass* controller) {
@@ -160,17 +183,15 @@ CommandsRunDialog::CommandsRunDialog(const QVector<BurnInCommand*>& commands, co
     ui->commands_table->resizeColumnsToContents();
     ui->commands_table->resizeRowsToContents();
     
-    _executer_thread = new QThread;
-    
-    _executer.moveToThread(_executer_thread);
+    _executer.moveToThread(&_executer_thread);
     connect(&_executer, SIGNAL(commandStarted(int, QDateTime)), this, SLOT(onCommandStarted(int, QDateTime)));
     connect(&_executer, SIGNAL(commandFinished(int, QDateTime)), this, SLOT(onCommandFinished(int, QDateTime)));
     connect(&_executer, SIGNAL(commandStatusUpdate(int, QString)), this, SLOT(onCommandStatusUpdate(int, QString)));
     connect(&_executer, SIGNAL(allFinished()), this, SLOT(onAllFinished()));
-    connect(_executer_thread, SIGNAL(started()), &_executer, SLOT(start()));
-    connect(_executer_thread, SIGNAL(finished()), _executer_thread, SLOT(deleteLater()));
+    connect(&_executer_thread, SIGNAL(started()), &_executer, SLOT(start()));
+    connect(&_executer_thread, &QThread::finished, [] { std::cout << "thread finished" << std::endl; });
     
-    _executer_thread->start();
+    _executer_thread.start();
 }
 
 CommandsRunDialog::~CommandsRunDialog()
@@ -180,10 +201,17 @@ CommandsRunDialog::~CommandsRunDialog()
 
 void CommandsRunDialog::on_abort_button_clicked()
 {
+    _executer.abort();
+    _executer_thread.quit();
 }
 
 void CommandsRunDialog::on_pause_button_clicked()
 {
+    _executer.togglePause();
+    if (_executer.isPaused())
+        ui->pause_button->setText("Unpause");
+    else
+        ui->pause_button->setText("Pause");
 }
 
 void CommandsRunDialog::onCommandStarted(int n, QDateTime dt) {
@@ -200,5 +228,5 @@ void CommandsRunDialog::onCommandStatusUpdate(int n, QString status) {
 }
 
 void CommandsRunDialog::onAllFinished() {
-    
+    _executer_thread.quit();
 }

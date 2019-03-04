@@ -5,6 +5,7 @@
 #include <QThread>
 #include <QDateTime>
 #include <QString>
+#include <atomic>
 #include "general/burnincommand.h"
 #include "general/systemcontrollerclass.h"
 
@@ -17,9 +18,12 @@ class CommandExecuter : public QObject {
 
 public:
     CommandExecuter(const QVector<BurnInCommand*>& commands, const SystemControllerClass* controller, QWidget *parent = 0);
+    bool isPaused() const;
     
 public slots:
     void start();
+    void togglePause();
+    void abort();
     
 signals:
     void commandStarted(int n, QDateTime dt);
@@ -30,6 +34,9 @@ signals:
 private:
     QVector<BurnInCommand*> _commands;
     const SystemControllerClass* _controller;
+    
+    std::atomic<bool> _shouldAbort;
+    std::atomic<bool> _shouldPause;
     
     class CommandExecuteHandler : public AbstractCommandHandler {
     public:
@@ -82,7 +89,7 @@ private:
     
     QVector<BurnInCommand*> _commands;
     CommandExecuter _executer;
-    QThread* _executer_thread;
+    QThread _executer_thread;
 };
 
 #endif // COMMANDSRUNDIALOG_H
