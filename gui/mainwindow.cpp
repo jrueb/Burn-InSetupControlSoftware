@@ -549,12 +549,13 @@ void MainWindow::on_read_conf_button_clicked()
         QMessageBox dialog(this);
         dialog.critical(this, "Error", QString::fromStdString(e.what()));
         
+        if (fControl != nullptr) {
+            delete fControl;
+            fControl = nullptr;
+        }
+        
         if (xml_was_read) {
             // Do a clean up of things that were created already
-            if (fControl != nullptr) {
-                delete fControl;
-                fControl = nullptr;
-            }
             for (auto& p: gui_pointers_low_voltage)
                 delete p;
             for (auto& p: gui_pointers_high_voltage)
