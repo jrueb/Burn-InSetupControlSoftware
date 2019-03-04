@@ -452,7 +452,6 @@ void MainWindow::initialize()
 
 bool MainWindow::readXmlFile()
 {
-    fControl = new SystemControllerClass();
     QString cFilter  = "*.xml";
     QString cFileName = QFileDialog::getOpenFileName(this, "Open hardware description file", "./settings", cFilter);
 
@@ -524,6 +523,7 @@ bool MainWindow::readXmlFile()
 void MainWindow::on_read_conf_button_clicked()
 {
     bool xml_was_read = false;
+    fControl = new SystemControllerClass();
     try {
         // read the xml file
         if (not readXmlFile())
@@ -551,17 +551,27 @@ void MainWindow::on_read_conf_button_clicked()
         
         if (xml_was_read) {
             // Do a clean up of things that were created already
-            if (fControl != nullptr)
+            if (fControl != nullptr) {
                 delete fControl;
+                fControl = nullptr;
+            }
             for (auto& p: gui_pointers_low_voltage)
                 delete p;
             for (auto& p: gui_pointers_high_voltage)
                 delete p;
             gui_pointers_low_voltage.clear();
             gui_pointers_high_voltage.clear();
+            for (auto& p: gui_raspberrys)
+                delete p;
+            gui_raspberrys.clear();
+            delete gui_chiller;
+            qDeleteAll(ui->groupBox->children());
             delete ui->groupBox->layout();
+            qDeleteAll(ui->groupBox_2->children());
             delete ui->groupBox_2->layout();
+            qDeleteAll(ui->groupBox_3->children());
             delete ui->groupBox_3->layout();
+            qDeleteAll(ui->groupBox_Chiller->children());
             delete ui->groupBox_Chiller->layout();
         }
     }
