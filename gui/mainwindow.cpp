@@ -97,6 +97,7 @@ output_Chiller MainWindow::setChilerLayout()
     cOutputPointers.setTemperature = new QDoubleSpinBox();
     cOutputPointers.setTemperature->setMaximumHeight(20);
     cOutputPointers.setTemperature->setMinimum(-100000);
+    cOutputPointers.setTemperature->setSuffix(" °C");
 
     cOutputPointers.bathTemperature = new QLCDNumber();
     cOutputPointers.bathTemperature->setMaximumHeight(20);
@@ -131,7 +132,7 @@ output_Chiller* MainWindow::SetChillerOutput(QLayout *pMainLayout, string pName)
     QSize size(80,20);
 
     // set the labels
-    QLabel *label_t_set = new QLabel("Temperature set, °C:");
+    QLabel *label_t_set = new QLabel("Temperature set:");
     label_t_set->setMinimumSize(size);
     group_box_layout->addWidget(label_t_set, 0, 0);
     QLabel *label_t_bath = new QLabel("Temperature bath, °C:");
@@ -140,7 +141,7 @@ output_Chiller* MainWindow::SetChillerOutput(QLayout *pMainLayout, string pName)
     QLabel *label_t_sensor = new QLabel("Temperature sensor, °C:");
     label_t_sensor->setMinimumSize(size);
     group_box_layout->addWidget(label_t_sensor, 2, 0);
-    QLabel *label_pressure = new QLabel("Pressure stage");
+    QLabel *label_pressure = new QLabel("Pressure stage:");
     label_pressure->setMinimumSize(size);
     group_box_layout->addWidget(label_pressure, 3, 0);
     QLabel *label_on_off = new QLabel("On/Off:");
