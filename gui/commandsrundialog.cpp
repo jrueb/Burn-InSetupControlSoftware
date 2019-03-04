@@ -2,6 +2,8 @@
 #include "ui_commandsrundialog.h"
 #include "commanddisplayer.h"
 
+#include <QMessageBox>
+
 CommandExecuter::CommandExecuter(const QVector<BurnInCommand*>& commands, const SystemControllerClass* controller, QWidget *parent) :
     QObject(parent)
 {
@@ -9,10 +11,12 @@ CommandExecuter::CommandExecuter(const QVector<BurnInCommand*>& commands, const 
     _controller = controller;
     _shouldAbort = false;
     _shouldPause = false;
+    _isRunning = false;
 }
 
 void CommandExecuter::start() {
     _shouldAbort = false;
+    _isRunning = true;
     int n = 0;
     for (const auto& command: _commands) {
         CommandExecuteHandler handler(this, n, _controller);
@@ -34,11 +38,16 @@ void CommandExecuter::start() {
         ++n;
     }
     
+    _isRunning = false;
     emit allFinished();
 }
 
 bool CommandExecuter::isPaused() const {
     return _shouldPause;
+}
+
+bool CommandExecuter::isRunning() const {
+    return _isRunning;
 }
 
 void CommandExecuter::togglePause() {
@@ -47,6 +56,7 @@ void CommandExecuter::togglePause() {
 
 void CommandExecuter::abort() {
     _shouldAbort = true;
+    _isRunning = false;
 }
 
 CommandExecuter::CommandExecuteHandler::CommandExecuteHandler(CommandExecuter* executer, int n, const SystemControllerClass* controller) {
@@ -58,8 +68,12 @@ CommandExecuter::CommandExecuteHandler::CommandExecuteHandler(CommandExecuter* e
 }
 
 void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInWaitCommand& command) {
+    unsigned int wait = command.wait;
     emit _executer->commandStatusUpdate(_n, "Waiting");
-    QThread::sleep(command.wait);
+    while (not _executer->_shouldAbort and wait > 0) {
+        QThread::sleep(WAIT_INTERVAL);
+        wait -= WAIT_INTERVAL;
+    }
     emit _executer->commandStatusUpdate(_n, "Wait finished");
 }
 
@@ -75,7 +89,8 @@ void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInVoltageSourceOu
     }
     
     if (command.source->getPower(command.output)) {
-        _waitForVoltage(command.source, command.output);
+        if (not _executer->_shouldAbort)
+            _waitForVoltage(command.source, command.output);
         emit _executer->commandStatusUpdate(_n, "Voltage source turned on. Voltage at set value.");
     } else
         emit _executer->commandStatusUpdate(_n, "Voltage source turned off.");
@@ -87,7 +102,8 @@ void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInVoltageSourceSe
     emit _executer->commandStatusUpdate(_n, "Voltage set");
     
     if (command.source->getPower(command.output)) {
-        _waitForVoltage(command.source, command.output);
+        if (not _executer->_shouldAbort)
+            _waitForVoltage(command.source, command.output);
         emit _executer->commandStatusUpdate(_n, "Voltage applied");
     } else
         emit _executer->commandStatusUpdate(_n, "Voltage set. Voltage source output not turned on.");
@@ -96,8 +112,9 @@ void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInVoltageSourceSe
 void CommandExecuter::CommandExecuteHandler::_waitForVoltage(PowerControlClass* source, int output) {
     emit _executer->commandStatusUpdate(_n, "Waiting for output to reach voltage");
     
-    while (std::abs(source->getVolt(output) - source->getVoltApp(output)) > VOLTAGESRC_EPSILON)
-        QThread::sleep(VOLTAGESRC_WAIT_INTERVAL);
+    while (not _executer->_shouldAbort and 
+            std::abs(source->getVolt(output) - source->getVoltApp(output)) > VOLTAGESRC_EPSILON)
+        QThread::sleep(WAIT_INTERVAL);
 }
 
 void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInChillerOutputCommand& command) {
@@ -126,7 +143,8 @@ void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInChillerOutputCo
     
     if (chiller->GetCirculatorStatus()) {
         _waitForChiller(chiller);
-        emit _executer->commandStatusUpdate(_n, "Chiller turned on. Bath at desired temperature");
+        if (not _executer->_shouldAbort)
+            emit _executer->commandStatusUpdate(_n, "Chiller turned on. Bath at desired temperature");
     } else
         emit _executer->commandStatusUpdate(_n, "Chiller turned off");
 }
@@ -148,7 +166,8 @@ void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInChillerSetComma
     
     if (chiller->GetCirculatorStatus()) {
         _waitForChiller(chiller);
-        emit _executer->commandStatusUpdate(_n, "Temperature set. Bath at desired temperature");
+        if (not _executer->_shouldAbort)
+            emit _executer->commandStatusUpdate(_n, "Temperature set. Bath at desired temperature");
     } else
         emit _executer->commandStatusUpdate(_n, "Temperature set. Chiller not turned on");
     
@@ -157,8 +176,9 @@ void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInChillerSetComma
 void CommandExecuter::CommandExecuteHandler::_waitForChiller(JulaboFP50* chiller) {
     emit _executer->commandStatusUpdate(_n, "Waiting for bath to reach temperature");
     
-    while (std::abs(chiller->GetBathTemperature() - chiller->GetWorkingTemperature()) > CHILLER_TEMP_EPSILON)
-        QThread::sleep(CHILLER_WAIT_INTERVAL);
+    while (not _executer->_shouldAbort and 
+            std::abs(chiller->GetBathTemperature() - chiller->GetWorkingTemperature()) > CHILLER_TEMP_EPSILON)
+        QThread::sleep(WAIT_INTERVAL);
 }
 
 
@@ -203,6 +223,8 @@ void CommandsRunDialog::on_abort_button_clicked()
 {
     _executer.abort();
     _executer_thread.quit();
+    ui->pause_button->setEnabled(false);
+    ui->abort_button->setEnabled(false);
 }
 
 void CommandsRunDialog::on_pause_button_clicked()
@@ -229,4 +251,23 @@ void CommandsRunDialog::onCommandStatusUpdate(int n, QString status) {
 
 void CommandsRunDialog::onAllFinished() {
     _executer_thread.quit();
+}
+
+void CommandsRunDialog::reject() {
+    if (_executer.isRunning()) {
+        QMessageBox::StandardButton button = QMessageBox::question(this,
+            "Command execution running",
+            "Commands are still being executed. Abort?");
+            
+        if (button != QMessageBox::Yes)
+            return;
+    }
+    
+    ui->pause_button->setEnabled(false);
+    ui->abort_button->setEnabled(false);
+    
+    _executer.abort();
+    _executer_thread.quit();
+    _executer_thread.wait();
+    QDialog::reject();
 }

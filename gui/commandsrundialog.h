@@ -19,6 +19,7 @@ class CommandExecuter : public QObject {
 public:
     CommandExecuter(const QVector<BurnInCommand*>& commands, const SystemControllerClass* controller, QWidget *parent = 0);
     bool isPaused() const;
+    bool isRunning() const;
     
 public slots:
     void start();
@@ -37,6 +38,7 @@ private:
     
     std::atomic<bool> _shouldAbort;
     std::atomic<bool> _shouldPause;
+    std::atomic<bool> _isRunning;
     
     class CommandExecuteHandler : public AbstractCommandHandler {
     public:
@@ -51,9 +53,8 @@ private:
         bool error;
         
         const double VOLTAGESRC_EPSILON = 0.1; // V, for comparing two voltage values
-        const int VOLTAGESRC_WAIT_INTERVAL = 1; // s
         const double CHILLER_TEMP_EPSILON = 0.1; // °C, for comparing two temperature values
-        const int CHILLER_WAIT_INTERVAL = 10; // s
+        const unsigned int WAIT_INTERVAL = 1; // s
         
     private:
         CommandExecuter* _executer;
@@ -73,6 +74,8 @@ class CommandsRunDialog : public QDialog
 public:
     explicit CommandsRunDialog(const QVector<BurnInCommand*>& commands, const SystemControllerClass* controller, QWidget *parent = 0);
     ~CommandsRunDialog();
+    
+    void reject();
 
 private slots:
     void on_abort_button_clicked();
