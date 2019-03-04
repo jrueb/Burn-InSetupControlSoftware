@@ -51,9 +51,11 @@ void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInVoltageSourceOu
         emit _executer->commandStatusUpdate(_n, "Turned off output");
     }
     
-    //TODO
-    //if (command.source->getPower())
-    //    _waitForVoltage(command.source, command.output)
+    if (command.source->getPower(command.output)) {
+        _waitForVoltage(command.source, command.output);
+        emit _executer->commandStatusUpdate(_n, "Voltage source turned on. Voltage at set value.");
+    } else
+        emit _executer->commandStatusUpdate(_n, "Voltage source turned off.");
 }
 
 void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInVoltageSourceSetCommand& command) {
@@ -61,17 +63,18 @@ void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInVoltageSourceSe
     command.source->setVolt(command.value, command.output);
     emit _executer->commandStatusUpdate(_n, "Voltage set");
     
-    //TODO
-    //if (command.source->getPower())
-    //    _waitForVoltage(command.source, command.output)
+    if (command.source->getPower(command.output)) {
+        _waitForVoltage(command.source, command.output);
+        emit _executer->commandStatusUpdate(_n, "Voltage applied");
+    } else
+        emit _executer->commandStatusUpdate(_n, "Voltage set. Voltage source output not turned on.");
 }
 
 void CommandExecuter::CommandExecuteHandler::_waitForVoltage(PowerControlClass* source, int output) {
     emit _executer->commandStatusUpdate(_n, "Waiting for output to reach voltage");
     
-    //TODO
-    //while (std::abs(source->getVolt(output) - source->getSetVolt(output)) > VOLTAGESRC_EPSILON)
-    //    QThread::sleep(VOLTAGESRC_WAIT_INTERVAL);
+    while (std::abs(source->getVolt(output) - source->getVoltApp(output)) > VOLTAGESRC_EPSILON)
+        QThread::sleep(VOLTAGESRC_WAIT_INTERVAL);
 }
 
 void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInChillerOutputCommand& command) {
