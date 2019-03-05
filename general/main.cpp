@@ -12,6 +12,8 @@ extern "C" {
 
 using namespace std;
 
+const bool COLOR_TERM_MESSAGES = true;
+
 void messageHandler(QtMsgType type, const QMessageLogContext& /* context */, const QString& msg)
 {
     QString msg_ = msg;
@@ -39,6 +41,33 @@ void messageHandler(QtMsgType type, const QMessageLogContext& /* context */, con
     }
 }
 
+void messageHandlerColor(QtMsgType type, const QMessageLogContext& /* context */, const QString& msg)
+{
+    QString msg_ = msg;
+    msg_.replace('\n', "\\n");
+    msg_.replace('\r', "\\r");
+    msg_.replace('\t', "\\t");
+    QByteArray localMsg = msg_.toLocal8Bit();
+    //const char *file = context.file ? context.file : "";
+    switch (type) {
+    case QtDebugMsg:
+        fprintf(stderr, "\033[90mDebug: %s\033[0m\n", localMsg.constData());
+        break;
+    case QtInfoMsg:
+        fprintf(stderr, "\033[37mInfo: %s\033[0m\n", localMsg.constData());
+        break;
+    case QtWarningMsg:
+        fprintf(stderr, "\033[91mWarning: %s\033[0m\n", localMsg.constData());
+        break;
+    case QtCriticalMsg:
+        fprintf(stderr, "\033[31mCritical: %s\033[0m\n", localMsg.constData());
+        break;
+    case QtFatalMsg:
+        fprintf(stderr, "\033[31mFatal: %s\033[0m\n", localMsg.constData());
+        break;
+    }
+}
+
 int main(int argc, char *argv[])
 {
     //replaces commas with dots in printf
@@ -47,7 +76,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QMap<QString, QString>>("QMap<QString, QString>");
     lxi_init();
 
-    qInstallMessageHandler(messageHandler);
+    qInstallMessageHandler(COLOR_TERM_MESSAGES ? messageHandlerColor : messageHandler);
     QApplication a(argc, argv);
 
     MainWindow w;
