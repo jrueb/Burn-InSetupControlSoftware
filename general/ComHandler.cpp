@@ -54,7 +54,7 @@ ComHandler::~ComHandler( void ) {
 //! Send the command string &lt;commandString&gt; to device.
 void ComHandler::SendCommand( const char *commandString, bool sendfeed ) {
 
-  qDebug("Command to %s: %s", fIoPort, commandString);
+  qDebug("Command to %s: %s%s", fIoPort, commandString, sendfeed ? FEEDSTRING : "");
 
   for ( unsigned int i = 0; i < strlen( commandString ); i++ ) {
 
