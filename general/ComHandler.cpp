@@ -14,6 +14,7 @@
 #include "BurnInException.h"
 
 #include <sys/select.h>
+#include <QtGlobal>
 
 // SETTINGS ON THE DEVICE:
 // (MENU RS-232)
@@ -22,6 +23,8 @@
 // HARDW HANDSHAKE: on
 // PARITY: none (8N1)
 // TX TERM: NL
+
+const char FEEDSTRING[] = "\n";
 
 /*!
   The serial port &lt;ioPort&gt; may be specified in several ways:<br><br>
@@ -51,25 +54,23 @@ ComHandler::~ComHandler( void ) {
 //! Send the command string &lt;commandString&gt; to device.
 void ComHandler::SendCommand( const char *commandString, bool sendfeed ) {
 
-  char singleCharacter = 0;
-
-  std::cout << "Command to " << fIoPort << ": " << commandString << std::endl;
+  qDebug("Command to %s: %s", fIoPort, commandString);
 
   for ( unsigned int i = 0; i < strlen( commandString ); i++ ) {
 
     // scan command string character wise & write
-    singleCharacter = commandString[i];
-    ssize_t bytes_written;
-    bytes_written = write( fIoPortFileDescriptor, &singleCharacter, 1 );
-    if ( bytes_written < 0 )
+    if ( write( fIoPortFileDescriptor, commandString + i, 1 ) < 0 )
     {
-      std::cerr << "Problem in writing to ComHandler!" << std::endl;
+      qCritical("Error while writing to %s: %s", fIoPort, std::strerror(errno));
     }
   }
 
   if (sendfeed) {
     // send feed characters
-    SendFeedString();
+    if ( write( fIoPortFileDescriptor, &FEEDSTRING, strlen(FEEDSTRING) ) < 0 )
+    {
+      qCritical("Error while writing to %s: %s", fIoPort, std::strerror(errno));
+    }
   }
 }
 
@@ -91,19 +92,19 @@ void ComHandler::ReceiveString( char *receiveString ) {
   
   int rv = select(fIoPortFileDescriptor + 1, &set, NULL, NULL, &timeout);
   if (rv == -1) {
-    std::cerr << "Error occured when reading from " << fIoPort << std::endl;
+    qCritical("Error when reading (select) from %s: %s", fIoPort, std::strerror(errno));
     return;
   } else if (rv == 0) {
-    std::cerr << "Timeout reached when reading from " << fIoPort << std::endl;
+    qCritical("Timeout reached when reading from %s", fIoPort);
     return;
   } else {
-    int len = read(fIoPortFileDescriptor, receiveString, 1023);
+    ssize_t len = read(fIoPortFileDescriptor, receiveString, 1023);
     if (len == -1) {
-      std::cerr << "Error occured when reading (read call) from " << fIoPort << std::endl;
+      qCritical("Error when reading (read) from %s: %s", fIoPort, std::strerror(errno));
       return;
     }
     receiveString[len] = 0;
-    std::cout << "Read " << len << " bytes from " << fIoPort << ": " << receiveString << std::endl;
+    qDebug("Read %li bytes from %s: %s", len, fIoPort, receiveString);
   }
   
 }
@@ -119,10 +120,7 @@ void ComHandler::OpenIoPort( void ) {
 
   // check if successful
   if ( fIoPortFileDescriptor == -1 ) {
-    std::cerr << "[ComHandler::OpenIoPort] ** ERROR: could not open device file "
-              << fIoPort << "." << std::endl;
-    std::cerr << "                           (probably it's not user-writable)."
-              << std::endl;
+    qCritical("Could not open device file %s: %s", fIoPort, std::strerror(errno));
     throw BurnInException("Could not open device file");
     
   } else {
@@ -230,25 +228,6 @@ void ComHandler::RestoreIoPort( void ) {
 void ComHandler::CloseIoPort( void ) {
 
   close( fIoPortFileDescriptor );
-}
-
-//! Send command termination string (<NL>).
-/*!
-  \internal
-*/
-void ComHandler::SendFeedString( void ) {
-
-  // feed string is <NL>
-  char feedString = 10;
-
-  ssize_t bytes_written;
-
-  bytes_written = write( fIoPortFileDescriptor, &feedString, 1 );
-
-  if ( bytes_written < 0 )
-  {
-      std::cerr << "Problem in writing to ComHandler!" << std::endl;
-  }
 }
 
 

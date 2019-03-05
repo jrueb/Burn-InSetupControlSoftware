@@ -14,7 +14,7 @@
 #define _COMHANDLER_H_
 
 #include <termios.h>
-#include <string.h>
+#include <cstring>
 #include <iostream>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -59,7 +59,6 @@ class ComHandler {
   void InitializeIoPort( speed_t baud );
   void RestoreIoPort( void );
   void CloseIoPort( void );
-  void SendFeedString( void );
 
   int fIoPortFileDescriptor;
 
