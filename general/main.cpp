@@ -12,6 +12,33 @@ extern "C" {
 
 using namespace std;
 
+void messageHandler(QtMsgType type, const QMessageLogContext& /* context */, const QString& msg)
+{
+    QString msg_ = msg;
+    msg_.replace('\n', "\\n");
+    msg_.replace('\r', "\\r");
+    msg_.replace('\t', "\\t");
+    QByteArray localMsg = msg_.toLocal8Bit();
+    //const char *file = context.file ? context.file : "";
+    switch (type) {
+    case QtDebugMsg:
+        fprintf(stderr, "Debug: %s\n", localMsg.constData());
+        break;
+    case QtInfoMsg:
+        fprintf(stderr, "Info: %s\n", localMsg.constData());
+        break;
+    case QtWarningMsg:
+        fprintf(stderr, "Warning: %s\n", localMsg.constData());
+        break;
+    case QtCriticalMsg:
+        fprintf(stderr, "Critical: %s\n", localMsg.constData());
+        break;
+    case QtFatalMsg:
+        fprintf(stderr, "Fatal: %s\n", localMsg.constData());
+        break;
+    }
+}
+
 int main(int argc, char *argv[])
 {
     //replaces commas with dots in printf
@@ -20,6 +47,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QMap<QString, QString>>("QMap<QString, QString>");
     lxi_init();
 
+    qInstallMessageHandler(messageHandler);
     QApplication a(argc, argv);
 
     MainWindow w;
