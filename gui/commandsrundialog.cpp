@@ -29,11 +29,15 @@ void CommandExecuter::start() {
         
         if (_shouldAbort)
             break;
-        if (_shouldPause)
+        bool paused = false;
+        if (_shouldPause) {
             emit commandStatusUpdate(n, "Paused");
+            paused = true;
+        }
         while (_shouldPause)
             QThread::msleep(100);
-        emit commandStatusUpdate(n, "Unpaused");
+        if (paused)
+            emit commandStatusUpdate(n, "Unpaused");
         
         ++n;
     }
