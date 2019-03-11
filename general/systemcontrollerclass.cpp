@@ -22,6 +22,7 @@ SystemControllerClass::SystemControllerClass()
 {
     _daqmodule = nullptr;
     _refreshThread = nullptr;
+    fChiller = nullptr;
 }
 
 SystemControllerClass::~SystemControllerClass() {
