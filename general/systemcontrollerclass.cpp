@@ -95,7 +95,7 @@ void SystemControllerClass::_parseVSources()
 
             int opset_size = desc.operational_settings.size();
             if (opset_size > 2) {
-                cerr << "More than two Output given for TTI. Only using first two." << endl;
+                qWarning("More than two Output given for TTI. Only using first two.");
                 opset_size = 2;
             }
             try {
@@ -109,7 +109,7 @@ void SystemControllerClass::_parseVSources()
             dev = new ControlTTiPower(address, cPort, cVolt[0], cCurr[0], cVolt[1], cCurr[1]);
         } else if (desc.classOfInstr == "Keithley2410") {
             if (fGenericInstrumentMap.count(desc.classOfInstr) != 0) {
-                cerr << "Can only use one Keithley at a time. Ignoring others." << endl;
+                qWarning("Can only use one Keithley at a time. Ignoring others.");
                 continue;
             }
             
@@ -117,7 +117,7 @@ void SystemControllerClass::_parseVSources()
             double cSetCurr = 0;
             if (desc.operational_settings.size() > 0) {
                 if (desc.operational_settings.size() > 1)
-                    cerr << "More than one Output given for Keithley2410. Only using first one." << endl;
+                    qWarning("More than one output given for Keithley2410. Only using first one.");
                 try {
                     cSetVolt = stod(desc.operational_settings[0].at("Voltage"));
                     cSetCurr = stod(desc.operational_settings[0].at("CurrentLimit"));
@@ -167,7 +167,7 @@ void SystemControllerClass::_parseChiller()
 
         if(fHWDescription[i].classOfInstr == "JulaboFP50"){
             if (fGenericInstrumentMap.count(fHWDescription[i].classOfInstr) != 0) {
-                cerr << "Can only use one JulaboFP50 at a time. Ignoring others." << endl;
+                qWarning("Can only use one JulaboFP50 at a time. Ignoring others.");
                 continue;
             }
             
@@ -190,7 +190,7 @@ void SystemControllerClass::_parseDaqModule() {
             continue;
             
         if (_daqmodule != nullptr) {
-            cerr << "Can only use one DAQ module at a time. Ignoring others." << endl;
+            qWarning("Can only use one DAQ module at a time. Ignoring others.");
             continue;
         }
             
@@ -229,7 +229,7 @@ void SystemControllerClass::_removeAllDevices() {
     }
     
     // Clear vectors and pointers
-    cout << "Removing devices" << endl;
+    qDebug("Removing devices");
     _daqmodule = nullptr;
     fConnectRasps.clear();
     fNamesVoltageSources.clear();
@@ -270,7 +270,7 @@ void SystemControllerClass::ReadXmlFile(std::string pFileName)
         _parseDaqModule();
         
         if (_daqmodule == nullptr)
-            cerr << "No DAQ module was found in config." << endl;
+            qWarning("No DAQ module was found in config.");
         
     } catch (BurnInException e) {
         _removeAllDevices();

@@ -122,7 +122,7 @@ void ControlKeithleyPower::initialize(){
     _commMutex.unlock();
     
     if (buf[0] == '1') {
-	cout << "Keithley output was on during initialization. Turning off" << endl;
+	qInfo("Keithley output was on during initialization. Turning off");
 	refreshAppliedValues();
 	emit deviceStateChanged(true, fVolt);
     }

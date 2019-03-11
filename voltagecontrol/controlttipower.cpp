@@ -43,7 +43,7 @@ void ControlTTiPower::initialize()
     delete[] pConn;
     
     if (fDevice == -1) {
-        std::cerr << "Could not open ControlTTiPower on " << fAddress << " and port " << fPort << std::endl;
+        qCritical("Could not open ControlTTiPower on %s and port %i", fAddress, fPort);
         throw BurnInException("Could not open connection to TTi");
     }
     
@@ -138,11 +138,8 @@ void ControlTTiPower::_refreshPowerStatus(int pId)
     QThread::msleep(50);
     
     int len;
-    if ((len = lxi_receive(fDevice, buf, sizeof(buf), TIMEOUT)) == LXI_ERROR) {
-        cerr << "ControlTTiPower::_refreshPowerStatus: Could not receive value." << endl;
-        
+    if ((len = lxi_receive(fDevice, buf, sizeof(buf), TIMEOUT)) == LXI_ERROR)
         throw BurnInException("Could not receive TTi power status");
-    }
     _commMutex.unlock();
     
     bool changed = _power[pId - 1] == (buf[0] == '1');
@@ -187,7 +184,7 @@ void ControlTTiPower::refreshAppliedValues() {
     
     int len;
     if ((len = lxi_receive(fDevice, cBuff, sizeof(cBuff), TIMEOUT)) == LXI_ERROR) {
-        cerr << "ControlTTiPower::refreshAppliedValues: Could not receive values." << endl;
+        qCritical("Could not receive values TTi values during refresh.");
         return;
     }
     _commMutex.unlock();

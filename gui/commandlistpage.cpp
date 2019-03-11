@@ -347,7 +347,7 @@ void CommandListPage::onOpenListPressed() {
     try {
         commands = _proc->getCommandListFromFile(fileName, _buildVoltageSourcesVector());
     } catch (BurnInException& e) {
-        std::cerr << "Error: " << e.what() << endl;
+        qWarning("%s", e.what());
         QMessageBox dialog(_commandListWidget->window());
         dialog.critical(_commandListWidget->window(), "Error", "Error while reading commands: " + QString::fromStdString(e.what()));
         return;

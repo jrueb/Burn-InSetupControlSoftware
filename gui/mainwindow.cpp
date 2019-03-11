@@ -541,7 +541,7 @@ void MainWindow::on_read_conf_button_clicked()
             ui->DAQControl->setEnabled(true);
             
     } catch (const BurnInException& e) {
-        cerr << "Error: " << e.what() << endl;
+        qCritical("%s", e.what());
         
         commandListPage->setSystemController(nullptr);
         daqPage->setDAQModule(nullptr);
@@ -579,7 +579,7 @@ void MainWindow::on_read_conf_button_clicked()
 }
 
 void MainWindow::app_quit() {
-    cout << "quitting" << endl;
+    qDebug("Qutting");
     // Set chillder temperature and turn off
     if (fControl != nullptr and fControl->countInstrument("JulaboFP50") > 0) {
         JulaboFP50* chiller = dynamic_cast<JulaboFP50*>(fControl->getGenericInstrObj("JulaboFP50"));

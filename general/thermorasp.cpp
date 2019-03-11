@@ -57,7 +57,7 @@ QMap<QString, QString> Thermorasp::_parseReplyForReadings(QByteArray buffer) con
     QRegularExpressionMatch match = re.match(readingsline);
     
     if (not match.hasMatch()) {
-        cerr << "Raspberry line has invalid format: " << readingsline.toStdString() << endl;
+        qCritical("Raspberry sent line with invalid format: '%s'", readingsline.toLatin1().data());
         return ret;
     }
     

@@ -209,7 +209,6 @@ CommandsRunDialog::CommandsRunDialog(const QVector<BurnInCommand*>& commands, co
     connect(&_executer, SIGNAL(commandStatusUpdate(int, QString)), this, SLOT(onCommandStatusUpdate(int, QString)));
     connect(&_executer, SIGNAL(allFinished()), this, SLOT(onAllFinished()));
     connect(&_executer_thread, SIGNAL(started()), &_executer, SLOT(start()));
-    connect(&_executer_thread, &QThread::finished, [] { std::cout << "thread finished" << std::endl; });
     
     _executer_thread.start();
 }
