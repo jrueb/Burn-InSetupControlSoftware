@@ -504,7 +504,7 @@ void JulaboFP50::Device_Init( void ) {
   // std::cout << buffer << std::endl;
 
   if (std::string::npos==std::string(buffer).find( "JULABO TOPTECH-SERIES MC-2 VERSION")) {
-    qCritical("Invalid or no device at address of Julabo chiller. Returned %s", buffer);
+    qCritical("Invalid or no device at address of Julabo chiller. Returned '%s'", buffer);
     isCommunication_ = false;
     
     throw BurnInException("Invalid or no device at address of Julabo chiller");

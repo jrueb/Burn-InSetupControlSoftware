@@ -56,8 +56,7 @@ DAQModule::~DAQModule() {
 
 void DAQModule::initialize() {
 	// Start controlhub
-	QProcess controlhub_start;
-	if (not controlhub_start.startDetached(_contrStartPath, {}))
+	if (not QProcess::startDetached(_contrStartPath, {}))
 		throw BurnInException("Unable to start the controlhub " + _contrStartPath.toStdString());
 		
 	// FC7 arduino runs at 9600 baud. For every char send to it, it
@@ -110,11 +109,11 @@ void DAQModule::setFC7Power(bool power) {
 		_fc7power = true;
 		break;
 	default:
-		std::cerr << "Got invalid response from FC7: " << buf[0] << std::endl;
+		qCritical("Got invalid response from FC7: '%c'", buf[0]);
 		break;
 	}
 	if (_fc7power != power)
-		std::cerr << "Could not set FC7 power" << std::endl;
+		qCritical("Could not set FC7 power");
 		
 	emit fc7PowerChanged(_fc7power);
 }
@@ -156,13 +155,11 @@ void DAQModule::runNoiseMeasurement() const {
 }
 
 void DAQModule::_run_ph2_binary(const QString& name, const QString& path, const QVector<QString>& switches) const {
-	QProcess process;
-	
 	QString switches_str;
 	for (const auto& s: switches)
 		switches_str += "\"" + s + "\" ";
 	
 	QString cmd = _ph2SetupCommand + "; \"" + path + "\" -f \"" + _daqHwdescFile + "\" " + switches_str + "; read";
-	if (not process.startDetached("/usr/bin/konsole", {"--hide-menubar", "--hide-tabbar", "-p", "HistoryMode=2", "-e", "bash", "-c", cmd}))
+	if (not QProcess::startDetached("/usr/bin/konsole", {"--hide-menubar", "--hide-tabbar", "-p", "HistoryMode=2", "-e", "bash", "-c", cmd}))
 		throw BurnInException("Unable to run" + name.toStdString() + ". Command: " + cmd.toStdString());
 }
