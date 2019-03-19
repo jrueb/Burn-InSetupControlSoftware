@@ -336,7 +336,7 @@ void SystemControllerClass::_refreshingReadings() {
         julabo->refreshDeviceState();
     
     for (size_t n = 0; n < getNumRasps(); ++n)
-        getThermorasp(n)->fetchReadings();
+        getThermorasp(n)->fetchReadings(500);
 
 }
 
@@ -347,12 +347,12 @@ void SystemControllerClass::startRefreshingReadings() {
         delete _refreshThread;
     }
     
-    _refreshThread = new QThread();
+    _refreshThread = new QThread(this);
     QTimer* refreshTimer = new QTimer();
     refreshTimer->moveToThread(_refreshThread);
     refreshTimer->setInterval(DEVICE_REFRESH_INTERVAL * 1000);
     connect(_refreshThread, &QThread::started, refreshTimer, static_cast<void (QTimer::*)()>(&QTimer::start));
     connect(_refreshThread, &QThread::finished, refreshTimer, &QObject::deleteLater);
-    connect(refreshTimer, &QTimer::timeout, this, &SystemControllerClass::_refreshingReadings);
+    connect(refreshTimer, &QTimer::timeout, this, &SystemControllerClass::_refreshingReadings, Qt::DirectConnection);
     _refreshThread->start();
 }
