@@ -75,8 +75,10 @@ QMap<QString, QString> Thermorasp::fetchReadings(int timeout) {
     QTcpSocket* sock = new QTcpSocket(nullptr);
     QMap<QString, QString> ret;
     sock->connectToHost(_address, _port);
-    if (not sock->waitForDisconnected(timeout))
+    if (not sock->waitForDisconnected(timeout)) {
+        qInfo("Thermorasp at %s didn't answer", _address.toLatin1().data());
         return ret;
+    }
     sock->waitForReadyRead(timeout);
     
     QByteArray buffer = sock->readAll();
