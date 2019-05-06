@@ -252,18 +252,18 @@ void CommandsRunDialog::_setupDisplays(const SystemControllerClass* controller) 
 }
 
 void CommandsRunDialog::_updateDisplayLabel(QLabel* label, std::string name, PowerControlClass* source) {
-    QString line = QString::fromStdString(name) + ": ";
+    QString line = QString::fromStdString(name) + ": \n";
     for (int i = 1; i <= source->getNumOutputs(); ++i) {
         if (i != 1)
-            line += ", ";
-        line += "Output " + QString(source->getPower(i) ? "on" : "off") + " " + QString::number(source->getVolt(i)) + " V";
+            line += "\n";
+        line += "    Output " + QString(source->getPower(i) ? "on" : "off") + ", " + QString::number(source->getVolt(i)) + " V";
     }
     label->setText(line);
 }
 
 void CommandsRunDialog::_updateDisplayLabel(QLabel* label, std::string name, JulaboFP50* chiller) {
-    QString line = QString::fromStdString(name) + ": "
-        + "Circulator " + (chiller->GetCirculatorStatus() ? "on" : "off") + " "
+    QString line = QString::fromStdString(name) + ": \n"
+        + "    Circulator " + (chiller->GetCirculatorStatus() ? "on" : "off") + ", "
         + QString::number(chiller->GetWorkingTemperature()) + " °C";
     label->setText(line);
 }
