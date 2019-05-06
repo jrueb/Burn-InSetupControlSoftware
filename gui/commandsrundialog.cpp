@@ -87,11 +87,9 @@ void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInVoltageSourceOu
     if (command.on) {
         emit _executer->commandStatusUpdate(_n, "Turning on output");
         command.source->onPower(command.output);
-        emit _executer->commandStatusUpdate(_n, "Turned on output");
     } else {
         emit _executer->commandStatusUpdate(_n, "Turning off output");
         command.source->offPower(command.output);
-        emit _executer->commandStatusUpdate(_n, "Turned off output");
     }
     
     if (command.source->getPower(command.output)) {
@@ -105,7 +103,6 @@ void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInVoltageSourceOu
 void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInVoltageSourceSetCommand& command) {
     emit _executer->commandStatusUpdate(_n, "Setting voltage");
     command.source->setVolt(command.value, command.output);
-    emit _executer->commandStatusUpdate(_n, "Voltage set");
     
     if (command.source->getPower(command.output)) {
         if (not _executer->_shouldAbort)
