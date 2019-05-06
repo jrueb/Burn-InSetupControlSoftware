@@ -17,17 +17,18 @@
         </VoltageSource>
     </Power>
 
+
     <!-- environment section -->
     <Environment>       
         <!-- Chiller Section -->
         <ChillerControl class="JulaboFP50" address="/dev/ttyS0" description="used to cool done the cooling block" />
-        <!--Raspberry  Section -->
+        <!-- Raspberry  Section -->
         <RaspberryControl class="Thermorasp" address="fhlthermorasp1.desy.de" port="50007" description="used for display temperature humidity pressure" >
             <Sensor sensor="W1_10-0008032b1481_temp"/>
             <Sensor sensor="DHT11_PIN4_temp"/>
             <Sensor sensor="DHT11_PIN4_hum"/>
-            <Sensor sensor="SHT75_temp"/>
-            <Sensor sensor="SHT75_hum"/>
+            <Sensor sensor="SHT75_PIN20_temp"/>
+            <Sensor sensor="SHT75_PIN20_hum"/>
         </RaspberryControl>
         <RaspberryControl class="Thermorasp" address="fhlthermorasp2.desy.de" port="50007" description="used for display temperature humidity pressure" >
             <Sensor sensor="BME680_i2c-0_0x77_temp"/>
