@@ -5,6 +5,7 @@
 #include <QThread>
 #include <QDateTime>
 #include <QString>
+#include <QLabel>
 #include <atomic>
 #include "general/burnincommand.h"
 #include "general/systemcontrollerclass.h"
@@ -93,6 +94,10 @@ private:
     QVector<BurnInCommand*> _commands;
     CommandExecuter _executer;
     QThread _executer_thread;
+    
+    void _setupDisplays(const SystemControllerClass* controller);
+    void _updateDisplayLabel(QLabel* label, std::string name, PowerControlClass* source);
+    void _updateDisplayLabel(QLabel* label, std::string name, JulaboFP50* chiller);
 };
 
 #endif // COMMANDSRUNDIALOG_H
