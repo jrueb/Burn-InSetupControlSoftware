@@ -240,15 +240,17 @@ void CommandsRunDialog::_setupDisplays(const SystemControllerClass* controller) 
     }
     
     JulaboFP50* chiller = controller->getChiller();
-    QLabel* label = new QLabel();
-    connect(chiller, &JulaboFP50::workingTemperatureChanged, [this, label, chiller](float) {
-        this->_updateDisplayLabel(label, "Chiller", chiller);
-    });
-    connect(chiller, &JulaboFP50::circulatorStatusChanged, [this, label, chiller](bool) {
-        this->_updateDisplayLabel(label, "Chiller", chiller);
-    });
-    ui->device_status_area->addWidget(label);
-    _updateDisplayLabel(label, "Chiller", chiller);
+    if (chiller) {
+        QLabel* label = new QLabel();
+        connect(chiller, &JulaboFP50::workingTemperatureChanged, [this, label, chiller](float) {
+            this->_updateDisplayLabel(label, "Chiller", chiller);
+        });
+        connect(chiller, &JulaboFP50::circulatorStatusChanged, [this, label, chiller](bool) {
+            this->_updateDisplayLabel(label, "Chiller", chiller);
+        });
+        ui->device_status_area->addWidget(label);
+        _updateDisplayLabel(label, "Chiller", chiller);
+    }
 }
 
 void CommandsRunDialog::_updateDisplayLabel(QLabel* label, std::string name, PowerControlClass* source) {
