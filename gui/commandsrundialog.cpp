@@ -227,10 +227,10 @@ void CommandsRunDialog::_setupDisplays(const SystemControllerClass* controller) 
     std::map<std::string, PowerControlClass*> sources = controller->getVoltageSources();
     for (auto const& source: sources) {
         QLabel* label = new QLabel();
-        connect(source.second, &PowerControlClass::voltSetChanged, [this, label, source](double, int) {
+        connect(source.second, &PowerControlClass::voltSetChanged, this, [this, label, source](double, int) {
             this->_updateDisplayLabel(label, source.first, source.second);
         });
-        connect(source.second, &PowerControlClass::powerStateChanged, [this, label, source](bool, int) {
+        connect(source.second, &PowerControlClass::powerStateChanged, this, [this, label, source](bool, int) {
             this->_updateDisplayLabel(label, source.first, source.second);
         });
         ui->device_status_area->addWidget(label);
@@ -240,10 +240,10 @@ void CommandsRunDialog::_setupDisplays(const SystemControllerClass* controller) 
     JulaboFP50* chiller = controller->getChiller();
     if (chiller) {
         QLabel* label = new QLabel();
-        connect(chiller, &JulaboFP50::workingTemperatureChanged, [this, label, chiller](float) {
+        connect(chiller, &JulaboFP50::workingTemperatureChanged, this, [this, label, chiller](float) {
             this->_updateDisplayLabel(label, "Chiller", chiller);
         });
-        connect(chiller, &JulaboFP50::circulatorStatusChanged, [this, label, chiller](bool) {
+        connect(chiller, &JulaboFP50::circulatorStatusChanged, this, [this, label, chiller](bool) {
             this->_updateDisplayLabel(label, "Chiller", chiller);
         });
         ui->device_status_area->addWidget(label);

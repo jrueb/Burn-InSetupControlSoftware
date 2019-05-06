@@ -307,17 +307,17 @@ void MainWindow::_connectTTi() {
         ControlTTiPower* ttidev = dynamic_cast<ControlTTiPower*>(fControl->getGenericInstrObj(name));
         output_pointer_t* widgets = gui_pointers_low_voltage[dev_num];
         
-        connect(ttidev, &ControlTTiPower::voltSetChanged, [widgets, dev_num](double volt, int id) {
+        connect(ttidev, &ControlTTiPower::voltSetChanged, this, [widgets, dev_num](double volt, int id) {
             QDoubleSpinBox* box = widgets[2 - id].v_set;
             QSignalBlocker blocker(box);
             box->setValue(volt);
         });
-        connect(ttidev, &ControlTTiPower::currSetChanged, [widgets, dev_num](double curr, int id) {
+        connect(ttidev, &ControlTTiPower::currSetChanged, this, [widgets, dev_num](double curr, int id) {
             QDoubleSpinBox* box = widgets[2 - id].i_set;
             QSignalBlocker blocker(box);
             box->setValue(curr);
         });
-        connect(ttidev, &ControlTTiPower::voltAppChanged, [widgets, dev_num](double volt, int id) {
+        connect(ttidev, &ControlTTiPower::voltAppChanged, this, [widgets, dev_num](double volt, int id) {
             QLCDNumber* num = widgets[2 - id].v_applied;
             QSignalBlocker blocker(num);
             // If a small number needs too many digits, display() seems to do nothing.
@@ -326,7 +326,7 @@ void MainWindow::_connectTTi() {
             else
                 num->display(volt);
         });
-        connect(ttidev, &ControlTTiPower::currAppChanged, [widgets, dev_num](double curr, int id) {
+        connect(ttidev, &ControlTTiPower::currAppChanged, this, [widgets, dev_num](double curr, int id) {
             QLCDNumber* num = widgets[2 - id].i_applied;
             QSignalBlocker blocker(num);
             if (abs(curr) < 0.0001)
@@ -334,7 +334,7 @@ void MainWindow::_connectTTi() {
             else
                 num->display(curr);
         });
-        connect(ttidev, &ControlTTiPower::powerStateChanged, [widgets, dev_num](bool on, int id) {
+        connect(ttidev, &ControlTTiPower::powerStateChanged, this, [widgets, dev_num](bool on, int id) {
             QCheckBox* box = widgets[2 - id].onoff_button;
             QSignalBlocker blocker(box);
             box->setChecked(on);
@@ -357,29 +357,29 @@ void MainWindow::_connectKeithley() {
     ControlKeithleyPower* keihleydev = dynamic_cast<ControlKeithleyPower*>(fControl->getGenericInstrObj("Keithley2410"));
     output_pointer_t* widget = gui_pointers_high_voltage[0];
 
-    connect(keihleydev, &ControlKeithleyPower::voltSetChanged, [widget](double volt, int) {
+    connect(keihleydev, &ControlKeithleyPower::voltSetChanged, this, [widget](double volt, int) {
         QSignalBlocker blocker(widget->v_set);
         widget->v_set->setValue(volt);
     });
-    connect(keihleydev, &ControlKeithleyPower::currSetChanged, [widget](double curr, int) {
+    connect(keihleydev, &ControlKeithleyPower::currSetChanged, this, [widget](double curr, int) {
         QSignalBlocker blocker(widget->i_set);
         widget->i_set->setValue(curr);
     });
-    connect(keihleydev, &ControlKeithleyPower::voltAppChanged, [widget](double volt, int) {
+    connect(keihleydev, &ControlKeithleyPower::voltAppChanged, this, [widget](double volt, int) {
         QSignalBlocker blocker(widget->v_applied);
         if (abs(volt) < 0.0001)
             widget->v_applied->display(0.);
         else
             widget->v_applied->display(volt);
     });
-    connect(keihleydev, &ControlKeithleyPower::currAppChanged, [widget](double curr, int) {
+    connect(keihleydev, &ControlKeithleyPower::currAppChanged, this, [widget](double curr, int) {
         QSignalBlocker blocker(widget->i_applied);
         if (abs(curr) < 0.0001)
             widget->i_applied->display(0.);
         else
             widget->i_applied->display(curr);
     });
-    connect(keihleydev, &ControlKeithleyPower::powerStateChanged, [widget](bool on, int) {
+    connect(keihleydev, &ControlKeithleyPower::powerStateChanged, this, [widget](bool on, int) {
         QSignalBlocker blocker(widget->onoff_button);
         widget->onoff_button->setChecked(on);
         widget->v_set->setEnabled(not on);
@@ -396,24 +396,24 @@ void MainWindow::_connectJulabo() {
     JulaboFP50* chiller = dynamic_cast<JulaboFP50*>(fControl->getGenericInstrObj("JulaboFP50"));
     output_Chiller* widget = gui_chiller;
     
-    connect(chiller, &JulaboFP50::circulatorStatusChanged, [widget](bool on) {
+    connect(chiller, &JulaboFP50::circulatorStatusChanged, this, [widget](bool on) {
         QSignalBlocker blocker(widget->onoff_button);
         widget->onoff_button->setChecked(on);
         widget->setTemperature->setEnabled(not on);
     });
-    connect(chiller, &JulaboFP50::workingTemperatureChanged, [widget](float temperature) {
+    connect(chiller, &JulaboFP50::workingTemperatureChanged, this, [widget](float temperature) {
         QSignalBlocker blocker(widget->setTemperature);
         widget->setTemperature->setValue(temperature);
     });
-    connect(chiller, &JulaboFP50::bathTemperatureChanged, [widget](float temperature) {
+    connect(chiller, &JulaboFP50::bathTemperatureChanged, this, [widget](float temperature) {
         QSignalBlocker blocker(widget->bathTemperature);
         widget->bathTemperature->display(temperature);
     });
-    connect(chiller, &JulaboFP50::safetySensorTemperatureChanged, [widget](float temperature) {
+    connect(chiller, &JulaboFP50::safetySensorTemperatureChanged, this, [widget](float temperature) {
         QSignalBlocker blocker(widget->sensorTemperature);
         widget->sensorTemperature->display(temperature);
     });
-    connect(chiller, &JulaboFP50::pumpPressureChanged, [widget](unsigned int pressureStage) {
+    connect(chiller, &JulaboFP50::pumpPressureChanged, this, [widget](unsigned int pressureStage) {
         QSignalBlocker blocker(widget->pressure);
         widget->pressure->display(QString::number(pressureStage));
     });
@@ -425,7 +425,7 @@ void MainWindow::_connectThermorasp() {
         output_Raspberry* widget = gui_raspberrys[n];
         std::vector<std::string> names = thermorasp->getSensorNames();
         
-        connect(thermorasp, &Thermorasp::gotNewReadings, [widget, names](const QMap<QString, QString>& readings) {
+        connect(thermorasp, &Thermorasp::gotNewReadings, this, [widget, names](const QMap<QString, QString>& readings) {
             int i = 0;
             for (const string& name: names) {
                 widget[i].value->display(readings[QString::fromStdString(name)]);
