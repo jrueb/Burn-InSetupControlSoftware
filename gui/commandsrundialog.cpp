@@ -3,6 +3,7 @@
 #include "commanddisplayer.h"
 
 #include <QMessageBox>
+#include <QScrollBar>
 #include <functional>
 
 CommandExecuter::CommandExecuter(const QVector<BurnInCommand*>& commands, const SystemControllerClass* controller, QWidget *parent) :
@@ -298,6 +299,11 @@ void CommandsRunDialog::onCommandFinished(int n, QDateTime dt) {
 
 void CommandsRunDialog::onCommandStatusUpdate(int n, QString status) {
     ui->commands_table->setItem(n, 3, new QTableWidgetItem(status));
+    
+    QDateTime now = QDateTime::currentDateTime();
+    ui->log_view->appendPlainText("[" + now.toString("yyyy-MM-dd hh:mm:ss") + "] " + status);
+    // Scroll to bottom
+    ui->log_view->verticalScrollBar()->setValue(ui->log_view->verticalScrollBar()->maximum());
 }
 
 void CommandsRunDialog::onAllFinished() {
