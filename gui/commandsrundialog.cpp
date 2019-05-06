@@ -311,6 +311,8 @@ void CommandsRunDialog::onCommandStatusUpdate(int n, QString status) {
 void CommandsRunDialog::onAllFinished() {
     _executer_thread.quit();
     _logMessage("All commands finished");
+    ui->pause_button->setEnabled(false);
+    ui->abort_button->setEnabled(false);
 }
 
 void CommandsRunDialog::reject() {
