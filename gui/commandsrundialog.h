@@ -98,6 +98,7 @@ private:
     void _setupDisplays(const SystemControllerClass* controller);
     void _updateDisplayLabel(QLabel* label, std::string name, PowerControlClass* source);
     void _updateDisplayLabel(QLabel* label, std::string name, JulaboFP50* chiller);
+    void _logMessage(QString message);
 };
 
 #endif // COMMANDSRUNDIALOG_H

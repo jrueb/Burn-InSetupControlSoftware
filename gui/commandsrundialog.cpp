@@ -268,6 +268,15 @@ void CommandsRunDialog::_updateDisplayLabel(QLabel* label, std::string name, Jul
     label->setText(line);
 }
 
+void CommandsRunDialog::_logMessage(QString message) {
+    QDateTime now = QDateTime::currentDateTime();
+    QScrollBar* bar = ui->log_view->verticalScrollBar();
+    bool scrolledToBottom = bar->maximum() == bar->value();
+    ui->log_view->appendPlainText("[" + now.toString("yyyy-MM-dd hh:mm:ss") + "] " + message);
+    if (scrolledToBottom) // Scroll to bottom again
+        ui->log_view->verticalScrollBar()->setValue(ui->log_view->verticalScrollBar()->maximum());
+}
+
 void CommandsRunDialog::on_abort_button_clicked()
 {
     _executer.abort();
@@ -296,15 +305,12 @@ void CommandsRunDialog::onCommandFinished(int n, QDateTime dt) {
 
 void CommandsRunDialog::onCommandStatusUpdate(int n, QString status) {
     ui->commands_table->setItem(n, 3, new QTableWidgetItem(status));
-    
-    QDateTime now = QDateTime::currentDateTime();
-    ui->log_view->appendPlainText("[" + now.toString("yyyy-MM-dd hh:mm:ss") + "] " + status);
-    // Scroll to bottom
-    ui->log_view->verticalScrollBar()->setValue(ui->log_view->verticalScrollBar()->maximum());
+    _logMessage(status);
 }
 
 void CommandsRunDialog::onAllFinished() {
     _executer_thread.quit();
+    _logMessage("All commands finished");
 }
 
 void CommandsRunDialog::reject() {
