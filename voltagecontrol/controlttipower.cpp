@@ -43,7 +43,7 @@ void ControlTTiPower::initialize()
     delete[] pConn;
     
     if (fDevice == -1) {
-        qCritical("Could not open ControlTTiPower on %s and port %i", fAddress, fPort);
+        qCritical("Could not open ControlTTiPower on %s and port %i", fAddress.c_str(), fPort);
         throw BurnInException("Could not open connection to TTi");
     }
     
