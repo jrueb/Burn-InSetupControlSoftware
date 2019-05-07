@@ -461,16 +461,11 @@ bool MainWindow::readXmlFile()
         fControl->ReadXmlFile(cFileName.toStdString());
         fSources = fControl->getSourceNameVec();
 
-        QHBoxLayout *low_layout = new QHBoxLayout;
-        QHBoxLayout *high_layout = new QHBoxLayout;
-        QHBoxLayout *rasp_layout = new QHBoxLayout;
-        QHBoxLayout *chiller_layout = new QHBoxLayout;
-
         for(auto const& i: fControl->fGenericInstrumentMap){
 
             if( dynamic_cast<ControlTTiPower*>(i.second) ){
 
-                gui_pointers_low_voltage.push_back(SetVoltageSource(low_layout, i.first, "TTI", 2));
+                gui_pointers_low_voltage.push_back(SetVoltageSource(ui->lowVoltageLayout, i.first, "TTI", 2));
                 int dev_num = gui_pointers_low_voltage.size() - 1;
 
                 for (int id = 0; id < 2; id++){
@@ -486,8 +481,7 @@ bool MainWindow::readXmlFile()
 
             if( dynamic_cast<ControlKeithleyPower*>(i.second) ){
 
-                gui_pointers_high_voltage.push_back(SetVoltageSource(high_layout, i.first, "Keithley2410", 1));
-                ui->groupBox_2->setLayout(high_layout);
+                gui_pointers_high_voltage.push_back(SetVoltageSource(ui->highVoltageLayout, i.first, "Keithley2410", 1));
 
                  connect(gui_pointers_high_voltage[0]->onoff_button, &QCheckBox::toggled, [this](bool pArg)
                  {this->on_OnOff_button_stateChanged("Keithley2410", 0, 0, pArg);});
@@ -495,22 +489,16 @@ bool MainWindow::readXmlFile()
 
             if( dynamic_cast<Thermorasp*>(i.second) ){
                 Thermorasp* rasp = dynamic_cast<Thermorasp*>(i.second);
-                gui_raspberrys.push_back(SetRaspberryOutput(rasp_layout, rasp->getSensorNames(), i.first));
+                gui_raspberrys.push_back(SetRaspberryOutput(ui->envMonitorLayout, rasp->getSensorNames(), i.first));
             }
 
             if( dynamic_cast<JulaboFP50*>(i.second) ){
-                gui_chiller = SetChillerOutput(chiller_layout , i.first);
+                gui_chiller = SetChillerOutput(ui->envControlLayout , i.first);
 
                 connect(gui_chiller->onoff_button, &QCheckBox::toggled, [this](bool pArg)
                 {this->on_OnOff_button_stateChanged("JulaboFP50", 0, 0, pArg);});
             }
         }
-
-        //set layout to group box
-        ui->groupBox->setLayout(low_layout);
-        ui->groupBox_2->setLayout(high_layout);
-        ui->groupBox_3->setLayout(rasp_layout);
-        ui->groupBox_Chiller->setLayout(chiller_layout);
         
         commandListPage->setSystemController(fControl);
         if (fControl->getDaqModule() != nullptr)
