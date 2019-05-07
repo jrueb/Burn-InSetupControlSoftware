@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>786</width>
-    <height>770</height>
+    <width>800</width>
+    <height>750</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -25,7 +25,7 @@
   <widget class="QWidget" name="centralWidget">
    <property name="minimumSize">
     <size>
-     <width>800</width>
+     <width>0</width>
      <height>0</height>
     </size>
    </property>
@@ -325,7 +325,7 @@
       <item>
        <widget class="QPushButton" name="read_conf_button">
         <property name="text">
-         <string>Read Hardware Configuration Xml</string>
+         <string>Open hardware configuration</string>
         </property>
        </widget>
       </item>
@@ -351,8 +351,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>786</width>
-     <height>20</height>
+     <width>800</width>
+     <height>22</height>
     </rect>
    </property>
   </widget>
