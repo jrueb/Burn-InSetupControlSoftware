@@ -9,6 +9,7 @@
 #include <QListWidget>
 #include "general/systemcontrollerclass.h"
 #include "general/commandprocessor.h"
+#include "commandsrundialog.h"
 
 class CommandListItem : public QObject, public QListWidgetItem
 {
@@ -49,6 +50,8 @@ private:
     
     const SystemControllerClass* _controller;
     CommandProcessor* _proc;
+    
+    CommandsRunDialog* _rundialog;
     
     QMap<QString, QPair<int, PowerControlClass*>> _buildVoltageSourcesVector() const;
     QStringList _getAvailableACFBinaries() const;

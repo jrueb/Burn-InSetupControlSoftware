@@ -8,7 +8,6 @@
 #include <QMessageBox>
 #include <algorithm>
 #include "commandmodifydialog.h"
-#include "commandsrundialog.h"
 #include "commanddisplayer.h"
 #include "general/BurnInException.h"
 
@@ -81,6 +80,7 @@ CommandListPage::CommandListPage(QWidget* commandListWidget, QObject *parent) : 
     connect(_run_button, SIGNAL(pressed()), this, SLOT(onRunPressed()));
     
     _proc = nullptr;
+    _rundialog = nullptr;
     
 }
 
@@ -379,11 +379,11 @@ void CommandListPage::onRunPressed() {
         commands.push_back(item->command.get());
     }
     
-    CommandsRunDialog* dialog = new CommandsRunDialog(commands, _controller, _commandListWidget->window());
+    _rundialog = new CommandsRunDialog(commands, _controller, _commandListWidget->window());
     
-    connect(dialog, SIGNAL(finished(int)), this, SLOT(onRunFinished()));
+    connect(_rundialog, &CommandsRunDialog::finished, this, &CommandListPage::onRunFinished);
     
-    dialog->show();
+    _rundialog->show();
     _run_button->setText("Running...");
     _run_button->setEnabled(false);
 }
@@ -391,6 +391,9 @@ void CommandListPage::onRunPressed() {
 void CommandListPage::onRunFinished() {
     _run_button->setEnabled(true);
     _run_button->setText("Run");
+    
+    delete _rundialog;
+    _rundialog = nullptr;
 }
 
 void CommandListPage::onAddWait() {
