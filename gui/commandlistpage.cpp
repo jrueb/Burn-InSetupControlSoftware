@@ -407,7 +407,7 @@ void CommandListPage::onAddWait() {
 
 QMap<QString, QPair<int, PowerControlClass*>> CommandListPage::_buildVoltageSourcesVector() const {
     QMap<QString, QPair<int, PowerControlClass*>> availSources;
-    for (const auto& source: _proc->getAvailableVoltageSources()) {
+    for (const auto& source: _controller->getVoltageSources()) {
         int numOutputs = source.second->getNumOutputs();
         if (numOutputs == 1)
             availSources[QString::fromStdString(source.first)] = qMakePair(0, source.second);

@@ -15,7 +15,6 @@ public:
     explicit CommandProcessor(const SystemControllerClass* controller, QObject *parent = nullptr);
     
     QVector<BurnInCommandType> getAvailableCommands() const;
-    std::map<std::string, PowerControlClass*> getAvailableVoltageSources() const;
     static QString getStringForType(BurnInCommandType type);
     
     void saveCommandList(const QVector<BurnInCommand*>& commandList, const QString& filePath) const;

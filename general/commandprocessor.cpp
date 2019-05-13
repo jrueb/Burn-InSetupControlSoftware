@@ -30,10 +30,6 @@ QVector<BurnInCommandType> CommandProcessor::getAvailableCommands() const {
     return avail;
 }
 
-std::map<std::string, PowerControlClass*> CommandProcessor::getAvailableVoltageSources() const {
-    return _controller->getVoltageSources();
-}
-
 QString CommandProcessor::getStringForType(BurnInCommandType type) {
     switch(type) {
     case COMMAND_WAIT:
