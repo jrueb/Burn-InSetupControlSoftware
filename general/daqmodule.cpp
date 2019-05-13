@@ -123,7 +123,7 @@ QString DAQModule::getImagePath() const {
 }
 
 QStringList DAQModule::getAvailableACFBinaries() const {
-	return QDir(_pathjoin({_ph2acfPath, "bin"})).entryList(QDir::Executable);
+	return QDir(_pathjoin({_ph2acfPath, "bin"})).entryList(QDir::Files | QDir::Executable);
 }
 
 void DAQModule::loadFirmware() const {
@@ -134,15 +134,20 @@ void DAQModule::loadFirmware() const {
 		throw BurnInException("Unable to load firmware. Command: " + cmd.toStdString());
 }
 
-void DAQModule::runACFBinary(const QString& execName, const QVector<QString>& switches, bool appendHWDesc) const {
+void DAQModule::runACFBinary(const QString& execName, QString switches, bool appendHWDesc) const {
 	QString path = _pathjoin({_ph2acfPath, "bin", execName});
+	if (appendHWDesc)
+		switches = "-f \"" + _daqHwdescPath + "\" " + switches;
+	
+	QString cmd = _ph2SetupCommand + "; \"" + path + "\" " + switches + "; read";
+	qDebug("Running DAQ command %s", cmd.toStdString().c_str());
+	if (not QProcess::startDetached("/usr/bin/konsole", {"--hide-menubar", "--hide-tabbar", "-p", "HistoryMode=2", "-e", "bash", "-c", cmd}))
+		throw BurnInException("Unable to run" + execName.toStdString() + ". Command: " + cmd.toStdString());
+}
+
+void DAQModule::runACFBinary(const QString& execName, const QVector<QString>& switches, bool appendHWDesc) const {
 	QString switches_str;
 	for (const auto& s: switches)
 		switches_str += "\"" + s + "\" ";
-	if (appendHWDesc)
-		switches_str += "-f \"" + _daqHwdescPath + "\" ";
-	
-	QString cmd = _ph2SetupCommand + "; \"" + path + "\" " + switches_str + "; read";
-	if (not QProcess::startDetached("/usr/bin/konsole", {"--hide-menubar", "--hide-tabbar", "-p", "HistoryMode=2", "-e", "bash", "-c", cmd}))
-		throw BurnInException("Unable to run" + execName.toStdString() + ". Command: " + cmd.toStdString());
+	runACFBinary(execName, switches_str, appendHWDesc);
 }

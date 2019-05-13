@@ -36,9 +36,11 @@ public:
      *  Run a binary from the bin directory of the Ph2_ACF in an extra
      *  terminal window.
      *  execName: Name of the binary to run
-     *  switches: Arguments to pass when executing
+     *  switches: Arguments to pass when executing, either separated by
+     *            spaces or as seperate strings in a vector
      *  appendHWDesc: If true, append "-f <daqHwdescFile>" to the arguments
      */
+    void runACFBinary(const QString& execName, QString switches, bool appendHWDesc) const;
     void runACFBinary(const QString& execName, const QVector<QString>& switches = {}, bool appendHWDesc = true) const;
     
     const int FC7SLEEP = 10000; //us
