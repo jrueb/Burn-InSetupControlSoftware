@@ -23,6 +23,9 @@ QVector<BurnInCommandType> CommandProcessor::getAvailableCommands() const {
         avail.push_back(COMMAND_CHILLEROUTPUT);
         avail.push_back(COMMAND_CHILLERSET);
     }
+    
+    if (_controller->getDaqModule() != nullptr)
+        avail.push_back(COMMAND_DAQCMD);
         
     return avail;
 }
@@ -47,6 +50,9 @@ QString CommandProcessor::getStringForType(BurnInCommandType type) {
         break;
     case COMMAND_CHILLERSET:
         return "chillerSet";
+        break;
+    case COMMAND_DAQCMD:
+        return "daqcmd";
         break;
     }
     
@@ -109,6 +115,13 @@ void CommandProcessor::CommandSaver::handleCommand(BurnInChillerSetCommand& comm
     *out << getStringForType(COMMAND_CHILLERSET) << " " << command.value << "\n";
 }
 
+void CommandProcessor::CommandSaver::handleCommand(BurnInDAQCommand& command) {
+    *out << getStringForType(COMMAND_DAQCMD)
+         << " \"" << CommandProcessor::_escapeName(command.execName) << "\""
+         << " \"" << CommandProcessor::_escapeName(command.opts) << "\""
+         << "\n";
+}
+
 QString CommandProcessor::_escapeName(const QString& name) {
     QString ret = name;
     
@@ -120,26 +133,26 @@ QString CommandProcessor::_escapeName(const QString& name) {
     return ret;
 }
 
-QVector<BurnInCommand*> CommandProcessor::getCommandListFromFile(const QString& filePath, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources) const {
+QVector<BurnInCommand*> CommandProcessor::getCommandListFromFile(const QString& filePath, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources, const QStringList& daqExecuteables) const {
     QFile file(filePath);
     
     if (not file.open(QIODevice::ReadOnly | QIODevice::Text))
         throw BurnInException("Could not open file");
     QTextStream in(&file);
-    QVector<BurnInCommand*> list = _parseCommands(in, voltageSources);
+    QVector<BurnInCommand*> list = _parseCommands(in, voltageSources, daqExecuteables);
     
     file.close();
     
     return list;
 }
 
-QVector<BurnInCommand*> CommandProcessor::getCommandListFromString(const QString& commandString, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources) const {
+QVector<BurnInCommand*> CommandProcessor::getCommandListFromString(const QString& commandString, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources, const QStringList& daqExecuteables) const {
     QString cpy = commandString;
     QTextStream in(&cpy);
-    return _parseCommands(in, voltageSources);
+    return _parseCommands(in, voltageSources, daqExecuteables);
 }
 
-QVector<BurnInCommand*> CommandProcessor::_parseCommands(QTextStream& in, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources) const {
+QVector<BurnInCommand*> CommandProcessor::_parseCommands(QTextStream& in, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources, const QStringList& daqExecuteables) const {
     QVector<BurnInCommand*> list;
     
     int line_count = 0;
@@ -163,7 +176,9 @@ QVector<BurnInCommand*> CommandProcessor::_parseCommands(QTextStream& in, const 
             
         } else if (line.startsWith(getStringForType(COMMAND_CHILLERSET) + " ")) {
             list.push_back(_parseChillerSetCommand(line, line_count));
-
+            
+        } else if (line.startsWith(getStringForType(COMMAND_DAQCMD) + " ")) {
+            list.push_back(_parseDaqCMDCommand(line, daqExecuteables, line_count));
         } else {
             QTextStream line_stream(&line);
             QString cmd;
@@ -267,6 +282,22 @@ BurnInChillerSetCommand* CommandProcessor::_parseChillerSetCommand(const QString
         throw BurnInException("Line " + std::to_string(line_count) + ": Invalid temperature value " + value_str.toStdString() + "");
     
     return new BurnInChillerSetCommand(value);
+}
+
+BurnInDAQCommand* CommandProcessor::_parseDaqCMDCommand(const QString& line, const QStringList& daqExecuteables, int line_count) const {
+    int cmdlen = getStringForType(COMMAND_DAQCMD).length();
+    QString args = line.right(line.length() - cmdlen - 1);
+    QTextStream line_stream(&args);
+    
+    QString execName;
+    QString opts;
+    
+    execName = _getQuotedString(line_stream);
+    if (not daqExecuteables.contains(execName))
+        throw BurnInException("Line " + std::to_string(line_count) + ": Unavailable DAQ command \"" + execName.toStdString() + "\"");
+    opts = _getQuotedString(line_stream);
+    
+    return new BurnInDAQCommand(execName, opts);
 }
 
 QString CommandProcessor::_getQuotedString(QTextStream& in) {

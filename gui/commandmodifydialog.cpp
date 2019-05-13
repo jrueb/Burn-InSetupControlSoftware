@@ -4,6 +4,7 @@
 #include <QLabel>
 #include <QSpinBox>
 #include <QComboBox>
+#include <QLineEdit>
 #include "general/JulaboFP50.h"
 
 CommandModifyDialog::CommandModifyDialog(QWidget *parent) :
@@ -142,10 +143,40 @@ double CommandModifyDialog::commandChillerSet(QWidget *parent, bool* ok, double 
     return value;
 }
 
-CommandModifyDialog::ModifyCommandHandler::ModifyCommandHandler(QWidget *parent_, bool* ok_, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources_):
+std::tuple<QString, QString> CommandModifyDialog::commandDAQCmd(QWidget *parent, const QStringList& executeables, bool* ok, QString execName, QString switches) {
+    CommandModifyDialog dialog(parent);
+    
+    QLabel* label1 = new QLabel("Execute DAQ ACF command", &dialog);
+    dialog.ui->horizontalLayout->insertWidget(0, label1);
+    
+    QComboBox* execCombo = new QComboBox(&dialog);
+    for (const auto& exec: executeables)
+        execCombo->addItem(exec);
+    if (execName != "")
+        execCombo->setCurrentText(execName);
+    dialog.ui->horizontalLayout->insertWidget(1, execCombo);
+    
+    QLabel* label2 = new QLabel("Options:");
+    dialog.ui->horizontalLayout->insertWidget(2, label2);
+    
+    QLineEdit* switchesEdit = new QLineEdit(&dialog);
+    switchesEdit->setMinimumWidth(100);
+    switchesEdit->setText(switches);
+    dialog.ui->horizontalLayout->insertWidget(3, switchesEdit);
+    
+    int res = dialog.exec();
+    execName = execCombo->currentText();
+    switches = switchesEdit->text();
+    
+    *ok = res == QDialog::Accepted;
+    return std::make_tuple(execName, switches);
+}
+
+CommandModifyDialog::ModifyCommandHandler::ModifyCommandHandler(QWidget *parent_, bool* ok_, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources_,  const QStringList& daqExecutables_):
     parent(parent_),
     ok(ok_),
-    voltageSources(voltageSources_) {
+    voltageSources(voltageSources_),
+    daqExecutables(daqExecutables_) {
 
 }
 
@@ -203,7 +234,16 @@ void CommandModifyDialog::ModifyCommandHandler::handleCommand(BurnInChillerSetCo
     command.value = value;
 }
 
-void CommandModifyDialog::modifyCommand(QWidget *parent, bool* ok, BurnInCommand* command, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources) {
-    CommandModifyDialog::ModifyCommandHandler handler(parent, ok, voltageSources);
+void CommandModifyDialog::ModifyCommandHandler::handleCommand(BurnInDAQCommand& command) {
+    std::tuple<QString, QString> ret = CommandModifyDialog::commandDAQCmd(parent, daqExecutables, ok, command.execName, command.opts);
+    if (not *ok)
+        return;
+    
+    command.execName = std::get<0>(ret);
+    command.opts = std::get<1>(ret);
+}
+
+void CommandModifyDialog::modifyCommand(QWidget *parent, bool* ok, BurnInCommand* command, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources, const QStringList& daqExecutables) {
+    CommandModifyDialog::ModifyCommandHandler handler(parent, ok, voltageSources, daqExecutables);
     command->accept(handler);
 }

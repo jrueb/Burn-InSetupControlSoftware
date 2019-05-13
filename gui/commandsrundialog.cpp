@@ -1,10 +1,12 @@
 #include "commandsrundialog.h"
 #include "ui_commandsrundialog.h"
 #include "commanddisplayer.h"
+#include "general/BurnInException.h"
 
 #include <QMessageBox>
 #include <QScrollBar>
 #include <functional>
+#include <QString>
 
 CommandExecuter::CommandExecuter(const QVector<BurnInCommand*>& commands, const SystemControllerClass* controller, QWidget *parent) :
     QObject(parent)
@@ -182,6 +184,25 @@ void CommandExecuter::CommandExecuteHandler::_waitForChiller(JulaboFP50* chiller
     while (not _executer->_shouldAbort and 
             std::abs(chiller->GetBathTemperature() - chiller->GetWorkingTemperature()) > CHILLER_TEMP_EPSILON)
         QThread::sleep(WAIT_INTERVAL);
+}
+
+void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInDAQCommand& command) {
+    DAQModule* module = _controller->getDaqModule();
+    if (module == nullptr) {
+        emit _executer->commandStatusUpdate(_n, "Error: No DAQ module connected");
+        error = true;
+        return;
+    }
+    
+    emit _executer->commandStatusUpdate(_n, "Running DAQ command");
+    try {
+        module->runACFBinary(command.execName, command.opts, true);
+    } catch (const BurnInException& e) {
+        emit _executer->commandStatusUpdate(_n, "Error: " + QString(e.what()));
+        error = true;
+        return;
+    }
+    emit _executer->commandStatusUpdate(_n, "DAQ command executed");
 }
 
 

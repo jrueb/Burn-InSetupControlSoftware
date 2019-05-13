@@ -28,3 +28,7 @@ void CommandDisplayer::handleCommand(BurnInChillerOutputCommand& command) {
 void CommandDisplayer::handleCommand(BurnInChillerSetCommand& command) {
     display = "Set chiller working temperature to " + QString::number(command.value) + " °C";
 }
+
+void CommandDisplayer::handleCommand(BurnInDAQCommand& command) {
+    display = "Execute DAQ ACF command " + command.execName + " " + command.opts;
+}

@@ -51,6 +51,7 @@ private:
     CommandProcessor* _proc;
     
     QMap<QString, QPair<int, PowerControlClass*>> _buildVoltageSourcesVector() const;
+    QStringList _getAvailableACFBinaries() const;
     void _addCommands(const QVector<BurnInCommand*>& commands);
 
 signals:
@@ -74,6 +75,7 @@ public slots:
     void onAddVoltageSourceAdd();
     void onAddChillerOutput();
     void onAddChillerSet();
+    void onAddDAQCmd();
 };
 
 #endif // COMMANDLISTPAGE_H

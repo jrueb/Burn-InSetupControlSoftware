@@ -1,5 +1,7 @@
 #include "burnincommand.h"
 
+#include <QFileInfo> 
+
 BurnInCommand::BurnInCommand(BurnInCommandType type) {
     _type = type;
 }
@@ -42,4 +44,11 @@ BurnInChillerSetCommand::BurnInChillerSetCommand(double value_):
     BurnInCommand(COMMAND_CHILLERSET) {
         
     value = value_;
+}
+
+BurnInDAQCommand::BurnInDAQCommand(QString execName_, QString opts_):
+    BurnInCommand(COMMAND_DAQCMD) {
+    
+    execName = execName_;
+    opts = opts_;
 }

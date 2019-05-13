@@ -20,8 +20,8 @@ public:
     
     void saveCommandList(const QVector<BurnInCommand*>& commandList, const QString& filePath) const;
     QString getCommandListAsString(const QVector<BurnInCommand*>& commandList) const;
-    QVector<BurnInCommand*> getCommandListFromFile(const QString& filePath, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources) const;
-    QVector<BurnInCommand*> getCommandListFromString(const QString& commandString, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources) const;
+    QVector<BurnInCommand*> getCommandListFromFile(const QString& filePath, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources, const QStringList& daqExecuteables) const;
+    QVector<BurnInCommand*> getCommandListFromString(const QString& commandString, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources, const QStringList& daqExecuteables) const;
 
 signals:
 
@@ -30,12 +30,13 @@ public slots:
 private:
     const SystemControllerClass* _controller;
     
-    QVector<BurnInCommand*> _parseCommands(QTextStream& in, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources) const;
+    QVector<BurnInCommand*> _parseCommands(QTextStream& in, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources, const QStringList& daqExecuteables) const;
     BurnInWaitCommand* _parseWaitCommand(const QString& line, int line_count) const;
     BurnInVoltageSourceOutputCommand* _parseVoltageSourceOutputCommand(const QString& line, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources, int line_count) const;
     BurnInVoltageSourceSetCommand* _parseVoltageSourceSetCommand(const QString& line, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources, int line_count) const;
     BurnInChillerOutputCommand* _parseChillerOutputCommand(const QString& line, int line_count) const;
     BurnInChillerSetCommand* _parseChillerSetCommand(const QString& line, int line_count) const;
+    BurnInDAQCommand* _parseDaqCMDCommand(const QString& line, const QStringList& daqExecuteables, int line_count) const;
     
     static QString _escapeName(const QString& name);
     static QString _getQuotedString(QTextStream& in);
@@ -50,6 +51,7 @@ private:
         void handleCommand(BurnInVoltageSourceSetCommand& command) override;
         void handleCommand(BurnInChillerOutputCommand& command) override;
         void handleCommand(BurnInChillerSetCommand& command) override;
+        void handleCommand(BurnInDAQCommand& command) override;
         
     private:
         QTextStream* out;

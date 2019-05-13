@@ -1,6 +1,8 @@
 #ifndef BURNINCOMMAND_H
 #define BURNINCOMMAND_H
 
+#include <QString>
+
 #include "general/systemcontrollerclass.h"
 
 enum BurnInCommandType {
@@ -9,6 +11,7 @@ enum BurnInCommandType {
     COMMAND_VOLTAGESOURCESET,
     COMMAND_CHILLEROUTPUT,
     COMMAND_CHILLERSET,
+    COMMAND_DAQCMD,
 };
 
 class AbstractCommandHandler;
@@ -30,6 +33,7 @@ class BurnInVoltageSourceOutputCommand;
 class BurnInVoltageSourceSetCommand;
 class BurnInChillerOutputCommand;
 class BurnInChillerSetCommand;
+class BurnInDAQCommand;
 
 class AbstractCommandHandler {
 public:
@@ -38,6 +42,7 @@ public:
     virtual void handleCommand(BurnInVoltageSourceSetCommand& command) = 0;
     virtual void handleCommand(BurnInChillerOutputCommand& command) = 0;
     virtual void handleCommand(BurnInChillerSetCommand& command) = 0;
+    virtual void handleCommand(BurnInDAQCommand& command) = 0;
 };
 
 class BurnInWaitCommand : public BurnInCommand {
@@ -94,6 +99,19 @@ public:
     }
 
     double value;
+};
+
+// Potentially dangerous: Itended to run DAQ commands but allows
+// running any binary the user has access to.
+class BurnInDAQCommand : public BurnInCommand {
+public:
+    BurnInDAQCommand(QString execName_, QString opts_);
+    void accept(AbstractCommandHandler& handler) override {
+        handler.handleCommand(*this);
+    }
+    
+    QString execName;
+    QString opts;
 };
 
 #endif // BURNINCOMMAND_H

@@ -6,7 +6,8 @@
 #include <QMap>
 #include <QPair>
 #include <QString>
-#include <general/commandprocessor.h>
+#include <QStringList>
+#include "general/commandprocessor.h"
 
 namespace Ui {
 class CommandModifyDialog;
@@ -30,24 +31,29 @@ public:
     static bool commandChillerOutput(QWidget *parent, bool* ok, bool on = true);
     static double commandChillerSet(QWidget *parent, bool* ok, double value = 0);
     
-    static void modifyCommand(QWidget *parent, bool* ok, BurnInCommand* command, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources);
+    /* DAQ dialogs */
+    static std::tuple<QString, QString> commandDAQCmd(QWidget *parent, const QStringList& executeables, bool* ok, QString execName = "", QString switches = "");
+    
+    static void modifyCommand(QWidget *parent, bool* ok, BurnInCommand* command, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources, const QStringList& daqExecutables);
 
 private:
     Ui::CommandModifyDialog *ui;
     
     class ModifyCommandHandler : public AbstractCommandHandler {
     public:
-        ModifyCommandHandler(QWidget *parent_, bool* ok_, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources);
+        ModifyCommandHandler(QWidget *parent_, bool* ok_, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources_, const QStringList& daqExecutables_);
         
         void handleCommand(BurnInWaitCommand& command) override;
         void handleCommand(BurnInVoltageSourceOutputCommand& command) override;
         void handleCommand(BurnInVoltageSourceSetCommand& command) override;
         void handleCommand(BurnInChillerOutputCommand& command) override;
         void handleCommand(BurnInChillerSetCommand& command) override;
+        void handleCommand(BurnInDAQCommand& command) override;
         
         QWidget* parent;
         bool* ok;
         const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources;
+        const QStringList& daqExecutables;
     };
 };
 

@@ -129,6 +129,10 @@ void CommandListPage::setSystemController(const SystemControllerClass* controlle
             action = _add_command_menu->addAction("Set chiller working temperature");
             connect(action, SIGNAL(triggered()), this, SLOT(onAddChillerSet()));
             break;
+        case COMMAND_DAQCMD:
+            action = _add_command_menu->addAction("Execute a DAQ command");
+            connect(action, SIGNAL(triggered()), this, SLOT(onAddDAQCmd()));
+            break;
         }
     }
 }
@@ -232,7 +236,7 @@ void CommandListPage::onCommandsListPaste() {
     const QMap<QString, QPair<int, PowerControlClass*>> voltageSources = _buildVoltageSourcesVector();
     QVector<BurnInCommand*> commands;
     try {
-        commands = _proc->getCommandListFromString(mimeData->text(), voltageSources);
+        commands = _proc->getCommandListFromString(mimeData->text(), voltageSources, _getAvailableACFBinaries());
     } catch (const BurnInException& e) {
         // Error during parsing of clipboard text. Do nothing
         return;
@@ -253,7 +257,8 @@ void CommandListPage::onChangeParamsButtonPressed() {
     CommandListItem* item = dynamic_cast<CommandListItem*>(_commands_list->currentItem());
     bool ok;
     QMap<QString, QPair<int, PowerControlClass*>> voltageSources = _buildVoltageSourcesVector();
-    CommandModifyDialog::modifyCommand(_commandListWidget->window(), &ok, item->command.get(), voltageSources);
+    QStringList daqExecuteables = _getAvailableACFBinaries();
+    CommandModifyDialog::modifyCommand(_commandListWidget->window(), &ok, item->command.get(), voltageSources, daqExecuteables);
     if (ok) {
         item->updateText();
         _commands_list_modified = true;
@@ -345,7 +350,7 @@ void CommandListPage::onOpenListPressed() {
     
     QVector<BurnInCommand*> commands;
     try {
-        commands = _proc->getCommandListFromFile(fileName, _buildVoltageSourcesVector());
+        commands = _proc->getCommandListFromFile(fileName, _buildVoltageSourcesVector(), _getAvailableACFBinaries());
     } catch (BurnInException& e) {
         qWarning("%s", e.what());
         QMessageBox dialog(_commandListWidget->window());
@@ -417,6 +422,14 @@ QMap<QString, QPair<int, PowerControlClass*>> CommandListPage::_buildVoltageSour
     return availSources;
 }
 
+QStringList CommandListPage::_getAvailableACFBinaries() const {
+    DAQModule* module = _controller->getDaqModule();
+    if (module == nullptr)
+        return QStringList();
+    else
+        return module->getAvailableACFBinaries();
+}
+
 void CommandListPage::onAddVoltageSourceOutput() {
     bool ok;
     QMap<QString, QPair<int, PowerControlClass*>> voltageSources = _buildVoltageSourcesVector();
@@ -469,6 +482,20 @@ void CommandListPage::onAddChillerSet() {
         return;
         
     auto command = std::make_shared<BurnInChillerSetCommand>(value);
+    
+    CommandListItem* item = new CommandListItem(command);
+    _commands_list->addItem(item);
+}
+
+void CommandListPage::onAddDAQCmd() {
+    bool ok;
+    std::tuple<QString, QString> ret = CommandModifyDialog::commandDAQCmd(_commandListWidget->window(), _getAvailableACFBinaries(), &ok);
+    if (not ok)
+        return;
+        
+    QString execName = std::get<0>(ret);
+    QString opts = std::get<1>(ret);
+    auto command = std::make_shared<BurnInDAQCommand>(execName, opts);
     
     CommandListItem* item = new CommandListItem(command);
     _commands_list->addItem(item);

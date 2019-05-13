@@ -50,6 +50,7 @@ private:
         void handleCommand(BurnInVoltageSourceSetCommand& command) override;
         void handleCommand(BurnInChillerOutputCommand& command) override;
         void handleCommand(BurnInChillerSetCommand& command) override;
+        void handleCommand(BurnInDAQCommand& command) override;
         
         bool error;
         
