@@ -5,6 +5,14 @@
 
 #include "general/systemcontrollerclass.h"
 
+/* How to add a new command type:
+ * 1. Add a command identifier to the BurnInCommandType enum
+ * 2. Add a command class implementing BurnInCommand
+ * 3. Fix all compiler errors that pop up
+ * 5. Add an else-if-case to CommandProcessor::_parseCommands of commandprocessor.cpp
+ * 6. Add the command type to the vector in CommandProcessor::getAvailableCommands() of commandprocessor.cpp
+ */
+
 enum BurnInCommandType {
     COMMAND_WAIT,
     COMMAND_VOLTAGESOURCEOUTPUT,
