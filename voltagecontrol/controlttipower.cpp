@@ -95,10 +95,14 @@ void ControlTTiPower::onPower(int pId)
     _commMutex.unlock();
     
     if (pId == 0) {
+        _power[0] = true;
+        _power[1] = true;
         emit powerStateChanged(true, 1);
         emit powerStateChanged(true, 2);
-    } else
+    } else {
+        _power[pId - 1] = true;
         emit powerStateChanged(true, pId);
+    }
 }
 
 void ControlTTiPower::offPower(int pId)
@@ -117,10 +121,14 @@ void ControlTTiPower::offPower(int pId)
     _commMutex.unlock();
     
     if (pId == 0) {
+        _power[0] = false;
+        _power[1] = false;
         emit powerStateChanged(false, 1);
         emit powerStateChanged(false, 2);
-    } else
+    } else {
         emit powerStateChanged(false, pId);
+        _power[pId - 1] = false;
+    }
 }
 
 bool ControlTTiPower::getPower(int pId) const {
