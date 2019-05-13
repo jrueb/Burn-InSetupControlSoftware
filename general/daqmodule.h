@@ -6,6 +6,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QStringList>
 #include <QVector>
 #include <initializer_list>
 
@@ -14,23 +15,31 @@ class DAQModule : public GenericInstrumentClass
     Q_OBJECT
     
 public:
-    DAQModule(const QString& fc7Port, const QString& controlhubPath, const QString& ph2acfPath, const QString& daqHwdescFile, const QString& daqImage);
+    DAQModule(const QString& fc7Port, const QString& controlhubPath, const QString& ph2acfPath, const QString& daqHwdescPath, const QString& daqImagePath);
     ~DAQModule();
-    DAQModule(const DAQModule&) = delete;
-    DAQModule& operator=(const DAQModule&) = delete;
     
     void initialize();
     
     void setFC7Power(bool power);
     bool getFC7Power() const;
     
+    QString getControlhubPath() const;
+    QString getACFPath() const;
+    QString getHwdescPath() const;
+    QString getImagePath() const;
+    
+    QStringList getAvailableACFBinaries() const;
+    
     void loadFirmware() const;
-    void runSystemTest() const;
-    void runCalibrate() const;
-    void runDatatest() const;
-    void runHybridtest() const;
-    void runCmtest() const;
-    void runNoiseMeasurement() const;
+    
+    /**
+     *  Run a binary from the bin directory of the Ph2_ACF in an extra
+     *  terminal window.
+     *  execName: Name of the binary to run
+     *  switches: Arguments to pass when executing
+     *  appendHWDesc: If true, append "-f <daqHwdescFile>" to the arguments
+     */
+    void runACFBinary(const QString& execName, const QVector<QString>& switches = {}, bool appendHWDesc = true) const;
     
     const int FC7SLEEP = 10000; //us
 
@@ -38,25 +47,20 @@ signals:
     void fc7PowerChanged(bool);
     
 private:
+    QString _controlhubPath;
     QString _contrStartPath;
+    QString _ph2acfPath;
     QString _ph2SetupPath;
     QString _ph2SetupCommand;
     QString _ph2FpgaConfigPath;
-    QString _ph2SystemtestPath;
-    QString _ph2DatatestPath;
-    QString _ph2CalibratePath;
-    QString _ph2HybridtestPath;
-    QString _ph2CmtestPath;
-    QString _ph2CommissionPath;
-    QString _daqHwdescFile;
-    QString _daqImage;
+    QString _daqHwdescPath;
+    QString _daqImagePath;
     
     char* _fc7Port;
     ComHandler* _fc7comhandler;
     bool _fc7power;
     
     QString _pathjoin(const std::initializer_list<const QString>& parts) const;
-    void _run_ph2_binary(const QString& name, const QString& path, const QVector<QString>& switches = {}) const;
 };
 
 #endif // DAQMODULE_H

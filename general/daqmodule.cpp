@@ -9,43 +9,27 @@
 
 #include <iostream>
 
-DAQModule::DAQModule(const QString& fc7Port, const QString& controlhubPath, const QString& ph2acfPath, const QString& daqHwdescFile, const QString& daqImage)
+DAQModule::DAQModule(const QString& fc7Port, const QString& controlhubPath, const QString& ph2acfPath, const QString& daqHwdescPath, const QString& daqImagePath)
 {
+	_controlhubPath = controlhubPath;
 	_contrStartPath = _pathjoin({controlhubPath, "bin", "controlhub_start"});
+	_ph2acfPath = ph2acfPath;
 	_ph2SetupPath = _pathjoin({ph2acfPath, "setup.sh"});
 	_ph2SetupCommand = "cd \"" + ph2acfPath + "\"; source \"" + _ph2SetupPath + "\"";
 	_ph2FpgaConfigPath = _pathjoin({ph2acfPath, "bin", "fpgaconfig"});
-	_ph2SystemtestPath = _pathjoin({ph2acfPath, "bin", "systemtest"});
-	_ph2DatatestPath = _pathjoin({ph2acfPath, "bin", "datatest"});
-	_ph2CalibratePath = _pathjoin({ph2acfPath, "bin", "calibrate"});
-	_ph2HybridtestPath = _pathjoin({ph2acfPath, "bin", "hybridtest"});
-	_ph2CmtestPath = _pathjoin({ph2acfPath, "bin", "cmtest"});
-	_ph2CommissionPath = _pathjoin({ph2acfPath, "bin", "commission"});
-	_daqHwdescFile = daqHwdescFile;
-	_daqImage = daqImage;
+	_daqHwdescPath = daqHwdescPath;
+	_daqImagePath = daqImagePath;
 	
 	_fc7Port = new char[fc7Port.length() + 1];
 	strcpy(_fc7Port, fc7Port.toUtf8().constData());
 	_fc7comhandler = nullptr;
 	_fc7power = false;
 	
-	// Check if all needed executables and files exist
+	// Check if all needed files are accessible
 	if (not QFileInfo(_contrStartPath).isExecutable())
 		throw BurnInException("Can not execute controlhub_start in controlhubPath " + _contrStartPath.toStdString());
-	if (not QFileInfo(_ph2SystemtestPath).isExecutable())
-		throw BurnInException("Can not execute systemtest in controlhubPath " + _ph2SystemtestPath.toStdString());
-	if (not QFileInfo(_ph2DatatestPath).isExecutable())
-		throw BurnInException("Can not execute datatest in controlhubPath " + _ph2DatatestPath.toStdString());
-	if (not QFileInfo(_ph2CalibratePath).isExecutable())
-		throw BurnInException("Can not execute calibrate in controlhubPath " + _ph2CalibratePath.toStdString());
-	if (not QFileInfo(_ph2HybridtestPath).isExecutable())
-		throw BurnInException("Can not execute hybridtest in controlhubPath " + _ph2HybridtestPath.toStdString());
-	if (not QFileInfo(_ph2CmtestPath).isExecutable())
-		throw BurnInException("Can not execute cmtest in controlhubPath " + _ph2CmtestPath.toStdString());
-	if (not QFileInfo(_ph2CommissionPath).isExecutable())
-		throw BurnInException("Can not execute commission in controlhubPath " + _ph2CommissionPath.toStdString());
-	if (not QFileInfo(_daqHwdescFile).isReadable())
-		throw BurnInException("Can not read daqHwdescFile " + _daqHwdescFile.toStdString());
+	if (not QFileInfo(_daqHwdescPath).isReadable())
+		throw BurnInException("Can not read daqHwdescFile " + _daqHwdescPath.toStdString());
 }
 
 DAQModule::~DAQModule() {
@@ -122,44 +106,43 @@ bool DAQModule::getFC7Power() const {
 	return _fc7power;
 }
 
+QString DAQModule::getControlhubPath() const {
+	return _controlhubPath;
+}
+
+QString DAQModule::getACFPath() const {
+	return _ph2acfPath;
+}
+
+QString DAQModule::getHwdescPath() const {
+	return _daqHwdescPath;
+}
+
+QString DAQModule::getImagePath() const {
+	return _daqImagePath;
+}
+
+QStringList DAQModule::getAvailableACFBinaries() const {
+	return QDir(_pathjoin({_ph2acfPath, "bin"})).entryList(QDir::Executable);
+}
+
 void DAQModule::loadFirmware() const {
 	QProcess fpgaconfig;
 	
-	QString cmd = _ph2SetupCommand + "; \"" + _ph2FpgaConfigPath + "\" -c \"" + _daqHwdescFile + "\" -i \"" + _daqImage + "\"; read";
+	QString cmd = _ph2SetupCommand + "; \"" + _ph2FpgaConfigPath + "\" -c \"" + _daqHwdescPath + "\" -i \"" + _daqImagePath + "\"; read";
 	if (not fpgaconfig.startDetached("/usr/bin/konsole", {"--hide-menubar", "--hide-tabbar", "-p", "HistoryMode=2", "-e", "bash", "-c", cmd}))
 		throw BurnInException("Unable to load firmware. Command: " + cmd.toStdString());
 }
 
-void DAQModule::runSystemTest() const {
-	_run_ph2_binary("systemtest", _ph2SystemtestPath);
-}
-
-void DAQModule::runDatatest() const {
-	_run_ph2_binary("datatest", _ph2DatatestPath);
-}
-
-void DAQModule::runCalibrate() const {
-	_run_ph2_binary("calibrate", _ph2CalibratePath, {"-n"});
-}
-
-void DAQModule::runHybridtest() const {
-	_run_ph2_binary("hybridtest", _ph2HybridtestPath);
-}
-
-void DAQModule::runCmtest() const {
-	_run_ph2_binary("cmtest", _ph2CmtestPath);
-}
-
-void DAQModule::runNoiseMeasurement() const {
-	_run_ph2_binary("noise measurement", _ph2CommissionPath, {"-n"});
-}
-
-void DAQModule::_run_ph2_binary(const QString& name, const QString& path, const QVector<QString>& switches) const {
+void DAQModule::runACFBinary(const QString& execName, const QVector<QString>& switches, bool appendHWDesc) const {
+	QString path = _pathjoin({_ph2acfPath, "bin", execName});
 	QString switches_str;
 	for (const auto& s: switches)
 		switches_str += "\"" + s + "\" ";
+	if (appendHWDesc)
+		switches_str += "-f \"" + _daqHwdescPath + "\" ";
 	
-	QString cmd = _ph2SetupCommand + "; \"" + path + "\" -f \"" + _daqHwdescFile + "\" " + switches_str + "; read";
+	QString cmd = _ph2SetupCommand + "; \"" + path + "\" " + switches_str + "; read";
 	if (not QProcess::startDetached("/usr/bin/konsole", {"--hide-menubar", "--hide-tabbar", "-p", "HistoryMode=2", "-e", "bash", "-c", cmd}))
-		throw BurnInException("Unable to run" + name.toStdString() + ". Command: " + cmd.toStdString());
+		throw BurnInException("Unable to run" + execName.toStdString() + ". Command: " + cmd.toStdString());
 }

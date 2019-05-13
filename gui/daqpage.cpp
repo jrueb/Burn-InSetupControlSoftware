@@ -60,27 +60,27 @@ void DAQPage::onLoadfirmwareClicked() {
 }
 
 void DAQPage::onSystemtestClicked() {
-    _module->runSystemTest();
+    _module->runACFBinary("systemtest");
 }
 
 void DAQPage::onCalibrateClicked() {
-    _module->runCalibrate();
+    _module->runACFBinary("calibrate", {"-n"});
 }
 
 void DAQPage::onDatatestClicked() {
-    _module->runDatatest();
+    _module->runACFBinary("datatest");
 }
 
 void DAQPage::onHybridtestClicked() {
-    _module->runHybridtest();
+    _module->runACFBinary("hybridtest");
 }
 
 void DAQPage::onCmtestClicked() {
-    _module->runCmtest();
+    _module->runACFBinary("cmtest");
 }
 
 void DAQPage::onNoiseMeasurementClicked() {
-    _module->runNoiseMeasurement();
+    _module->runACFBinary("commission", {"-n"});
 }
 
 
