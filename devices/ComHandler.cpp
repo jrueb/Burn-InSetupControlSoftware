@@ -13,7 +13,7 @@
 // Modified copy from https://github.com/DESY-FH-ELab/cmstkmodlab
 
 #include "ComHandler.h"
-#include "BurnInException.h"
+#include "general/BurnInException.h"
 
 #include <sys/select.h>
 #include <QtGlobal>

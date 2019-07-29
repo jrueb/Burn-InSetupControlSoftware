@@ -6,8 +6,8 @@
 #include <QMutex>
 #include <QTimer>
 
-#include "powercontrolclass.h"
-#include "general/ComHandler.h"
+#include "devices/power/powercontrolclass.h"
+#include "devices/ComHandler.h"
 
 class ControlKeithleyPower;
 

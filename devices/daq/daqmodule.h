@@ -1,8 +1,8 @@
 #ifndef DAQMODULE_H
 #define DAQMODULE_H
 
-#include "genericinstrumentclass.h"
-#include "ComHandler.h"
+#include "devices/genericinstrumentclass.h"
+#include "devices/ComHandler.h"
 
 #include <QObject>
 #include <QString>

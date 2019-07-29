@@ -1,6 +1,6 @@
 #include "daqmodule.h"
 
-#include "BurnInException.h"
+#include "general/BurnInException.h"
 
 #include <QDir>
 #include <QFileInfo>

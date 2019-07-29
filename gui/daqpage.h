@@ -1,7 +1,7 @@
 #ifndef DAQPAGE_H
 #define DAQPAGE_H
 
-#include "general/daqmodule.h"
+#include "devices/daq/daqmodule.h"
 
 #include <QObject>
 #include <QWidget>

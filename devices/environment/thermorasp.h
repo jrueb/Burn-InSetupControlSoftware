@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include "genericinstrumentclass.h"
+#include "devices/genericinstrumentclass.h"
 
 using namespace std;
 

@@ -34,20 +34,18 @@ UI_DIR = obj
 LIBS += -L/usr/local/lib/ -llxi
 
 SOURCES += \
-    additional/hwdescriptionparser.cpp \
-    general/ComHandler.cpp \
-    general/JulaboFP50.cpp \
-    general/thermorasp.cpp \
-    general/databaseinterfaceclass.cpp \
-    general/environmentcontrolclass.cpp \
-    general/genericinstrumentclass.cpp \
+    general/hwdescriptionparser.cpp \
+    devices/ComHandler.cpp \
+    devices/environment/JulaboFP50.cpp \
+    devices/environment/thermorasp.cpp \
+    devices/genericinstrumentclass.cpp \
     general/main.cpp \
     general/systemcontrollerclass.cpp \
     gui/mainwindow.cpp \
-    voltagecontrol/controlkeithleypower.cpp \
-    voltagecontrol/controlttipower.cpp \
-    voltagecontrol/powercontrolclass.cpp \
-    general/daqmodule.cpp \
+    devices/power/controlkeithleypower.cpp \
+    devices/power/controlttipower.cpp \
+    devices/power/powercontrolclass.cpp \
+    devices/daq/daqmodule.cpp \
     gui/daqpage.cpp \
     gui/commandlistpage.cpp \
     general/commandprocessor.cpp \
@@ -73,19 +71,17 @@ DISTFILES += \
     settings/hardware_description_desy.xml
 
 HEADERS += \
-    additional/hwdescriptionparser.h \
-    general/thermorasp.h \
-    general/databaseinterfaceclass.h \
-    general/environmentcontrolclass.h \
-    general/genericinstrumentclass.h \
+    general/hwdescriptionparser.h \
+    devices/environment/thermorasp.h \
+    devices/genericinstrumentclass.h \
     general/systemcontrollerclass.h \
     gui/mainwindow.h \
-    voltagecontrol/controlkeithleypower.h \
-    voltagecontrol/controlttipower.h \
-    voltagecontrol/powercontrolclass.h \
-    general/ComHandler.h \
-    general/JulaboFP50.h \
-    general/daqmodule.h \
+    devices/power/controlkeithleypower.h \
+    devices/power/controlttipower.h \
+    devices/power/powercontrolclass.h \
+    devices/ComHandler.h \
+    devices/environment/JulaboFP50.h \
+    devices/daq/daqmodule.h \
     gui/daqpage.h \
     gui/commandlistpage.h \
     general/commandprocessor.h \

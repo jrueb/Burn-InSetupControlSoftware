@@ -21,10 +21,9 @@
 
 #include <QMutexLocker> 
 
-#include "ComHandler.h"
-
 #include "JulaboFP50.h"
-#include "BurnInException.h"
+#include "devices/ComHandler.h"
+#include "general/BurnInException.h"
 
 //#####################
 // TODO:

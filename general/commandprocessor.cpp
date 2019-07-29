@@ -1,9 +1,11 @@
 #include "commandprocessor.h"
-#include "BurnInException.h"
+
+#include "general/BurnInException.h"
+#include "devices/environment/JulaboFP50.h"
+
 #include <QFile>
 #include <QChar>
 #include <cmath>
-#include "JulaboFP50.h"
 
 CommandProcessor::CommandProcessor(const SystemControllerClass* controller, QObject *parent) : QObject(parent) {
     _controller = controller;

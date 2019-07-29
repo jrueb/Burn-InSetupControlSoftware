@@ -16,7 +16,7 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "general/JulaboFP50.h"
+#include "devices/environment/JulaboFP50.h"
 #include "general/BurnInException.h"
 
 MainWindow::MainWindow(QWidget *parent) :

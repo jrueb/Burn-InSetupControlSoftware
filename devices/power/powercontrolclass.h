@@ -8,7 +8,7 @@ extern "C" {
 	#include "lxi.h"
 }
 
-#include "general/genericinstrumentclass.h"
+#include "devices/genericinstrumentclass.h"
 
 using namespace std;
 

@@ -6,14 +6,14 @@
 
 #include <QThread>
 
-#include "voltagecontrol/powercontrolclass.h"
-#include "voltagecontrol/controlttipower.h"
-#include "thermorasp.h"
-#include "voltagecontrol/controlkeithleypower.h"
-#include "JulaboFP50.h"
-#include "additional/hwdescriptionparser.h"
-#include "genericinstrumentclass.h"
-#include "daqmodule.h"
+#include "devices/genericinstrumentclass.h"
+#include "devices/power/powercontrolclass.h"
+#include "devices/power/controlttipower.h"
+#include "devices/power/controlkeithleypower.h"
+#include "devices/environment/thermorasp.h"
+#include "devices/environment/JulaboFP50.h"
+#include "devices/daq/daqmodule.h"
+#include "general/hwdescriptionparser.h"
 
 
 using namespace  std;

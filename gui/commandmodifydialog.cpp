@@ -5,7 +5,7 @@
 #include <QSpinBox>
 #include <QComboBox>
 #include <QLineEdit>
-#include "general/JulaboFP50.h"
+#include "devices/environment/JulaboFP50.h"
 
 CommandModifyDialog::CommandModifyDialog(QWidget *parent) :
     QDialog(parent),

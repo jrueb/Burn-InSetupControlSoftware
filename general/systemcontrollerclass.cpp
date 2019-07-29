@@ -10,9 +10,8 @@
 #include <QTime>
 
 #include "general/systemcontrollerclass.h"
-#include "additional/hwdescriptionparser.h"
-#include "JulaboFP50.h"
-#include "BurnInException.h"
+#include "devices/environment/JulaboFP50.h"
+#include "general/BurnInException.h"
 
 using namespace std;
 

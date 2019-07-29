@@ -24,7 +24,7 @@
 
 #include <QMutex>
 
-#include "genericinstrumentclass.h"
+#include "devices/genericinstrumentclass.h"
 
 typedef const char* ioport_t;
 class ComHandler;

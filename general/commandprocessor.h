@@ -6,7 +6,7 @@
 #include <QVector>
 #include <QTextStream>
 #include "general/systemcontrollerclass.h"
-#include "burnincommand.h"
+#include "general/burnincommand.h"
 
 class CommandProcessor : public QObject
 {

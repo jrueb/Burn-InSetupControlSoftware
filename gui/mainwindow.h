@@ -3,19 +3,18 @@
 
 #include <QMainWindow>
 #include <QMainWindow>
-#include "QPushButton"
-#include "QDoubleSpinBox"
-#include "QLCDNumber"
-#include "QCheckBox"
+#include <QPushButton>
+#include <QDoubleSpinBox>
+#include <QLCDNumber>
+#include <QCheckBox>
 #include <QListWidgetItem>
 #include <QStandardItemModel>
 #include <QLabel>
 
 #include "general/systemcontrollerclass.h"
-#include "general/environmentcontrolclass.h"
-#include "voltagecontrol/powercontrolclass.h"
-#include "commandlistpage.h"
-#include "daqpage.h"
+#include "devices/power/powercontrolclass.h"
+#include "gui/commandlistpage.h"
+#include "gui/daqpage.h"
 
 namespace Ui {
 class MainWindow;
