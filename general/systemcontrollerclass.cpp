@@ -10,6 +10,7 @@
 #include <QTime>
 
 #include "general/systemcontrollerclass.h"
+#include "devices/environment/chiller.h"
 #include "devices/environment/JulaboFP50.h"
 #include "general/BurnInException.h"
 
@@ -294,7 +295,7 @@ map<string, PowerControlClass* > SystemControllerClass::getVoltageSources() cons
     return fMapSources;
 }
 
-JulaboFP50* SystemControllerClass::getChiller() const {
+Chiller* SystemControllerClass::getChiller() const {
     return fChiller;
 }
 
@@ -330,9 +331,9 @@ void SystemControllerClass::_refreshingReadings() {
         }
     }
     
-    JulaboFP50* julabo = getChiller();
-    if (julabo)
-        julabo->refreshDeviceState();
+    Chiller* chiller = getChiller();
+    if (chiller)
+        chiller->refreshDeviceState();
     
     for (size_t n = 0; n < getNumRasps(); ++n)
         getThermorasp(n)->fetchReadings(500);

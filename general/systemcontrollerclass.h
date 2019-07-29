@@ -11,7 +11,7 @@
 #include "devices/power/controlttipower.h"
 #include "devices/power/controlkeithleypower.h"
 #include "devices/environment/thermorasp.h"
-#include "devices/environment/JulaboFP50.h"
+#include "devices/environment/chiller.h"
 #include "devices/daq/daqmodule.h"
 #include "general/hwdescriptionparser.h"
 
@@ -30,7 +30,7 @@ public:
     size_t getNumRasps() const;
     Thermorasp* getThermorasp(size_t n) const;
     
-    JulaboFP50* getChiller() const;
+    Chiller* getChiller() const;
     
     size_t getNumVoltageSources() const;
     map<string, PowerControlClass* > getVoltageSources() const;
@@ -72,7 +72,7 @@ private:
     DAQModule* _daqmodule;
     
     vector<Thermorasp*> fConnectRasps;
-    JulaboFP50* fChiller;
+    Chiller* fChiller;
     
     vector<GenericInstrumentDescription_t> fHWDescription;
     map<string, PowerControlClass* > fMapSources;

@@ -510,3 +510,11 @@ void JulaboFP50::Device_Init( void ) {
 
   isCommunication_ = true;
 }
+
+float JulaboFP50::GetMinTemp( void ) const {
+  return FP50LowerTempLimit;
+}
+
+float JulaboFP50::GetMaxTemp( void ) const {
+  return FP50UpperTempLimit;
+}

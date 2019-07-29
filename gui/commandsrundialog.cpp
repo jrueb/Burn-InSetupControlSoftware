@@ -1,6 +1,6 @@
 #include "commandsrundialog.h"
 #include "ui_commandsrundialog.h"
-#include "commanddisplayer.h"
+#include "gui/commanddisplayer.h"
 #include "general/BurnInException.h"
 
 #include <QMessageBox>
@@ -123,7 +123,7 @@ void CommandExecuter::CommandExecuteHandler::_waitForVoltage(PowerControlClass* 
 }
 
 void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInChillerOutputCommand& command) {
-    JulaboFP50* chiller = _controller->getChiller();
+    Chiller* chiller = _controller->getChiller();
     if (chiller == nullptr) {
         emit _executer->commandStatusUpdate(_n, "Error: No chiller connected");
         error = true;
@@ -155,7 +155,7 @@ void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInChillerOutputCo
 }
 
 void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInChillerSetCommand& command) {
-    JulaboFP50* chiller = _controller->getChiller();
+    Chiller* chiller = _controller->getChiller();
     if (chiller == nullptr) {
         emit _executer->commandStatusUpdate(_n, "Error: No chiller connected");
         error = true;
@@ -178,7 +178,7 @@ void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInChillerSetComma
     
 }
 
-void CommandExecuter::CommandExecuteHandler::_waitForChiller(JulaboFP50* chiller) {
+void CommandExecuter::CommandExecuteHandler::_waitForChiller(Chiller* chiller) {
     emit _executer->commandStatusUpdate(_n, "Waiting for bath to reach temperature");
     
     while (not _executer->_shouldAbort and 
@@ -258,13 +258,13 @@ void CommandsRunDialog::_setupDisplays(const SystemControllerClass* controller) 
         _updateDisplayLabel(label, source.first, source.second);
     }
     
-    JulaboFP50* chiller = controller->getChiller();
+    Chiller* chiller = controller->getChiller();
     if (chiller) {
         QLabel* label = new QLabel();
-        connect(chiller, &JulaboFP50::workingTemperatureChanged, this, [this, label, chiller](float) {
+        connect(chiller, &Chiller::workingTemperatureChanged, this, [this, label, chiller](float) {
             this->_updateDisplayLabel(label, "Chiller", chiller);
         });
-        connect(chiller, &JulaboFP50::circulatorStatusChanged, this, [this, label, chiller](bool) {
+        connect(chiller, &Chiller::circulatorStatusChanged, this, [this, label, chiller](bool) {
             this->_updateDisplayLabel(label, "Chiller", chiller);
         });
         ui->device_status_area->addWidget(label);
@@ -282,7 +282,7 @@ void CommandsRunDialog::_updateDisplayLabel(QLabel* label, std::string name, Pow
     label->setText(line);
 }
 
-void CommandsRunDialog::_updateDisplayLabel(QLabel* label, std::string name, JulaboFP50* chiller) {
+void CommandsRunDialog::_updateDisplayLabel(QLabel* label, std::string name, Chiller* chiller) {
     QString line = QString::fromStdString(name) + ": \n"
         + "    Circulator " + (chiller->GetCirculatorStatus() ? "on" : "off") + ", "
         + QString::number(chiller->GetWorkingTemperature()) + " °C";

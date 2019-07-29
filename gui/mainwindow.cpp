@@ -16,7 +16,7 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "devices/environment/JulaboFP50.h"
+#include "devices/environment/chiller.h"
 #include "general/BurnInException.h"
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -268,8 +268,8 @@ void MainWindow::on_OnOff_button_stateChanged(string pSourceName, int dev_num, i
             fControl->getObject(pSourceName)->offPower(0);
         }
     }
-    if(pSourceName == "JulaboFP50"){
-        JulaboFP50* chiller = dynamic_cast<JulaboFP50*>(fControl->getGenericInstrObj("JulaboFP50"));
+    if(pSourceName == "Chiller"){
+        Chiller* chiller = dynamic_cast<Chiller*>(fControl->getGenericInstrObj("JulaboFP50"));
         if(pArg){
             gui_chiller->setTemperature->setEnabled(false);
             
@@ -393,29 +393,21 @@ void MainWindow::_connectJulabo() {
         return;
     }
     
-    JulaboFP50* chiller = dynamic_cast<JulaboFP50*>(fControl->getGenericInstrObj("JulaboFP50"));
+    Chiller* chiller = dynamic_cast<Chiller*>(fControl->getGenericInstrObj("JulaboFP50"));
     output_Chiller* widget = gui_chiller;
     
-    connect(chiller, &JulaboFP50::circulatorStatusChanged, this, [widget](bool on) {
+    connect(chiller, &Chiller::circulatorStatusChanged, this, [widget](bool on) {
         QSignalBlocker blocker(widget->onoff_button);
         widget->onoff_button->setChecked(on);
         widget->setTemperature->setEnabled(not on);
     });
-    connect(chiller, &JulaboFP50::workingTemperatureChanged, this, [widget](float temperature) {
+    connect(chiller, &Chiller::workingTemperatureChanged, this, [widget](float temperature) {
         QSignalBlocker blocker(widget->setTemperature);
         widget->setTemperature->setValue(temperature);
     });
-    connect(chiller, &JulaboFP50::bathTemperatureChanged, this, [widget](float temperature) {
+    connect(chiller, &Chiller::bathTemperatureChanged, this, [widget](float temperature) {
         QSignalBlocker blocker(widget->bathTemperature);
         widget->bathTemperature->display(temperature);
-    });
-    connect(chiller, &JulaboFP50::safetySensorTemperatureChanged, this, [widget](float temperature) {
-        QSignalBlocker blocker(widget->sensorTemperature);
-        widget->sensorTemperature->display(temperature);
-    });
-    connect(chiller, &JulaboFP50::pumpPressureChanged, this, [widget](unsigned int pressureStage) {
-        QSignalBlocker blocker(widget->pressure);
-        widget->pressure->display(QString::number(pressureStage));
     });
 }
 
@@ -492,11 +484,11 @@ bool MainWindow::readXmlFile()
                 gui_raspberrys.push_back(SetRaspberryOutput(ui->envMonitorLayout, rasp->getSensorNames(), i.first));
             }
 
-            if( dynamic_cast<JulaboFP50*>(i.second) ){
+            if( dynamic_cast<Chiller*>(i.second) ){
                 gui_chiller = SetChillerOutput(ui->envControlLayout , i.first);
 
                 connect(gui_chiller->onoff_button, &QCheckBox::toggled, [this](bool pArg)
-                {this->on_OnOff_button_stateChanged("JulaboFP50", 0, 0, pArg);});
+                {this->on_OnOff_button_stateChanged("Chiller", 0, 0, pArg);});
             }
         }
         
@@ -579,7 +571,7 @@ void MainWindow::app_quit() {
     qDebug("Qutting");
     // Set chillder temperature and turn off
     if (fControl != nullptr and fControl->countInstrument("JulaboFP50") > 0) {
-        JulaboFP50* chiller = dynamic_cast<JulaboFP50*>(fControl->getGenericInstrObj("JulaboFP50"));
+        Chiller* chiller = dynamic_cast<Chiller*>(fControl->getGenericInstrObj("JulaboFP50"));
         chiller->SetWorkingTemperature(20);
         chiller->SetCirculatorOff();
     }

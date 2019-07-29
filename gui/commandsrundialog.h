@@ -64,7 +64,7 @@ private:
         const SystemControllerClass* _controller;
         
         void _waitForVoltage(PowerControlClass* source, int output);
-        void _waitForChiller(JulaboFP50* chiller);
+        void _waitForChiller(Chiller* chiller);
     };
     
 };
@@ -98,7 +98,7 @@ private:
     
     void _setupDisplays(const SystemControllerClass* controller);
     void _updateDisplayLabel(QLabel* label, std::string name, PowerControlClass* source);
-    void _updateDisplayLabel(QLabel* label, std::string name, JulaboFP50* chiller);
+    void _updateDisplayLabel(QLabel* label, std::string name, Chiller* chiller);
     void _logMessage(QString message);
 };
 

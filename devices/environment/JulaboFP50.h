@@ -24,11 +24,11 @@
 
 #include <QMutex>
 
-#include "devices/genericinstrumentclass.h"
+#include "devices/environment/chiller.h"
 
 typedef const char* ioport_t;
 class ComHandler;
-class JulaboFP50: public GenericInstrumentClass
+class JulaboFP50: public Chiller
 {
   Q_OBJECT
   
@@ -63,6 +63,8 @@ class JulaboFP50: public GenericInstrumentClass
   bool LoadControlParametersAndApply( const std::string& );
   void StripBuffer( char* ) const;
   
+  float GetMaxTemp(void) const;
+  float GetMinTemp(void) const;
   static constexpr int FP50LowerTempLimit = -50;
   static constexpr int FP50UpperTempLimit =  55;
   

@@ -52,7 +52,8 @@ SOURCES += \
     gui/commandmodifydialog.cpp \
     general/burnincommand.cpp \
     gui/commandsrundialog.cpp \
-    gui/commanddisplayer.cpp
+    gui/commanddisplayer.cpp \
+    devices/environment/chiller.cpp
 
 
 
@@ -88,4 +89,5 @@ HEADERS += \
     gui/commandmodifydialog.h \
     general/burnincommand.h \
     gui/commandsrundialog.h \
-    gui/commanddisplayer.h
+    gui/commanddisplayer.h \
+    devices/environment/chiller.h
