@@ -42,7 +42,7 @@
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <property name="usesScrollButtons">
        <bool>true</bool>
@@ -227,7 +227,7 @@
              <property name="widgetResizable">
               <bool>false</bool>
              </property>
-             <widget class="QWidget" name="lowVoltageControls">
+             <widget class="QWidget" name="lowVoltageContents">
               <property name="geometry">
                <rect>
                 <x>0</x>
@@ -278,7 +278,7 @@
              <property name="widgetResizable">
               <bool>false</bool>
              </property>
-             <widget class="QWidget" name="highVoltageControls">
+             <widget class="QWidget" name="highVoltageContents">
               <property name="geometry">
                <rect>
                 <x>0</x>
@@ -341,12 +341,12 @@
                <property name="widgetResizable">
                 <bool>false</bool>
                </property>
-               <widget class="QWidget" name="scrollAreaWidgetContents_3">
+               <widget class="QWidget" name="envMonitorContents">
                 <property name="geometry">
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>775</width>
+                  <width>750</width>
                   <height>276</height>
                  </rect>
                 </property>
@@ -386,7 +386,7 @@
                <property name="widgetResizable">
                 <bool>false</bool>
                </property>
-               <widget class="QWidget" name="scrollAreaWidgetContents_4">
+               <widget class="QWidget" name="envControlContents">
                 <property name="geometry">
                  <rect>
                   <x>0</x>

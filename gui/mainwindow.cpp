@@ -554,14 +554,23 @@ void MainWindow::on_read_conf_button_clicked()
                 delete p;
             gui_raspberrys.clear();
             delete gui_chiller;
-            qDeleteAll(ui->groupBox->children());
-            delete ui->groupBox->layout();
-            qDeleteAll(ui->groupBox_2->children());
-            delete ui->groupBox_2->layout();
-            qDeleteAll(ui->groupBox_3->children());
-            delete ui->groupBox_3->layout();
-            qDeleteAll(ui->groupBox_Chiller->children());
-            delete ui->groupBox_Chiller->layout();
+
+            for (const auto& child : ui->lowVoltageContents->children()) {
+                if (child != ui->lowVoltageLayout)
+                    delete child;
+            }
+            for (const auto& child : ui->highVoltageContents->children()) {
+                if (child != ui->highVoltageLayout)
+                    delete child;
+            }
+            for (const auto& child : ui->envMonitorContents->children()) {
+                if (child != ui->envMonitorLayout)
+                    delete child;
+            }
+            for (const auto& child : ui->envControlContents->children()) {
+                if (child != ui->envControlLayout)
+                    delete child;
+            }
         }
     }
 }
