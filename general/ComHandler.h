@@ -10,6 +10,8 @@
 //                                                                             //
 /////////////////////////////////////////////////////////////////////////////////
 
+// Modified copy from https://github.com/DESY-FH-ELab/cmstkmodlab
+
 #ifndef _COMHANDLER_H_
 #define _COMHANDLER_H_
 

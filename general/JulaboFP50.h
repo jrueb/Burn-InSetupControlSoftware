@@ -10,6 +10,8 @@
 //                                                                             //
 /////////////////////////////////////////////////////////////////////////////////
 
+// Modified copy from https://github.com/DESY-FH-ELab/cmstkmodlab
+
 #ifndef __JULABOFP50_H
 #define __JULABOFP50_H
 

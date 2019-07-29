@@ -10,6 +10,8 @@
 //                                                                             //
 /////////////////////////////////////////////////////////////////////////////////
 
+// Modified copy from https://github.com/DESY-FH-ELab/cmstkmodlab
+
 #include <iostream>
 #include <string>
 #include <sstream>
