@@ -1,176 +1,55 @@
 #include <iostream>
 #include <typeinfo>
 
-#include <QFile>
 #include <QFileDialog>
-#include <QThread>
-#include <QStandardItemModel>
-#include <QTimer>
-#include <QAbstractItemModel>
 #include <QMessageBox>
-#include <QPushButton>
 #include <QDoubleSpinBox>
 #include <QLCDNumber>
-#include <QVBoxLayout>
 #include <QLabel>
+#include <QFormLayout>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "devices/environment/chiller.h"
 #include "general/BurnInException.h"
+#include "general/hwdescriptionparser.h"
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
+DeviceWidget::DeviceWidget(const QString& title)
+    : QGroupBox(title)
 {
-    ui->setupUi(this);
-    commandListPage = new CommandListPage(ui->CommandList);
-    daqPage = new DAQPage(ui->DAQControl);
-
-    fControl = nullptr;
     
-    ui->tabWidget->setEnabled(false);
 }
 
-MainWindow::~MainWindow()
-{
-    delete ui;
-}
-
-output_pointer_t MainWindow::SetSourceOutputLayout() const
-{
-    // create pointer list
-    output_pointer_t cOutputPointers;
-
-    // i/v set
-    cOutputPointers.i_set = new QDoubleSpinBox();
-    cOutputPointers.i_set->setMaximumHeight(20);
-    cOutputPointers.i_set->setDecimals(3);
-    cOutputPointers.i_set->setSuffix(" A");
-    cOutputPointers.v_set = new QDoubleSpinBox();
-    cOutputPointers.v_set->setMaximumHeight(20);
-    cOutputPointers.v_set->setMinimum(-100000);
-    cOutputPointers.v_set->setDecimals(3);
-    cOutputPointers.v_set->setSuffix(" V");
-
-    // applied
-    cOutputPointers.i_applied = new QLCDNumber();
-    cOutputPointers.i_applied->setMaximumHeight(20);
-    cOutputPointers.i_applied->setSegmentStyle(QLCDNumber::Flat);
-    cOutputPointers.i_applied->setDigitCount(8);
-    cOutputPointers.v_applied = new QLCDNumber();
-    cOutputPointers.v_applied->setMaximumHeight(20);
-    cOutputPointers.v_applied->setSegmentStyle(QLCDNumber::Flat);
-    cOutputPointers.v_applied->setDigitCount(8);
+VoltageSourceWidgetControls::VoltageSourceWidgetControls() {
+    i_set = new QDoubleSpinBox();
+    i_set->setMaximumHeight(20);
+    i_set->setDecimals(3);
+    i_set->setSuffix(" A");
+    v_set = new QDoubleSpinBox();
+    v_set->setMaximumHeight(20);
+    v_set->setMinimum(-100000);
+    v_set->setDecimals(3);
+    v_set->setSuffix(" V");
+    i_applied = new QLCDNumber();
+    i_applied->setMaximumHeight(20);
+    i_applied->setSegmentStyle(QLCDNumber::Flat);
+    i_applied->setDigitCount(8);
+    v_applied = new QLCDNumber();
+    v_applied->setMaximumHeight(20);
+    v_applied->setSegmentStyle(QLCDNumber::Flat);
+    v_applied->setDigitCount(8);
 
     // on off
-    cOutputPointers.onoff_button = new QCheckBox("On");
-    cOutputPointers.onoff_button->setMaximumHeight(20);
-
-    // return
-    return cOutputPointers;
+    onoff_button = new QCheckBox("On");
+    onoff_button->setMaximumHeight(20);
 }
 
-output_Raspberry MainWindow::setRaspberryLayout(string pName)
+VoltageSourceWidget::VoltageSourceWidget(const QString& title, PowerControlClass* device, bool settersAlwaysEnabled)
+    : DeviceWidget(title)
 {
-    output_Raspberry cOutputRaspberry;
-
-    cOutputRaspberry.layout = new QHBoxLayout;
-
-    cOutputRaspberry.label = new QLabel(QString::fromStdString(pName));
-    cOutputRaspberry.label->setMaximumHeight(20);
-    cOutputRaspberry.value = new QLCDNumber();
-    cOutputRaspberry.value->setMaximumHeight(20);
-    cOutputRaspberry.layout->addWidget(cOutputRaspberry.label);
-    cOutputRaspberry.value->setSegmentStyle(QLCDNumber::Flat);
-
-    cOutputRaspberry.layout->addWidget(cOutputRaspberry.value);
-
-    return cOutputRaspberry;
-}
-
-output_Chiller MainWindow::setChilerLayout()
-{
-    output_Chiller cOutputPointers;
-
-    cOutputPointers.setTemperature = new QDoubleSpinBox();
-    cOutputPointers.setTemperature->setMaximumHeight(20);
-    cOutputPointers.setTemperature->setMinimum(-100000);
-    cOutputPointers.setTemperature->setSuffix(" °C");
-
-    cOutputPointers.bathTemperature = new QLCDNumber();
-    cOutputPointers.bathTemperature->setMaximumHeight(20);
-    cOutputPointers.bathTemperature->setSegmentStyle(QLCDNumber::Flat);
-    cOutputPointers.bathTemperature->setDigitCount(6);
-
-    cOutputPointers.sensorTemperature = new QLCDNumber();
-    cOutputPointers.sensorTemperature->setMaximumHeight(20);
-    cOutputPointers.sensorTemperature->setSegmentStyle(QLCDNumber::Flat);
-    cOutputPointers.sensorTemperature->setDigitCount(6);
-
-    cOutputPointers.pressure = new QLCDNumber();
-    cOutputPointers.pressure->setMaximumHeight(20);
-    cOutputPointers.pressure->setSegmentStyle(QLCDNumber::Flat);
-
-    // on off
-    cOutputPointers.onoff_button = new QCheckBox("On");
-    cOutputPointers.onoff_button->setMaximumHeight(20);
-
-    return cOutputPointers;
-}
-
-output_Chiller* MainWindow::SetChillerOutput(QLayout *pMainLayout, string pName)
-{
-    // output pointers
-    output_Chiller *cOutputPointers = new output_Chiller[1];
-
-    // horizontal layout
-    QGroupBox *group_box = new QGroupBox(pName.c_str());
-    QGridLayout *group_box_layout = new QGridLayout;
-
-    QSize size(80,20);
-
-    // set the labels
-    QLabel *label_t_set = new QLabel("Temperature set:");
-    label_t_set->setMinimumSize(size);
-    group_box_layout->addWidget(label_t_set, 0, 0);
-    QLabel *label_t_bath = new QLabel("Temperature bath, °C:");
-    label_t_bath->setMinimumSize(size);
-    group_box_layout->addWidget(label_t_bath, 1, 0);
-    QLabel *label_t_sensor = new QLabel("Temperature sensor, °C:");
-    label_t_sensor->setMinimumSize(size);
-    group_box_layout->addWidget(label_t_sensor, 2, 0);
-    QLabel *label_pressure = new QLabel("Pressure stage:");
-    label_pressure->setMinimumSize(size);
-    group_box_layout->addWidget(label_pressure, 3, 0);
-    QLabel *label_on_off = new QLabel("On/Off:");
-    label_on_off->setMinimumSize(size);
-    group_box_layout->addWidget(label_on_off, 4, 0);
-
-    cOutputPointers[0] = setChilerLayout();
-    group_box_layout->addWidget(cOutputPointers[0].setTemperature, 0, 1);
-    group_box_layout->addWidget(cOutputPointers[0].bathTemperature, 1, 1);
-    group_box_layout->addWidget(cOutputPointers[0].sensorTemperature, 2, 1);
-    group_box_layout->addWidget(cOutputPointers[0].pressure, 3, 1);
-    group_box_layout->addWidget(cOutputPointers[0].onoff_button, 4, 1);
-
-    group_box->setLayout(group_box_layout);
-
-    // finally add to the main layout
-    pMainLayout->addWidget(group_box);
-
-    // return everything
-    return cOutputPointers;
-}
-
-output_pointer_t* MainWindow::SetVoltageSource(QLayout *pMainLayout, std::string pName, std::string pType, int pNoutputs)
-{
-    // create the output pointers
-    output_pointer_t* cOutputPointers = new output_pointer_t[pNoutputs];
-
-    // horizontal layout
-    QGroupBox *group_box = new QGroupBox(pName.c_str());
-    QGridLayout *group_box_layout = new QGridLayout;
+    _device = device;
+    _settersAlwaysEnabled = settersAlwaysEnabled;
+    setTitle(title);
+    QGridLayout *group_box_layout = new QGridLayout(this);
 
     QSize size(300, 20);
 
@@ -194,249 +73,197 @@ output_pointer_t* MainWindow::SetVoltageSource(QLayout *pMainLayout, std::string
     label_onoff->setMinimumSize(size);
     group_box_layout->addWidget(label_onoff, 5, 0);
 
-    // set the outputs
-    for (int i = 0; i < pNoutputs; i++) {
-        cOutputPointers[i] = SetSourceOutputLayout();
-        QLabel *type = new QLabel(pType.c_str());
-        type->setMaximumHeight(20);
-        group_box_layout->addWidget(type, 0, i + 1);
-        group_box_layout->addWidget(cOutputPointers[i].i_set, 1, i + 1);
-        group_box_layout->addWidget(cOutputPointers[i].v_set, 2, i + 1);
-        group_box_layout->addWidget(cOutputPointers[i].i_applied, 3, i + 1);
-        group_box_layout->addWidget(cOutputPointers[i].v_applied, 4, i + 1);
-        group_box_layout->addWidget(cOutputPointers[i].onoff_button, 5, i + 1);
-    }
-
-    // set the group box
-    group_box->setLayout(group_box_layout);
-
-    // finally add to the main layout
-    pMainLayout->addWidget(group_box);
-
-    // return everything
-    return cOutputPointers;
-}
-
-output_Raspberry* MainWindow::SetRaspberryOutput(QLayout *pMainLayout , vector<string> pNames , string pNameGroupBox)
-{
-    output_Raspberry* cOutputPointers = new output_Raspberry[pNames.size()];
-
-    QGroupBox *group_box = new QGroupBox(QString::fromStdString(pNameGroupBox));
-
-    QHBoxLayout *cLayout_group_box = new QHBoxLayout;
-
-    QVBoxLayout *cLayout_raspberry = new QVBoxLayout;
-    for(size_t i = 0 ; i < pNames.size() ; i++){
-        cOutputPointers[i] = setRaspberryLayout(pNames[i]);
-        cLayout_raspberry->addItem(cOutputPointers[i].layout);
-        cLayout_raspberry->addSpacing(15);
-    }
-    //cLayout_raspberry->addStretch();
-    QSpacerItem *item = new QSpacerItem(0 , 100 ,QSizePolicy::Expanding, QSizePolicy::Fixed);
-    cLayout_raspberry->addItem(item);
-
-    cLayout_group_box->addItem(cLayout_raspberry);
-
-    group_box->setLayout(cLayout_group_box);
-
-    pMainLayout->addWidget(group_box);
-
-    return cOutputPointers;
-}
-
-void MainWindow::on_OnOff_button_stateChanged(string pSourceName, int dev_num, int pId, bool pArg)
-{
-    if(pSourceName.substr(0, 3) == "TTI"){
-        if(pArg){
-
-            fControl->getObject(pSourceName)->setVolt(gui_pointers_low_voltage[dev_num][2 - pId].v_set->value(), pId);
-            fControl->getObject(pSourceName)->setCurr(gui_pointers_low_voltage[dev_num][2 - pId].i_set->value(), pId);
-            fControl->getObject(pSourceName)->onPower(pId);
-        }
-        else{
-            fControl->getObject(pSourceName)->offPower(pId);
-        }
-    }
-    if(pSourceName == "Keithley2410"){
-
-        if(pArg){
-            fControl->getObject(pSourceName)->setVolt(gui_pointers_high_voltage[dev_num]->v_set->value(), pId);
-            fControl->getObject(pSourceName)->setCurr(gui_pointers_high_voltage[dev_num]->i_set->value(), pId);
-            fControl->getObject(pSourceName)->onPower(0);
-        }
-        else{
-            fControl->getObject(pSourceName)->offPower(0);
-        }
-    }
-    if(pSourceName == "Chiller"){
-        Chiller* chiller = dynamic_cast<Chiller*>(fControl->getGenericInstrObj("JulaboFP50"));
-        if(pArg){
-            gui_chiller->setTemperature->setEnabled(false);
-            
-            chiller->SetWorkingTemperature(gui_chiller->setTemperature->value());
-            chiller->SetCirculatorOn();
-        }
-        else{
-            gui_chiller->setTemperature->setEnabled(true);
-            
-            chiller->SetCirculatorOff();
-        }
-    }
-}
-
-//Set func
-void MainWindow::on_V_set_doubleSpinBox_valueChanged(string pSourceName, int pId, double pVolt)
-{
-    fControl->getObject(pSourceName)->setVolt(pVolt, pId);
-    QThread::sleep(0.5);
-}
-
-void MainWindow::on_I_set_doubleSpinBox_valueChanged(string pSourceName , int pId, double pCurr)
-{
-    fControl->getObject(pSourceName)->setCurr(pCurr, pId);
-    QThread::sleep(0.5);
-}
-
-void MainWindow::_connectTTi() {
-    const vector<string> sources = fControl->getSourceNameVec();
-    int dev_num = 0;
-    for (const string& name: sources) {
-        if (name.substr(0, 3) != "TTI")
-            continue;
-            
-        ControlTTiPower* ttidev = dynamic_cast<ControlTTiPower*>(fControl->getGenericInstrObj(name));
-        output_pointer_t* widgets = gui_pointers_low_voltage[dev_num];
+    for (int i = 0; i < device->getNumOutputs(); i++) {
+        VoltageSourceWidgetControls control;
+        //QLabel *type = new QLabel(pType.c_str());
+        //type->setMaximumHeight(20);
+        //group_box_layout->addWidget(type, 0, i + 1);
+        group_box_layout->addWidget(control.i_set, 1, i + 1);
+        group_box_layout->addWidget(control.v_set, 2, i + 1);
+        group_box_layout->addWidget(control.i_applied, 3, i + 1);
+        group_box_layout->addWidget(control.v_applied, 4, i + 1);
+        group_box_layout->addWidget(control.onoff_button, 5, i + 1);
+        _controls.push_back(control);
         
-        connect(ttidev, &ControlTTiPower::voltSetChanged, this, [widgets, dev_num](double volt, int id) {
-            QDoubleSpinBox* box = widgets[2 - id].v_set;
-            QSignalBlocker blocker(box);
-            box->setValue(volt);
+        connect(control.onoff_button, &QCheckBox::toggled, this, [this, i](bool state) {
+            this->onOnOffToggled(i, state);
         });
-        connect(ttidev, &ControlTTiPower::currSetChanged, this, [widgets, dev_num](double curr, int id) {
-            QDoubleSpinBox* box = widgets[2 - id].i_set;
-            QSignalBlocker blocker(box);
-            box->setValue(curr);
-        });
-        connect(ttidev, &ControlTTiPower::voltAppChanged, this, [widgets, dev_num](double volt, int id) {
-            QLCDNumber* num = widgets[2 - id].v_applied;
-            QSignalBlocker blocker(num);
-            // If a small number needs too many digits, display() seems to do nothing.
-            if (abs(volt) < 0.0001)
-                num->display(0.);
-            else
-                num->display(volt);
-        });
-        connect(ttidev, &ControlTTiPower::currAppChanged, this, [widgets, dev_num](double curr, int id) {
-            QLCDNumber* num = widgets[2 - id].i_applied;
-            QSignalBlocker blocker(num);
-            if (abs(curr) < 0.0001)
-                num->display(0.);
-            else
-                num->display(curr);
-        });
-        connect(ttidev, &ControlTTiPower::powerStateChanged, this, [widgets, dev_num](bool on, int id) {
-            QCheckBox* box = widgets[2 - id].onoff_button;
-            QSignalBlocker blocker(box);
-            box->setChecked(on);
-        });
-        
-        ++dev_num;
+        if (settersAlwaysEnabled) {
+            connect(control.v_set, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, [device, i](double voltage) {
+                device->setVolt(voltage, i);
+            });
+            connect(control.i_set, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, [device, i](double current) {
+               device->setCurr(current, i);
+            });
+        }
     }
-    if (dev_num == 0) {
-        ui->groupBox->setEnabled(false);
-        return;
+
+    setLayout(group_box_layout);
+}
+
+void VoltageSourceWidget::onOnOffToggled(int output, bool state) {
+    if (state) {
+        _device->setVolt(_controls[output].v_set->value(), output);
+        _device->setCurr(_controls[output].i_set->value(), output);
+        _device->onPower(output);
+    } else {
+        _device->offPower(output);
     }
 }
 
-void MainWindow::_connectKeithley() {
-    if (fControl->countInstrument("Keithley2410") == 0) {
-        ui->groupBox_2->setEnabled(false);
-        return;
-    }
-    
-    ControlKeithleyPower* keihleydev = dynamic_cast<ControlKeithleyPower*>(fControl->getGenericInstrObj("Keithley2410"));
-    output_pointer_t* widget = gui_pointers_high_voltage[0];
-
-    connect(keihleydev, &ControlKeithleyPower::voltSetChanged, this, [widget](double volt, int) {
-        QSignalBlocker blocker(widget->v_set);
-        widget->v_set->setValue(volt);
+void VoltageSourceWidget::initialize() {
+    connect(_device, &PowerControlClass::voltSetChanged, this, [this](double volt, int output) {
+        QDoubleSpinBox* box = this->_controls[output].v_set;
+        QSignalBlocker blocker(box);
+        box->setValue(volt);
     });
-    connect(keihleydev, &ControlKeithleyPower::currSetChanged, this, [widget](double curr, int) {
-        QSignalBlocker blocker(widget->i_set);
-        widget->i_set->setValue(curr);
+    connect(_device, &PowerControlClass::currSetChanged, this, [this](double curr, int output) {
+        QDoubleSpinBox* box = this->_controls[output].i_set;
+        QSignalBlocker blocker(box);
+        box->setValue(curr);
     });
-    connect(keihleydev, &ControlKeithleyPower::voltAppChanged, this, [widget](double volt, int) {
-        QSignalBlocker blocker(widget->v_applied);
+    connect(_device, &PowerControlClass::voltAppChanged, this, [this](double volt, int output) {
+        QLCDNumber* num = this->_controls[output].v_applied;
+        QSignalBlocker blocker(num);
+        // If a small number needs too many digits, display() seems to do nothing.
         if (abs(volt) < 0.0001)
-            widget->v_applied->display(0.);
+            num->display(0.);
         else
-            widget->v_applied->display(volt);
+            num->display(volt);
     });
-    connect(keihleydev, &ControlKeithleyPower::currAppChanged, this, [widget](double curr, int) {
-        QSignalBlocker blocker(widget->i_applied);
+    connect(_device, &PowerControlClass::currAppChanged, this, [this](double curr, int output) {
+        QLCDNumber* num = this->_controls[output].i_applied;
+        QSignalBlocker blocker(num);
         if (abs(curr) < 0.0001)
-            widget->i_applied->display(0.);
+            num->display(0.);
         else
-            widget->i_applied->display(curr);
+            num->display(curr);
     });
-    connect(keihleydev, &ControlKeithleyPower::powerStateChanged, this, [widget](bool on, int) {
-        QSignalBlocker blocker(widget->onoff_button);
-        widget->onoff_button->setChecked(on);
-        widget->v_set->setEnabled(not on);
-        widget->i_set->setEnabled(not on);
-    });
-}
-
-void MainWindow::_connectJulabo() {
-    if (fControl->countInstrument("JulaboFP50") == 0) {
-        ui->groupBox_Chiller->setEnabled(false);
-        return;
-    }
-    
-    Chiller* chiller = dynamic_cast<Chiller*>(fControl->getGenericInstrObj("JulaboFP50"));
-    output_Chiller* widget = gui_chiller;
-    
-    connect(chiller, &Chiller::circulatorStatusChanged, this, [widget](bool on) {
-        QSignalBlocker blocker(widget->onoff_button);
-        widget->onoff_button->setChecked(on);
-        widget->setTemperature->setEnabled(not on);
-    });
-    connect(chiller, &Chiller::workingTemperatureChanged, this, [widget](float temperature) {
-        QSignalBlocker blocker(widget->setTemperature);
-        widget->setTemperature->setValue(temperature);
-    });
-    connect(chiller, &Chiller::bathTemperatureChanged, this, [widget](float temperature) {
-        QSignalBlocker blocker(widget->bathTemperature);
-        widget->bathTemperature->display(temperature);
+    connect(_device, &PowerControlClass::powerStateChanged, this, [this](bool on, int output) {
+        QCheckBox* box = this->_controls[output].onoff_button;
+        QSignalBlocker blocker(box);
+        box->setChecked(on);
+        if (not this->_settersAlwaysEnabled) {
+            this->_controls[output].v_set->setEnabled(not on);
+            this->_controls[output].i_set->setEnabled(not on);
+        }
     });
 }
 
-void MainWindow::_connectThermorasp() {
-    for (size_t n = 0; n < fControl->getNumRasps(); ++n) {
-        Thermorasp* thermorasp = fControl->getThermorasp(n);
-        output_Raspberry* widget = gui_raspberrys[n];
-        std::vector<std::string> names = thermorasp->getSensorNames();
+ThermoraspWidget::ThermoraspWidget(const QString& title, Thermorasp* device)
+    : DeviceWidget(title)
+{
+    _device = device;
+    setTitle(title);
+    
+    QFormLayout* layout = new QFormLayout(this);
+    for (const auto& name: device->getSensorNames()) {
+        QLabel* label = new QLabel(name.c_str());
+        label->setMaximumHeight(20);
         
-        connect(thermorasp, &Thermorasp::gotNewReadings, this, [widget, names](const QMap<QString, QString>& readings) {
-            int i = 0;
-            for (const string& name: names) {
-                widget[i].value->display(readings[QString::fromStdString(name)]);
-                ++i;
-            }
-        });
+        QLCDNumber* value = new QLCDNumber();
+        value->setMaximumHeight(20);
+        value->setSegmentStyle(QLCDNumber::Flat);
+        _values.push_back(value);
+        
+        layout->addRow(label, value);
     }
+    
+    setLayout(layout);
+}
+
+void ThermoraspWidget::initialize() {
+    connect(_device, &Thermorasp::gotNewReadings, this, [this](const QMap<QString, QString>& readings) {
+        int i = 0;
+        for (const auto& name: this->_device->getSensorNames()) {
+            this->_values[i]->display(readings[QString::fromStdString(name)]);
+            ++i;
+        }
+    });
+}
+
+ChillerWidget::ChillerWidget(const QString& title, Chiller* device)
+    : DeviceWidget(title)
+{
+    _device = device;
+    setTitle(title);
+    
+    QFormLayout* layout = new QFormLayout(this);
+    
+    QLabel* workingTempLabel = new QLabel("Temperature set:");
+    _workingTemp = new QDoubleSpinBox();
+    _workingTemp->setMinimum(device->GetMinTemp());
+    _workingTemp->setMaximum(device->GetMaxTemp());
+    _workingTemp->setSuffix(" °C");
+    layout->addRow(workingTempLabel, _workingTemp);
+    
+    QLabel* bathTempLabel = new QLabel("Temperature bath, °C:");
+    _bathTemp = new QLCDNumber();
+    _bathTemp->setSegmentStyle(QLCDNumber::Flat);
+    _bathTemp->setDigitCount(6);
+    layout->addRow(bathTempLabel, _bathTemp);
+    
+    QLabel* onoffLabel = new QLabel("On/Off:");
+    _onoffButton = new QCheckBox("On");
+    layout->addRow(onoffLabel, _onoffButton);
+    
+    connect(_onoffButton, &QCheckBox::toggled, this, &ChillerWidget::onOnOffToggled);
+    
+    setLayout(layout);
+    
+}
+
+void ChillerWidget::onOnOffToggled(bool state) {
+    _workingTemp->setEnabled(not state);
+    if (state) {
+        _device->SetWorkingTemperature(_workingTemp->value());
+        _device->SetCirculatorOn();
+    } else{
+        _device->SetCirculatorOff();
+    }
+}
+
+void ChillerWidget::initialize() {
+    connect(_device, &Chiller::circulatorStatusChanged, this, [this](bool on) {
+        QSignalBlocker blocker(this->_onoffButton);
+        this->_onoffButton->setChecked(on);
+        this->_workingTemp->setEnabled(not on);
+    });
+    connect(_device, &Chiller::workingTemperatureChanged, this, [this](float temperature) {
+        QSignalBlocker blocker(this->_workingTemp);
+        this->_workingTemp->setValue(temperature);
+    });
+    connect(_device, &Chiller::bathTemperatureChanged, this, [this](float temperature) {
+        QSignalBlocker blocker(this->_bathTemp);
+        this->_bathTemp->display(temperature);
+    });
+}
+
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent),
+      ui(new Ui::MainWindow)
+{
+    ui->setupUi(this);
+    commandListPage = new CommandListPage(ui->CommandList);
+    daqPage = new DAQPage(ui->DAQControl);
+
+    fControl = nullptr;
+    
+    ui->tabWidget->setEnabled(false);
+}
+
+MainWindow::~MainWindow() {
+    delete ui;
 }
 
 void MainWindow::initialize()
 {
     // Connect devices to GUI widgets
-    _connectTTi();
-    _connectKeithley();
-    _connectJulabo();
-    _connectThermorasp();
+    for (auto& widget: _deviceWidgets)
+        widget->initialize();
     
     // Initialize the hardware devices
-    fControl->Initialize();
+    fControl->initialize();
     
     // Setup thread to refresh the readings from the devices
     fControl->startRefreshingReadings();
@@ -449,55 +276,41 @@ bool MainWindow::readXmlFile()
 
     if (cFileName.isEmpty())
         return false;
-    else {
-        fControl->ReadXmlFile(cFileName.toStdString());
-        fSources = fControl->getSourceNameVec();
-
-        for(auto const& i: fControl->fGenericInstrumentMap){
-
-            if( dynamic_cast<ControlTTiPower*>(i.second) ){
-
-                gui_pointers_low_voltage.push_back(SetVoltageSource(ui->lowVoltageLayout, i.first, "TTI", 2));
-                int dev_num = gui_pointers_low_voltage.size() - 1;
-
-                for (int id = 0; id < 2; id++){
-                    connect(gui_pointers_low_voltage[dev_num][id].onoff_button, &QCheckBox::toggled, [this, i, id, dev_num](bool pArg)
-                        {this->on_OnOff_button_stateChanged(i.first, dev_num, 2 - id, pArg);});
-                    connect(gui_pointers_low_voltage[dev_num][id].v_set, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [this, i, id](double pVolt)
-                        {this->on_V_set_doubleSpinBox_valueChanged(i.first, 2 - id, pVolt);});
-                    connect(gui_pointers_low_voltage[dev_num][id].i_set, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [this, i, id](double pCurr)
-                        {this->on_I_set_doubleSpinBox_valueChanged(i.first, 2 - id, pCurr);});
-                 }
-
-            }
-
-            if( dynamic_cast<ControlKeithleyPower*>(i.second) ){
-
-                gui_pointers_high_voltage.push_back(SetVoltageSource(ui->highVoltageLayout, i.first, "Keithley2410", 1));
-
-                 connect(gui_pointers_high_voltage[0]->onoff_button, &QCheckBox::toggled, [this](bool pArg)
-                 {this->on_OnOff_button_stateChanged("Keithley2410", 0, 0, pArg);});
-            }
-
-            if( dynamic_cast<Thermorasp*>(i.second) ){
-                Thermorasp* rasp = dynamic_cast<Thermorasp*>(i.second);
-                gui_raspberrys.push_back(SetRaspberryOutput(ui->envMonitorLayout, rasp->getSensorNames(), i.first));
-            }
-
-            if( dynamic_cast<Chiller*>(i.second) ){
-                gui_chiller = SetChillerOutput(ui->envControlLayout , i.first);
-
-                connect(gui_chiller->onoff_button, &QCheckBox::toggled, [this](bool pArg)
-                {this->on_OnOff_button_stateChanged("Chiller", 0, 0, pArg);});
-            }
-        }
         
-        commandListPage->setSystemController(fControl);
-        if (fControl->getDaqModule() != nullptr)
-            daqPage->setDAQModule(fControl->getDaqModule());
-
-        return true;
+    HWDescriptionParser cParser;
+    std::vector<GenericInstrumentDescription_t> descriptions = cParser.ParseXML(cFileName);
+    
+    fControl->setupFromDesc(descriptions);
+    for (const auto& source: fControl->getLowVoltageSources()) {
+        VoltageSourceWidget* widget = new VoltageSourceWidget("test", source, true);
+        ui->lowVoltageLayout->addWidget(widget);
+        _lowVoltageWidgets.push_back(widget);
+        _deviceWidgets.push_back(widget);
     }
+    for (const auto& source: fControl->getHighVoltageSources()) {
+        VoltageSourceWidget* widget = new VoltageSourceWidget("test", source, false);
+        ui->highVoltageLayout->addWidget(widget);
+        _highVoltageWidgets.push_back(widget);
+        _deviceWidgets.push_back(widget);
+    }
+    for (const auto& rasp: fControl->getThermorasps()) {
+        ThermoraspWidget* widget = new ThermoraspWidget("test", rasp);
+        ui->envMonitorLayout->addWidget(widget);
+        _thermoraspWidgets.push_back(widget);
+        _deviceWidgets.push_back(widget);
+    }
+    for (const auto& chiller: fControl->getChillers()) {
+        ChillerWidget* widget = new ChillerWidget("test", chiller);
+        ui->envControlLayout->addWidget(widget);
+        _chillerWidgets.push_back(widget);
+        _deviceWidgets.push_back(widget);
+    }
+    
+    commandListPage->setSystemController(fControl);
+    if (fControl->getDaqModules().size() != 0)
+        daqPage->setDAQModule(fControl->getDaqModules()[0]);
+
+    return true;
 }
 
 void MainWindow::on_read_conf_button_clicked()
@@ -512,12 +325,11 @@ void MainWindow::on_read_conf_button_clicked()
         
         initialize();
             
-            
         // enable back
         ui->tabWidget->setEnabled(true);
         ui->read_conf_button->setEnabled(false);
         
-        if (fControl->getDaqModule() != nullptr)
+        if (fControl->getDaqModules().size() != 0)
             ui->DAQControl->setEnabled(true);
             
     } catch (const BurnInException& e) {
@@ -536,16 +348,13 @@ void MainWindow::on_read_conf_button_clicked()
         
         if (xml_was_read) {
             // Do a clean up of things that were created already
-            for (auto& p: gui_pointers_low_voltage)
-                delete p;
-            for (auto& p: gui_pointers_high_voltage)
-                delete p;
-            gui_pointers_low_voltage.clear();
-            gui_pointers_high_voltage.clear();
-            for (auto& p: gui_raspberrys)
-                delete p;
-            gui_raspberrys.clear();
-            delete gui_chiller;
+            for (auto& widget: _deviceWidgets)
+                delete widget;
+            _deviceWidgets.clear();
+            _lowVoltageWidgets.clear();
+            _highVoltageWidgets.clear();
+            _thermoraspWidgets.clear();
+            _chillerWidgets.clear();
 
             for (const auto& child : ui->lowVoltageContents->children()) {
                 if (child != ui->lowVoltageLayout)
@@ -569,29 +378,16 @@ void MainWindow::on_read_conf_button_clicked()
 
 void MainWindow::app_quit() {
     qDebug("Qutting");
-    // Set chillder temperature and turn off
-    if (fControl != nullptr and fControl->countInstrument("JulaboFP50") > 0) {
-        Chiller* chiller = dynamic_cast<Chiller*>(fControl->getGenericInstrObj("JulaboFP50"));
-        chiller->SetWorkingTemperature(20);
-        chiller->SetCirculatorOff();
-    }
-    
-    // Turn off Keithley power
-    if (fControl != nullptr and fControl->countInstrument("Keithley2410")) {
-        ControlKeithleyPower* keithley = dynamic_cast<ControlKeithleyPower*>(fControl->getGenericInstrObj("Keithley2410"));
-        keithley->offPower();
-        keithley->waitForSafeShutdown();
-    }
-    
-    // Turn off TTi power
     if (fControl != nullptr) {
-        const vector<string> sources = fControl->getSourceNameVec();
-        for (const string& name: sources) {
-            if (name.substr(0, 3) != "TTI")
-                continue;
-                
-            ControlTTiPower* ttidev = dynamic_cast<ControlTTiPower*>(fControl->getGenericInstrObj(name));
-            ttidev->offPower(0);
+        for (auto& chiller: fControl->getChillers()) {
+            chiller->SetWorkingTemperature(20);
+            chiller->SetCirculatorOff();
+        }
+        for (auto& source: fControl->getVoltageSources()) {
+            source->offPower(0);
+            ControlKeithleyPower* keithley = dynamic_cast<ControlKeithleyPower*>(source);
+            if (keithley)
+                keithley->waitForSafeShutdown();
         }
     }
 }

@@ -3,6 +3,8 @@
 #define SYSTEMCONTROLLERCLASS_H
 
 #include <string>
+#include <vector>
+#include <map>
 
 #include <QThread>
 
@@ -15,68 +17,49 @@
 #include "devices/daq/daqmodule.h"
 #include "general/hwdescriptionparser.h"
 
-
-using namespace  std;
-
 class SystemControllerClass:public QObject
 {
     Q_OBJECT
 public:
     SystemControllerClass();
     virtual ~SystemControllerClass();
-    SystemControllerClass(const SystemControllerClass&) = delete;
-    SystemControllerClass& operator=(const SystemControllerClass&) = delete;
     
-    size_t getNumRasps() const;
-    Thermorasp* getThermorasp(size_t n) const;
-    
-    Chiller* getChiller() const;
-    
-    size_t getNumVoltageSources() const;
-    map<string, PowerControlClass* > getVoltageSources() const;
-
-    //struct for the vector which contains commands
-    struct fParameters{
-        string cName;
-        double cValue;
-    };
-    vector<SystemControllerClass::fParameters> fListOfCommands;
-    
-    void Initialize();
-    void ReadXmlFile(std::string pFileName);
-
-    int countInstrument(string instrument_name) const;
-    PowerControlClass* getObject(string pStr) const;
-    GenericInstrumentClass* getGenericInstrObj(string pStr) const;
-    vector<string> getSourceNameVec() const;
-    vector<QString>* readFile();
-    
-    DAQModule* getDaqModule() const;
-    
-    map<string , GenericInstrumentClass*> fGenericInstrumentMap;
-    
+    void setupFromDesc(const std::vector<GenericInstrumentDescription_t>& descs);
+    void initialize();
     void startRefreshingReadings();
+    
+    std::vector<GenericInstrumentClass*> getDevices() const;
+    std::string getId(const GenericInstrumentClass*) const;
+    GenericInstrumentClass* getDeviceById(std::string id) const;
+    
+    std::vector<Thermorasp*> getThermorasps() const;
+    std::vector<Chiller*> getChillers() const;
+    std::vector<PowerControlClass*> getVoltageSources() const;
+    std::vector<PowerControlClass*> getLowVoltageSources() const;
+    std::vector<PowerControlClass*> getHighVoltageSources() const;
+    std::vector<DAQModule*> getDaqModules() const;
 
 private:
-    string _getIdentifierForDescription(const GenericInstrumentDescription_t& desc) const;
+    string _buildId(const GenericInstrumentDescription_t& desc) const;
     
-    void _removeAllDevices();
+    void _deleteAllDevices();
     
-    void _parseChiller();
-    void _parseVSources();
-    void _parseRaspberry();
-    void _parseDaqModule();
+    ControlTTiPower* _constructTTiPower(const GenericInstrumentDescription_t& desc) const;
+    ControlKeithleyPower* _constructKeithleyPower(const GenericInstrumentDescription_t& desc) const;
+    void _addHighVoltageSource(const GenericInstrumentDescription_t& desc);
+    void _addLowVoltageSource(const GenericInstrumentDescription_t& desc);
+    void _addChiller(const GenericInstrumentDescription_t& desc);
+    void _addThermorasp(const GenericInstrumentDescription_t& desc);
+    void _addDAQModule(const GenericInstrumentDescription_t& desc);
     
     void _refreshingReadings();
     
-    DAQModule* _daqmodule;
-    
-    vector<Thermorasp*> fConnectRasps;
-    Chiller* fChiller;
-    
-    vector<GenericInstrumentDescription_t> fHWDescription;
-    map<string, PowerControlClass* > fMapSources;
-    vector<string> fNamesVoltageSources;
+    std::map<string , GenericInstrumentClass*> _devices;
+    std::vector<Thermorasp*> _thermorasps;
+    std::vector<Chiller*> _chillers;
+    std::vector<PowerControlClass*> _lowVoltageSources;
+    std::vector<PowerControlClass*> _highVoltageSources;
+    std::vector<DAQModule*> _daqModules;
     
     QThread* _refreshThread;
 

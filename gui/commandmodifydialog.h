@@ -3,11 +3,13 @@
 
 #include <QDialog>
 #include <tuple>
-#include <QMap>
+#include <map>
 #include <QPair>
 #include <QString>
 #include <QStringList>
 #include "general/commandprocessor.h"
+#include "general/systemcontrollerclass.h"
+#include "devices/environment/chiller.h"
 
 namespace Ui {
 class CommandModifyDialog;
@@ -21,27 +23,27 @@ public:
     explicit CommandModifyDialog(QWidget *parent);
     virtual ~CommandModifyDialog();
     
-    static unsigned int commandWait(QWidget *parent, bool* ok, int value = 60);
+    static bool commandWait(QWidget *parent, BurnInWaitCommand *command);
     
     /* Voltage source dialogs */
-    static std::tuple<QString, bool> commandVoltageSourceOutput(QWidget *parent, const QList<QString>& voltageSources, bool* ok, QString source = "", bool on = true);
-    static std::tuple<QString, double> commandVoltageSourceSet(QWidget *parent, const QList<QString>& voltageSources, bool* ok, QString source = "", double value = 0);
+    static bool commandVoltageSourceOutput(QWidget *parent, BurnInVoltageSourceOutputCommand *command, const SystemControllerClass *controller);
+    static bool commandVoltageSourceSet(QWidget *parent, BurnInVoltageSourceSetCommand *command, const SystemControllerClass *controller);
     
-    /* Chiller dialogs. Expects only one chiller */
-    static bool commandChillerOutput(QWidget *parent, bool* ok, bool on = true);
-    static double commandChillerSet(QWidget *parent, bool* ok, double value = 0);
+    /* Chiller dialogs */
+    static bool commandChillerOutput(QWidget *parent, BurnInChillerOutputCommand *command, const SystemControllerClass* controller);
+    static bool commandChillerSet(QWidget *parent, BurnInChillerSetCommand *command, const SystemControllerClass* controller);
     
     /* DAQ dialogs */
-    static std::tuple<QString, QString> commandDAQCmd(QWidget *parent, const QStringList& executeables, bool* ok, QString execName = "", QString switches = "");
+    static bool commandDAQCmd(QWidget *parent, BurnInDAQCommand *command, const SystemControllerClass* controller);
     
-    static void modifyCommand(QWidget *parent, bool* ok, BurnInCommand* command, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources, const QStringList& daqExecutables);
+    static bool modifyCommand(QWidget *parent, BurnInCommand* command, const SystemControllerClass* controller);
 
 private:
     Ui::CommandModifyDialog *ui;
     
     class ModifyCommandHandler : public AbstractCommandHandler {
     public:
-        ModifyCommandHandler(QWidget *parent_, bool* ok_, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources_, const QStringList& daqExecutables_);
+        ModifyCommandHandler(QWidget *parent_, bool* ok_, const SystemControllerClass* controller_);
         
         void handleCommand(BurnInWaitCommand& command) override;
         void handleCommand(BurnInVoltageSourceOutputCommand& command) override;
@@ -52,9 +54,12 @@ private:
         
         QWidget* parent;
         bool* ok;
-        const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources;
-        const QStringList& daqExecutables;
+        const SystemControllerClass* controller;
     };
+    
+    static std::map<QString, QPair<int, PowerControlClass*>> _getAvailableVoltageSources(const SystemControllerClass *controller);
+    static std::map<QString, Chiller*> _getAvailableChillers(const SystemControllerClass* controller);
+    static QStringList _getDaqExecutables(const SystemControllerClass* controller);
 };
 
 #endif // COMMANDMODIFYDIALOG_H

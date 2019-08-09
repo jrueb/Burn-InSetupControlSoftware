@@ -25,6 +25,7 @@ public:
     virtual double getVoltApp(int pId) const = 0;
     virtual double getCurr(int pId) const = 0;
     virtual double getCurrApp(int pId) const = 0;
+    virtual void refreshAppliedValues() = 0;
     virtual void setVolt(double pVoltage, int pId) = 0;
     virtual void setCurr(double pCurrent , int pId) = 0;
     virtual bool getPower(int pId) const = 0;

@@ -2,6 +2,7 @@
 #define HWDESCRIPTIONPARSER_H
 
 #include <string>
+#include <QString>
 #include <QXmlStreamReader>
 
 struct GenericInstrumentDescription_t {
@@ -17,7 +18,7 @@ class HWDescriptionParser
 {
 public:
     HWDescriptionParser();
-    std::vector<GenericInstrumentDescription_t> ParseXML(std::string pFileName);
+    std::vector<GenericInstrumentDescription_t> ParseXML(QString pFileName);
 private:
     GenericInstrumentDescription_t ParseGeneric(const QXmlStreamReader *pXmlFile) const;
     

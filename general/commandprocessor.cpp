@@ -16,17 +16,17 @@ QVector<BurnInCommandType> CommandProcessor::getAvailableCommands() const {
     
     avail.push_back(COMMAND_WAIT);
     
-    if (_controller->getNumVoltageSources() > 0) {
+    if (_controller->getVoltageSources().size() > 0) {
         avail.push_back(COMMAND_VOLTAGESOURCEOUTPUT);
         avail.push_back(COMMAND_VOLTAGESOURCESET);
     }
         
-    if (_controller->countInstrument("JulaboFP50") > 0) {
+    if (_controller->getChillers().size() > 0) {
         avail.push_back(COMMAND_CHILLEROUTPUT);
         avail.push_back(COMMAND_CHILLERSET);
     }
     
-    if (_controller->getDaqModule() != nullptr)
+    if (_controller->getDaqModules().size() > 0)
         avail.push_back(COMMAND_DAQCMD);
         
     return avail;
@@ -93,24 +93,32 @@ void CommandProcessor::CommandSaver::handleCommand(BurnInWaitCommand& command) {
 
 void CommandProcessor::CommandSaver::handleCommand(BurnInVoltageSourceOutputCommand& command) {
     *out << getStringForType(COMMAND_VOLTAGESOURCEOUTPUT)
-         << " \"" << CommandProcessor::_escapeName(command.sourceName) << "\" "
-         << (command.on ? "on" : "off")
+         << " \"" << CommandProcessor::_escapeName(command.sourceName) << "\""
+         << " " << command.output
+         << " " << (command.on ? "on" : "off")
          << "\n";
 }
 
 void CommandProcessor::CommandSaver::handleCommand(BurnInVoltageSourceSetCommand& command) {
     *out << getStringForType(COMMAND_VOLTAGESOURCESET)
-         << " \"" << CommandProcessor::_escapeName(command.sourceName) << "\" "
-         << command.value
+         << " \"" << CommandProcessor::_escapeName(command.sourceName) << "\""
+         << " " << command.output
+         << " " << command.value
          << "\n";
 }
 
 void CommandProcessor::CommandSaver::handleCommand(BurnInChillerOutputCommand& command) {
-    *out << getStringForType(COMMAND_CHILLEROUTPUT) << " " << (command.on ? "on" : "off") << "\n";
+    *out << getStringForType(COMMAND_CHILLEROUTPUT)
+         << " \"" << CommandProcessor::_escapeName(command.chillerName) << "\""
+         << " " << (command.on ? "on" : "off")
+         << "\n";
 }
 
 void CommandProcessor::CommandSaver::handleCommand(BurnInChillerSetCommand& command) {
-    *out << getStringForType(COMMAND_CHILLERSET) << " " << command.value << "\n";
+    *out << getStringForType(COMMAND_CHILLERSET)
+         << " \"" << CommandProcessor::_escapeName(command.chillerName) << "\""
+         << " " << command.value
+         << "\n";
 }
 
 void CommandProcessor::CommandSaver::handleCommand(BurnInDAQCommand& command) {
@@ -131,26 +139,26 @@ QString CommandProcessor::_escapeName(const QString& name) {
     return ret;
 }
 
-QVector<BurnInCommand*> CommandProcessor::getCommandListFromFile(const QString& filePath, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources, const QStringList& daqExecuteables) const {
+QVector<BurnInCommand*> CommandProcessor::getCommandListFromFile(const QString& filePath) const {
     QFile file(filePath);
     
     if (not file.open(QIODevice::ReadOnly | QIODevice::Text))
         throw BurnInException("Could not open file");
     QTextStream in(&file);
-    QVector<BurnInCommand*> list = _parseCommands(in, voltageSources, daqExecuteables);
+    QVector<BurnInCommand*> list = _parseCommands(in);
     
     file.close();
     
     return list;
 }
 
-QVector<BurnInCommand*> CommandProcessor::getCommandListFromString(const QString& commandString, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources, const QStringList& daqExecuteables) const {
+QVector<BurnInCommand*> CommandProcessor::getCommandListFromString(const QString& commandString) const {
     QString cpy = commandString;
     QTextStream in(&cpy);
-    return _parseCommands(in, voltageSources, daqExecuteables);
+    return _parseCommands(in);
 }
 
-QVector<BurnInCommand*> CommandProcessor::_parseCommands(QTextStream& in, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources, const QStringList& daqExecuteables) const {
+QVector<BurnInCommand*> CommandProcessor::_parseCommands(QTextStream& in) const {
     QVector<BurnInCommand*> list;
     
     int line_count = 0;
@@ -164,10 +172,10 @@ QVector<BurnInCommand*> CommandProcessor::_parseCommands(QTextStream& in, const 
             list.push_back(_parseWaitCommand(line, line_count));
             
         } else if (line.startsWith(getStringForType(COMMAND_VOLTAGESOURCEOUTPUT) + " ")) {
-            list.push_back(_parseVoltageSourceOutputCommand(line, voltageSources, line_count));
+            list.push_back(_parseVoltageSourceOutputCommand(line, line_count));
             
         } else if (line.startsWith(getStringForType(COMMAND_VOLTAGESOURCESET) + " ")) {
-            list.push_back(_parseVoltageSourceSetCommand(line, voltageSources, line_count));
+            list.push_back(_parseVoltageSourceSetCommand(line, line_count));
             
         } else if (line.startsWith(getStringForType(COMMAND_CHILLEROUTPUT) + " ")) {
             list.push_back(_parseChillerOutputCommand(line, line_count));
@@ -176,7 +184,7 @@ QVector<BurnInCommand*> CommandProcessor::_parseCommands(QTextStream& in, const 
             list.push_back(_parseChillerSetCommand(line, line_count));
             
         } else if (line.startsWith(getStringForType(COMMAND_DAQCMD) + " ")) {
-            list.push_back(_parseDaqCMDCommand(line, daqExecuteables, line_count));
+            list.push_back(_parseDaqCMDCommand(line, line_count));
         } else {
             QTextStream line_stream(&line);
             QString cmd;
@@ -205,54 +213,45 @@ BurnInWaitCommand* CommandProcessor::_parseWaitCommand(const QString& line, int 
     return new BurnInWaitCommand(wait);
 }
 
-BurnInVoltageSourceOutputCommand* CommandProcessor::_parseVoltageSourceOutputCommand(const QString& line, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources, int line_count) const {
+BurnInVoltageSourceOutputCommand* CommandProcessor::_parseVoltageSourceOutputCommand(const QString& line, int line_count) const {
     int cmdlen = getStringForType(COMMAND_VOLTAGESOURCEOUTPUT).length();
     QString args = line.right(line.length() - cmdlen - 1);
     QTextStream line_stream(&args);
     
     QString sourceName;
     int output;
-    PowerControlClass* dev;
+    PowerControlClass* source;
     bool on;
     
-    sourceName = _getQuotedString(line_stream);
-    if (not voltageSources.contains(sourceName))
-        throw BurnInException("Line " + std::to_string(line_count) + ": Unknown voltage source \"" + sourceName.toStdString() + "\"");
-    auto output_control_pair = voltageSources[sourceName];
-    output = output_control_pair.first;
-    dev = output_control_pair.second;
-    
+    source = _parseVoltageSourceName(sourceName, line_count);
+    output = _parseVoltageSourceOutput(line_stream, line_count);
     on = _parseOnOff(line_stream, line_count);
     
-    return new BurnInVoltageSourceOutputCommand(dev, sourceName, output, on);
+    return new BurnInVoltageSourceOutputCommand(source, sourceName, output, on);
 }
 
-BurnInVoltageSourceSetCommand* CommandProcessor::_parseVoltageSourceSetCommand(const QString& line, const QMap<QString, QPair<int, PowerControlClass*>>& voltageSources, int line_count) const {
+BurnInVoltageSourceSetCommand* CommandProcessor::_parseVoltageSourceSetCommand(const QString& line, int line_count) const {
     int cmdlen = getStringForType(COMMAND_VOLTAGESOURCESET).length();
     QString args = line.right(line.length() - cmdlen - 1);
     QTextStream line_stream(&args);
     
     QString sourceName;
     int output;
-    PowerControlClass* dev;
-    QString on_str;
+    PowerControlClass* source;
     QString value_str;
     bool ok;
     double value;
     
     sourceName = _getQuotedString(line_stream);
-    if (not voltageSources.contains(sourceName))
-        throw BurnInException("Line " + std::to_string(line_count) + ": Unknown voltage source \"" + sourceName.toStdString() + "\"");
-    auto output_control_pair = voltageSources[sourceName];
-    output = output_control_pair.first;
-    dev = output_control_pair.second;
+    source = _parseVoltageSourceName(sourceName, line_count);
+    output = _parseVoltageSourceOutput(line_stream, line_count);
     
     line_stream >> value_str;
     value = value_str.toDouble(&ok);
     if (not ok or std::isnan(value) or value < -1000 or value > 1000)
         throw BurnInException("Line " + std::to_string(line_count) + ": Invalid voltage value " + value_str.toStdString() + "");
         
-    return new BurnInVoltageSourceSetCommand(dev, sourceName, output, value);
+    return new BurnInVoltageSourceSetCommand(source, sourceName, output, value);
 }
 
 BurnInChillerOutputCommand* CommandProcessor::_parseChillerOutputCommand(const QString& line, int line_count) const {
@@ -260,9 +259,11 @@ BurnInChillerOutputCommand* CommandProcessor::_parseChillerOutputCommand(const Q
     QString args = line.right(line.length() - cmdlen - 1);
     QTextStream line_stream(&args);
     
+    QString chillerName = _getQuotedString(line_stream);
+    Chiller* chiller = _parseChillerName(chillerName, line_count);
     bool on = _parseOnOff(line_stream, line_count);
     
-    return new BurnInChillerOutputCommand(on);
+    return new BurnInChillerOutputCommand(chiller, chillerName, on);
 }
 
 BurnInChillerSetCommand* CommandProcessor::_parseChillerSetCommand(const QString& line, int line_count) const {
@@ -270,6 +271,8 @@ BurnInChillerSetCommand* CommandProcessor::_parseChillerSetCommand(const QString
     QString args = line.right(line.length() - cmdlen - 1);
     QTextStream line_stream(&args);
     
+    QString chillerName = _getQuotedString(line_stream);
+    Chiller* chiller = _parseChillerName(chillerName, line_count);
     QString value_str;
     double value;
     bool ok;
@@ -279,10 +282,10 @@ BurnInChillerSetCommand* CommandProcessor::_parseChillerSetCommand(const QString
     if (not ok or std::isnan(value) or value < JulaboFP50::FP50LowerTempLimit or value >JulaboFP50::FP50UpperTempLimit)
         throw BurnInException("Line " + std::to_string(line_count) + ": Invalid temperature value " + value_str.toStdString() + "");
     
-    return new BurnInChillerSetCommand(value);
+    return new BurnInChillerSetCommand(chiller, chillerName, value);
 }
 
-BurnInDAQCommand* CommandProcessor::_parseDaqCMDCommand(const QString& line, const QStringList& daqExecuteables, int line_count) const {
+BurnInDAQCommand* CommandProcessor::_parseDaqCMDCommand(const QString& line, int line_count) const {
     int cmdlen = getStringForType(COMMAND_DAQCMD).length();
     QString args = line.right(line.length() - cmdlen - 1);
     QTextStream line_stream(&args);
@@ -291,7 +294,14 @@ BurnInDAQCommand* CommandProcessor::_parseDaqCMDCommand(const QString& line, con
     QString opts;
     
     execName = _getQuotedString(line_stream);
-    if (not daqExecuteables.contains(execName))
+    bool found = false;
+    for (const auto& module: _controller->getDaqModules()) {
+        if (module->getAvailableACFBinaries().contains(execName)) {
+            found = true;
+            break;
+        }
+    }
+    if (not found)
         throw BurnInException("Line " + std::to_string(line_count) + ": Unavailable DAQ command \"" + execName.toStdString() + "\"");
     opts = _getQuotedString(line_stream);
     
@@ -323,6 +333,55 @@ QString CommandProcessor::_getQuotedString(QTextStream& in) {
     }
     
     return ret;
+}
+
+GenericInstrumentClass* CommandProcessor::_parseDeviceName(const QString& devName, int line_count) const {
+    GenericInstrumentClass* dev = _controller->getDeviceById(devName.toStdString());
+    if (dev == nullptr)
+        throw BurnInException("Line " + std::to_string(line_count) + ": Unknown voltage source \"" + devName.toStdString() + "\"");
+        
+    return dev;
+}
+
+PowerControlClass* CommandProcessor::_parseVoltageSourceName(const QString& devName, int line_count) const {
+    GenericInstrumentClass* dev = _parseDeviceName(devName, line_count);
+    PowerControlClass* source = nullptr;
+    
+    for (auto& source2: _controller->getVoltageSources()) {
+        if (dev == source2)
+            source = source2;
+    }
+    if (source == nullptr)
+        throw BurnInException("Line " + std::to_string(line_count) + ": Not a voltage source \"" + devName.toStdString() + "\"");
+        
+    return source;
+}
+
+Chiller* CommandProcessor::_parseChillerName(const QString& devName, int line_count) const {
+    GenericInstrumentClass* dev = _parseDeviceName(devName, line_count);
+    Chiller* chiller = nullptr;
+    
+    for (auto& chiller2: _controller->getChillers()) {
+        if (dev == chiller2)
+            chiller = chiller2;
+    }
+    if (chiller == nullptr)
+        throw BurnInException("Line " + std::to_string(line_count) + ": Not a chiller \"" + devName.toStdString() + "\"");
+        
+    return chiller;
+}
+
+int CommandProcessor::_parseVoltageSourceOutput(QTextStream& in, int line_count) {
+    QString output_str;
+    int output;
+    bool ok;
+    
+    in >> output_str;
+    output = output_str.toInt(&ok);
+    if (not ok or output < 0)
+        throw BurnInException("Line " + std::to_string(line_count) + ": Invalid output index " + output_str.toStdString() + "");
+        
+    return output;
 }
 
 bool CommandProcessor::_parseOnOff(QTextStream& in, int line_count) {

@@ -1,43 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <HardwareDescription>
-    <!-- section with power control -->
-    <Power>
-        <!-- Low Voltage Section -->
-        <VoltageSource class="TTI" port="9221" address="192.168.1.181">
-            <Output Voltage="5" CurrentLimit="0.06"/>
-            <Output Voltage="5" CurrentLimit="0.06"/>
-        </VoltageSource>
-        <VoltageSource class="TTI" port="9221" address="192.168.1.180">
-            <Output Voltage="3.3" CurrentLimit="0.4"/>
-            <Output Voltage="1.3" CurrentLimit="0.75"/>
-        </VoltageSource>
-        <!-- High Voltage Section -->
-        <VoltageSource class="Keithley2410" address="/dev/ttyUSB1">
-            <Output Voltage="-40" CurrentLimit="1.0"/>
-        </VoltageSource>
-    </Power>
+    <!-- Low Voltage Section -->
+    <LowVoltageSource class="TTi" port="9221" address="192.168.1.180">
+        <Output Voltage="5" CurrentLimit="0.06"/>
+        <Output Voltage="5" CurrentLimit="0.06"/>
+    </LowVoltageSource>
+    <LowVoltageSource class="TTi" port="9221" address="192.168.1.181">
+        <Output Voltage="3.3" CurrentLimit="0.4"/>
+        <Output Voltage="1.3" CurrentLimit="0.75"/>
+    </LowVoltageSource>
+    
+    <!-- High Voltage Section -->
+    <HighVoltageSource class="Keithley2410" address="/dev/ttyUSB0">
+        <Output Voltage="-40" CurrentLimit="1.0"/>
+    </HighVoltageSource>
 
+  
+    <!-- Chiller Section -->
+    <Chiller class="JulaboFP50" address="/dev/ttyS0"/>
+        
+    <!-- Thermorasp Section -->
+    <Thermorasp class="Thermorasp" address="fhlthermorasp1.desy.de" port="50007">
+        <Sensor sensor="W1_10-0008032b1481_temp"/>
+        <Sensor sensor="DHT11_PIN4_temp"/>
+        <Sensor sensor="DHT11_PIN4_hum"/>
+        <Sensor sensor="SHT75_PIN20_temp"/>
+        <Sensor sensor="SHT75_PIN20_hum"/>
+    </Thermorasp>
+    <Thermorasp class="Thermorasp" address="fhlthermorasp2.desy.de" port="50007">
+        <Sensor sensor="BME680_i2c-0_0x77_temp"/>
+        <Sensor sensor="BME680_i2c-0_0x77_hum"/>
+        <Sensor sensor="BME680_i2c-0_0x77_pres"/>
+    </Thermorasp>
 
-    <!-- environment section -->
-    <Environment>       
-        <!-- Chiller Section -->
-        <ChillerControl class="JulaboFP50" address="/dev/ttyS0"/>
-        <!-- Raspberry  Section -->
-        <RaspberryControl class="Thermorasp" address="fhlthermorasp1.desy.de" port="50007">
-            <Sensor sensor="W1_10-0008032b1481_temp"/>
-            <Sensor sensor="DHT11_PIN4_temp"/>
-            <Sensor sensor="DHT11_PIN4_hum"/>
-            <Sensor sensor="SHT75_PIN20_temp"/>
-            <Sensor sensor="SHT75_PIN20_hum"/>
-        </RaspberryControl>
-        <RaspberryControl class="Thermorasp" address="fhlthermorasp2.desy.de" port="50007">
-            <Sensor sensor="BME680_i2c-0_0x77_temp"/>
-            <Sensor sensor="BME680_i2c-0_0x77_hum"/>
-            <Sensor sensor="BME680_i2c-0_0x77_pres"/>
-        </RaspberryControl>
-    </Environment>
-    <DataAcquisition>
-        <DAQModule class="DAQModule" fc7Port="/dev/ttyACM0" controlhubPath="/opt/cactus" ph2acfPath="/opt/Ph2_ACF" daqHwdescFile="/opt/Ph2_ACF/settings/D19CDescription8CBC2.xml" daqImage="d19c_8cbc2_dio5_10012019.bin"/>
-    </DataAcquisition>
+    <!-- Data Acquisition Section -->
+    <DAQModule class="DAQModule" fc7Port="/dev/ttyACM0" controlhubPath="/opt/cactus" ph2acfPath="/opt/Ph2_ACF" daqHwdescFile="/opt/Ph2_ACF/settings/D19CDescription8CBC2.xml" daqImage="d19c_8xCBC2_21112018.bin"/>
 </HardwareDescription>
 

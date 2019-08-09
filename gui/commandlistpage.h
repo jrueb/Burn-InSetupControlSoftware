@@ -53,8 +53,6 @@ private:
     
     CommandsRunDialog* _rundialog;
     
-    QMap<QString, QPair<int, PowerControlClass*>> _buildVoltageSourcesVector() const;
-    QStringList _getAvailableACFBinaries() const;
     void _addCommands(const QVector<BurnInCommand*>& commands);
 
 signals:

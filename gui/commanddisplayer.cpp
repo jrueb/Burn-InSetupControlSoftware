@@ -9,24 +9,24 @@ void CommandDisplayer::handleCommand(BurnInWaitCommand& command) {
 
 void CommandDisplayer::handleCommand(BurnInVoltageSourceOutputCommand& command) {
     if (command.on)
-        display = "Turn on " + command.sourceName;
+        display = "Turn on source " + command.sourceName;
     else
-        display = "Turn off " + command.sourceName;
+        display = "Turn off source " + command.sourceName;
 }
 
 void CommandDisplayer::handleCommand(BurnInVoltageSourceSetCommand& command) {
-    display = "Set " + command.sourceName + " to " + QString::number(command.value) + " volts";
+    display = "Set source " + command.sourceName + " to " + QString::number(command.value) + " volts";
 }
 
 void CommandDisplayer::handleCommand(BurnInChillerOutputCommand& command) {
     if (command.on)
-        display = "Turn chiller output on";
+        display = "Turn chiller " + command.chillerName + " output on";
     else
-        display = "Turn chiller output off";
+        display = "Turn chiller " + command.chillerName + " output off";
 }
 
 void CommandDisplayer::handleCommand(BurnInChillerSetCommand& command) {
-    display = "Set chiller working temperature to " + QString::number(command.value) + " °C";
+    display = "Set chiller " + command.chillerName + " working temperature to " + QString::number(command.value) + " °C";
 }
 
 void CommandDisplayer::handleCommand(BurnInDAQCommand& command) {

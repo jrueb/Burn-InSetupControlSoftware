@@ -15,13 +15,13 @@
 HWDescriptionParser::HWDescriptionParser()
 {}
 
-std::vector<GenericInstrumentDescription_t> HWDescriptionParser::ParseXML(std::string pFileName)
+std::vector<GenericInstrumentDescription_t> HWDescriptionParser::ParseXML(QString pFileName)
 {
     // creating the vector to return
     std::vector<GenericInstrumentDescription_t> cInstruments;
 
     // opening file    
-    QFile *cFile =  new QFile(pFileName.c_str());
+    QFile *cFile =  new QFile(pFileName);
     if(!cFile->open(QFile::ReadOnly))
         throw BurnInException("Unable to open XML file");
     QXmlStreamReader *cXmlFile = new QXmlStreamReader(cFile);

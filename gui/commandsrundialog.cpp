@@ -123,7 +123,7 @@ void CommandExecuter::CommandExecuteHandler::_waitForVoltage(PowerControlClass* 
 }
 
 void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInChillerOutputCommand& command) {
-    Chiller* chiller = _controller->getChiller();
+    Chiller* chiller = command.chiller;
     if (chiller == nullptr) {
         emit _executer->commandStatusUpdate(_n, "Error: No chiller connected");
         error = true;
@@ -155,7 +155,7 @@ void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInChillerOutputCo
 }
 
 void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInChillerSetCommand& command) {
-    Chiller* chiller = _controller->getChiller();
+    Chiller* chiller = command.chiller;
     if (chiller == nullptr) {
         emit _executer->commandStatusUpdate(_n, "Error: No chiller connected");
         error = true;
@@ -187,7 +187,7 @@ void CommandExecuter::CommandExecuteHandler::_waitForChiller(Chiller* chiller) {
 }
 
 void CommandExecuter::CommandExecuteHandler::handleCommand(BurnInDAQCommand& command) {
-    DAQModule* module = _controller->getDaqModule();
+    DAQModule* module = _controller->getDaqModules()[0];
     if (module == nullptr) {
         emit _executer->commandStatusUpdate(_n, "Error: No DAQ module connected");
         error = true;
@@ -245,30 +245,32 @@ CommandsRunDialog::~CommandsRunDialog()
 }
 
 void CommandsRunDialog::_setupDisplays(const SystemControllerClass* controller) {
-    std::map<std::string, PowerControlClass*> sources = controller->getVoltageSources();
-    for (auto const& source: sources) {
+    std::vector<PowerControlClass*> sources = controller->getVoltageSources();
+    for (const auto& source: sources) {
         QLabel* label = new QLabel();
-        connect(source.second, &PowerControlClass::voltSetChanged, this, [this, label, source](double, int) {
-            this->_updateDisplayLabel(label, source.first, source.second);
+        std::string name = controller->getId(source);
+        connect(source, &PowerControlClass::voltSetChanged, this, [this, label, source, name](double, int) {
+            this->_updateDisplayLabel(label, name, source);
         });
-        connect(source.second, &PowerControlClass::powerStateChanged, this, [this, label, source](bool, int) {
-            this->_updateDisplayLabel(label, source.first, source.second);
+        connect(source, &PowerControlClass::powerStateChanged, this, [this, label, source, name](bool, int) {
+            this->_updateDisplayLabel(label, name, source);
         });
         ui->device_status_area->addWidget(label);
-        _updateDisplayLabel(label, source.first, source.second);
+        _updateDisplayLabel(label, name, source);
     }
     
-    Chiller* chiller = controller->getChiller();
-    if (chiller) {
+    std::vector<Chiller*> chillers = controller->getChillers();
+    for (const auto& chiller: chillers) {
         QLabel* label = new QLabel();
-        connect(chiller, &Chiller::workingTemperatureChanged, this, [this, label, chiller](float) {
-            this->_updateDisplayLabel(label, "Chiller", chiller);
+        std::string name = controller->getId(chiller);
+        connect(chiller, &Chiller::workingTemperatureChanged, this, [this, label, chiller, name](float) {
+            this->_updateDisplayLabel(label, name, chiller);
         });
-        connect(chiller, &Chiller::circulatorStatusChanged, this, [this, label, chiller](bool) {
-            this->_updateDisplayLabel(label, "Chiller", chiller);
+        connect(chiller, &Chiller::circulatorStatusChanged, this, [this, label, chiller, name](bool) {
+            this->_updateDisplayLabel(label, name, chiller);
         });
         ui->device_status_area->addWidget(label);
-        _updateDisplayLabel(label, "Chiller", chiller);
+        _updateDisplayLabel(label, name, chiller);
     }
 }
 

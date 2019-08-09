@@ -34,15 +34,19 @@ BurnInVoltageSourceSetCommand::BurnInVoltageSourceSetCommand(PowerControlClass* 
     value = value_;
 }
 
-BurnInChillerOutputCommand::BurnInChillerOutputCommand(bool on_):
+BurnInChillerOutputCommand::BurnInChillerOutputCommand(Chiller* chiller_, QString chillerName_, bool on_):
     BurnInCommand(COMMAND_CHILLEROUTPUT) {
         
+    chiller = chiller_;
+    chillerName = chillerName_;
     on = on_;
 }
 
-BurnInChillerSetCommand::BurnInChillerSetCommand(double value_):
+BurnInChillerSetCommand::BurnInChillerSetCommand(Chiller* chiller_, QString chillerName_, double value_):
     BurnInCommand(COMMAND_CHILLERSET) {
         
+    chiller = chiller_;
+    chillerName = chillerName_;
     value = value_;
 }
 

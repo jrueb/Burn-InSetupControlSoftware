@@ -4,6 +4,8 @@
 #include <QString>
 
 #include "general/systemcontrollerclass.h"
+#include "devices/power/powercontrolclass.h"
+#include "devices/environment/chiller.h"
 
 /* How to add a new command type:
  * 1. Add a command identifier to the BurnInCommandType enum
@@ -91,21 +93,25 @@ public:
 
 class BurnInChillerOutputCommand : public BurnInCommand {
 public:
-    BurnInChillerOutputCommand(bool on_);
+    BurnInChillerOutputCommand(Chiller* chiller_, QString chillerName_, bool on_);
     void accept(AbstractCommandHandler& handler) override {
         handler.handleCommand(*this);
     }
 
+    Chiller* chiller;
+    QString chillerName;
     bool on;
 };
 
 class BurnInChillerSetCommand : public BurnInCommand {
 public:
-    BurnInChillerSetCommand(double value_);
+    BurnInChillerSetCommand(Chiller* chiller_, QString chillerName_, double value_);
     void accept(AbstractCommandHandler& handler) override {
         handler.handleCommand(*this);
     }
 
+    Chiller* chiller;
+    QString chillerName;
     double value;
 };
 

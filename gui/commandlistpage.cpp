@@ -233,10 +233,9 @@ void CommandListPage::onCommandsListPaste() {
     if (not mimeData->hasText())
         return;
     
-    const QMap<QString, QPair<int, PowerControlClass*>> voltageSources = _buildVoltageSourcesVector();
     QVector<BurnInCommand*> commands;
     try {
-        commands = _proc->getCommandListFromString(mimeData->text(), voltageSources, _getAvailableACFBinaries());
+        commands = _proc->getCommandListFromString(mimeData->text());
     } catch (const BurnInException& e) {
         // Error during parsing of clipboard text. Do nothing
         return;
@@ -255,10 +254,7 @@ void CommandListPage::onDeleteButtonPressed() {
 
 void CommandListPage::onChangeParamsButtonPressed() {
     CommandListItem* item = dynamic_cast<CommandListItem*>(_commands_list->currentItem());
-    bool ok;
-    QMap<QString, QPair<int, PowerControlClass*>> voltageSources = _buildVoltageSourcesVector();
-    QStringList daqExecuteables = _getAvailableACFBinaries();
-    CommandModifyDialog::modifyCommand(_commandListWidget->window(), &ok, item->command.get(), voltageSources, daqExecuteables);
+    bool ok = CommandModifyDialog::modifyCommand(_commandListWidget->window(), item->command.get(), _controller);
     if (ok) {
         item->updateText();
         _commands_list_modified = true;
@@ -350,7 +346,7 @@ void CommandListPage::onOpenListPressed() {
     
     QVector<BurnInCommand*> commands;
     try {
-        commands = _proc->getCommandListFromFile(fileName, _buildVoltageSourcesVector(), _getAvailableACFBinaries());
+        commands = _proc->getCommandListFromFile(fileName);
     } catch (BurnInException& e) {
         qWarning("%s", e.what());
         QMessageBox dialog(_commandListWidget->window());
@@ -397,108 +393,60 @@ void CommandListPage::onRunFinished() {
 }
 
 void CommandListPage::onAddWait() {
-    bool ok;
-    int wait = CommandModifyDialog::commandWait(_commandListWidget->window(), &ok);
+    auto command = std::make_shared<BurnInWaitCommand>(0);
+    bool ok = CommandModifyDialog::commandWait(_commandListWidget->window(), command.get());
     if (not ok)
         return;
-        
-    auto command = std::make_shared<BurnInWaitCommand>(wait);
     
     CommandListItem* item = new CommandListItem(command);
     _commands_list->addItem(item);
 }
 
-QMap<QString, QPair<int, PowerControlClass*>> CommandListPage::_buildVoltageSourcesVector() const {
-    QMap<QString, QPair<int, PowerControlClass*>> availSources;
-    for (const auto& source: _controller->getVoltageSources()) {
-        int numOutputs = source.second->getNumOutputs();
-        if (numOutputs == 1)
-            availSources[QString::fromStdString(source.first)] = qMakePair(0, source.second);
-        else {
-            for (int i = 0; i < numOutputs; ++i) {
-                QString name = QString::fromStdString(source.first) + " output no. " + QString::number(i + 1);
-                availSources[name] = qMakePair(i, source.second);
-            }
-        }
-    }
-    
-    return availSources;
-}
-
-QStringList CommandListPage::_getAvailableACFBinaries() const {
-    DAQModule* module = _controller->getDaqModule();
-    if (module == nullptr)
-        return QStringList();
-    else
-        return module->getAvailableACFBinaries();
-}
-
 void CommandListPage::onAddVoltageSourceOutput() {
-    bool ok;
-    QMap<QString, QPair<int, PowerControlClass*>> voltageSources = _buildVoltageSourcesVector();
-    std::tuple<QString, bool> ret = CommandModifyDialog::commandVoltageSourceOutput(_commandListWidget->window(), voltageSources.keys(), &ok);
+    auto command = std::make_shared<BurnInVoltageSourceOutputCommand>(nullptr, "", 0, false);
+    bool ok = CommandModifyDialog::commandVoltageSourceOutput(_commandListWidget->window(), command.get(), _controller);
     if (not ok)
         return;
-    
-    QString name = std::get<0>(ret);
-    PowerControlClass* dev = voltageSources[name].second;
-    int output = voltageSources[name].first;
-    auto command = std::make_shared<BurnInVoltageSourceOutputCommand>(dev, name, output, std::get<1>(ret));
     
     CommandListItem* item = new CommandListItem(command);
     _commands_list->addItem(item);
 }
 
 void CommandListPage::onAddVoltageSourceAdd() {
-    bool ok;
-    QMap<QString, QPair<int, PowerControlClass*>> voltageSources = _buildVoltageSourcesVector();
-    std::tuple<QString, double> ret = CommandModifyDialog::commandVoltageSourceSet(_commandListWidget->window(), voltageSources.keys(), &ok);
+    auto command = std::make_shared<BurnInVoltageSourceSetCommand>(nullptr, "", 0, 0);
+    bool ok = CommandModifyDialog::commandVoltageSourceSet(_commandListWidget->window(), command.get(), _controller);
     if (not ok)
         return;
-    
-    QString name = std::get<0>(ret);
-    PowerControlClass* dev = voltageSources[name].second;
-    int output = voltageSources[name].first;
-    double value = std::get<1>(ret);
-    auto command = std::make_shared<BurnInVoltageSourceSetCommand>(dev, name, output, value);
 
     CommandListItem* item = new CommandListItem(command);
     _commands_list->addItem(item);
 }
 
 void CommandListPage::onAddChillerOutput() {
-    bool ok;
-    bool on = CommandModifyDialog::commandChillerOutput(_commandListWidget->window(), &ok);
+    auto command = std::make_shared<BurnInChillerOutputCommand>(nullptr, "", false);
+    bool ok = CommandModifyDialog::commandChillerOutput(_commandListWidget->window(), command.get(), _controller);
     if (not ok)
         return;
-        
-    auto command = std::make_shared<BurnInChillerOutputCommand>(on);
     
     CommandListItem* item = new CommandListItem(command);
     _commands_list->addItem(item);
 }
 
 void CommandListPage::onAddChillerSet() {
-    bool ok;
-    double value = CommandModifyDialog::commandChillerSet(_commandListWidget->window(), &ok);
+    auto command = std::make_shared<BurnInChillerSetCommand>(nullptr, "", 20);
+    bool ok = CommandModifyDialog::commandChillerSet(_commandListWidget->window(), command.get(), _controller);
     if (not ok)
         return;
-        
-    auto command = std::make_shared<BurnInChillerSetCommand>(value);
     
     CommandListItem* item = new CommandListItem(command);
     _commands_list->addItem(item);
 }
 
 void CommandListPage::onAddDAQCmd() {
-    bool ok;
-    std::tuple<QString, QString> ret = CommandModifyDialog::commandDAQCmd(_commandListWidget->window(), _getAvailableACFBinaries(), &ok);
+    auto command = std::make_shared<BurnInDAQCommand>("", "");
+    bool ok = CommandModifyDialog::commandDAQCmd(_commandListWidget->window(), command.get(), _controller);
     if (not ok)
         return;
-        
-    QString execName = std::get<0>(ret);
-    QString opts = std::get<1>(ret);
-    auto command = std::make_shared<BurnInDAQCommand>(execName, opts);
     
     CommandListItem* item = new CommandListItem(command);
     _commands_list->addItem(item);

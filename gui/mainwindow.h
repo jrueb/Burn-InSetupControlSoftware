@@ -2,45 +2,90 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QMainWindow>
-#include <QPushButton>
 #include <QDoubleSpinBox>
 #include <QLCDNumber>
 #include <QCheckBox>
-#include <QListWidgetItem>
-#include <QStandardItemModel>
-#include <QLabel>
+#include <QGroupBox>
 
 #include "general/systemcontrollerclass.h"
 #include "devices/power/powercontrolclass.h"
+#include "devices/environment/thermorasp.h"
+#include "devices/environment/chiller.h"
 #include "gui/commandlistpage.h"
 #include "gui/daqpage.h"
 
 namespace Ui {
-class MainWindow;
-class SystemControllerClass;
-}
-
-struct output_pointer_t {
-    QDoubleSpinBox *i_set;
-    QDoubleSpinBox *v_set;
-    QLCDNumber *i_applied;
-    QLCDNumber *v_applied;
-    QCheckBox *onoff_button;
+    class MainWindow;
+    class SystemControllerClass;
 };
 
-struct output_Raspberry {
-    QLayout *layout;
-    QLabel *label;
-    QLCDNumber *value;
+
+class DeviceWidget : public QGroupBox {
+    Q_OBJECT
+public:
+    DeviceWidget(const QString& title);
+    virtual void initialize() = 0;
 };
 
-struct output_Chiller{
-     QDoubleSpinBox *setTemperature;
-     QLCDNumber *bathTemperature;
-     QLCDNumber *sensorTemperature;
-     QLCDNumber *pressure;
-     QCheckBox *onoff_button;
+
+class VoltageSourceWidgetControls {
+public:
+    VoltageSourceWidgetControls();
+    
+    QDoubleSpinBox* i_set;
+    QDoubleSpinBox* v_set;
+    QLCDNumber* i_applied;
+    QLCDNumber* v_applied;
+    QCheckBox* onoff_button;
+};
+
+
+class VoltageSourceWidget : public DeviceWidget {
+    Q_OBJECT
+
+public:
+    VoltageSourceWidget(const QString& title, PowerControlClass* device, bool settersAlwaysEnabled);
+    void initialize();
+    
+private slots:
+    void onOnOffToggled(int output, bool state);
+    
+private:
+    std::vector<VoltageSourceWidgetControls> _controls;
+    PowerControlClass* _device;
+    bool _settersAlwaysEnabled;
+};
+
+
+class ThermoraspWidget : public DeviceWidget {
+    Q_OBJECT
+
+public:
+    ThermoraspWidget(const QString& title, Thermorasp* device);
+    void initialize();
+    
+private:
+    Thermorasp* _device;
+    std::vector<QLCDNumber*> _values;
+};
+
+
+class ChillerWidget : public DeviceWidget {
+    Q_OBJECT
+    
+public:
+    ChillerWidget(const QString& title, Chiller* device);
+    void initialize();
+    
+private slots:
+    void onOnOffToggled(bool state);
+    
+private:
+    Chiller* _device;
+    
+    QDoubleSpinBox *_workingTemp;
+    QLCDNumber *_bathTemp;
+    QCheckBox *_onoffButton;
 };
 
 
@@ -63,41 +108,16 @@ private slots:
     void app_quit();
 
 private:
-    int fRowMax;
+    std::vector<DeviceWidget*> _deviceWidgets;
+    std::vector<VoltageSourceWidget*> _lowVoltageWidgets;
+    std::vector<VoltageSourceWidget*> _highVoltageWidgets;
+    std::vector<ThermoraspWidget*> _thermoraspWidgets;
+    std::vector<ChillerWidget*> _chillerWidgets;
+
     SystemControllerClass *fControl;
     Ui::MainWindow *ui;
     CommandListPage* commandListPage;
     DAQPage* daqPage;
-    vector<string> fSources;
-    vector<output_pointer_t*> gui_pointers_low_voltage;
-
-    vector<output_pointer_t*> gui_pointers_high_voltage;
-
-    output_pointer_t SetSourceOutputLayout() const;
-    output_pointer_t *SetVoltageSource(QLayout *pMainLayout, std::string pName, std::string pType,
-                                       int pNoutputs);
-    vector<output_Raspberry*> gui_raspberrys;
-
-    output_Raspberry setRaspberryLayout(string pName);
-
-    output_Raspberry *SetRaspberryOutput(QLayout *pMainLayout , vector<string> pNames, string pNameGroupBox);
-
-    output_Chiller *gui_chiller;
-
-    output_Chiller setChilerLayout();
-
-    output_Chiller* SetChillerOutput(QLayout *pMainLayout, std::string pName);
-
-    void on_V_set_doubleSpinBox_valueChanged(string pSourceName , int pId , double pVolt);
-
-    void on_OnOff_button_stateChanged(string pSourceName, int dev_num, int pId, bool pArg);
-
-    void on_I_set_doubleSpinBox_valueChanged(string pSourceName , int pId, double pCurr);
-    
-    void _connectTTi();
-    void _connectKeithley();
-    void _connectJulabo();
-    void _connectThermorasp();
 
 };
 
