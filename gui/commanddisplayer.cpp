@@ -8,14 +8,20 @@ void CommandDisplayer::handleCommand(BurnInWaitCommand& command) {
 }
 
 void CommandDisplayer::handleCommand(BurnInVoltageSourceOutputCommand& command) {
+    QString output_name = "";
+    if (command.source->getNumOutputs() > 1)
+        output_name = " output no. " + QString::number(command.output);
     if (command.on)
-        display = "Turn on source " + command.sourceName;
+        display = "Turn on source " + command.sourceName + output_name;
     else
-        display = "Turn off source " + command.sourceName;
+        display = "Turn off source " + command.sourceName + output_name;
 }
 
 void CommandDisplayer::handleCommand(BurnInVoltageSourceSetCommand& command) {
-    display = "Set source " + command.sourceName + " to " + QString::number(command.value) + " volts";
+    QString output_name = "";
+    if (command.source->getNumOutputs() > 1)
+        output_name = " output no. " + QString::number(command.output);
+    display = "Set source " + command.sourceName + output_name + " to " + QString::number(command.value) + " volts";
 }
 
 void CommandDisplayer::handleCommand(BurnInChillerOutputCommand& command) {

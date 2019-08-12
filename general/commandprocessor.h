@@ -42,7 +42,7 @@ private:
     GenericInstrumentClass* _parseDeviceName(const QString& devName, int line_count) const;
     PowerControlClass* _parseVoltageSourceName(const QString& devName, int line_count) const;
     Chiller* _parseChillerName(const QString& devName, int line_count) const;
-    static int _parseVoltageSourceOutput(QTextStream& in, int line_count);
+    static int _parseVoltageSourceOutput(QTextStream& in, int line_count, const PowerControlClass* source);
     static bool _parseOnOff(QTextStream& in, int line_count);
     
     class CommandSaver : public AbstractCommandHandler {

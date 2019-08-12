@@ -48,11 +48,11 @@ std::map<QString, QPair<int, PowerControlClass*>> CommandModifyDialog::_getAvail
         int numOutputs = source->getNumOutputs();
         QString id = QString::fromStdString(controller->getId(source));
         if (numOutputs == 1)
-            availSources[id] = qMakePair(0, source);
+            availSources[id] = qMakePair(1, source);
         else {
             for (int i = 0; i < numOutputs; ++i) {
                 QString name = id + " output no. " + QString::number(i + 1);
-                availSources[name] = qMakePair(i, source);
+                availSources[name] = qMakePair(i + 1, source);
             }
         }
     }

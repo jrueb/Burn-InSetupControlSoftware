@@ -68,14 +68,14 @@ VoltageSourceWidget::VoltageSourceWidget(const QString& title, PowerControlClass
         _controls.push_back(control);
         
         connect(control.onoff_button, &QCheckBox::toggled, this, [this, i](bool state) {
-            this->onOnOffToggled(i, state);
+            this->onOnOffToggled(i + 1, state);
         });
         if (settersAlwaysEnabled) {
             connect(control.v_set, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, [device, i](double voltage) {
-                device->setVolt(voltage, i);
+                device->setVolt(voltage, i + 1);
             });
             connect(control.i_set, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, [device, i](double current) {
-               device->setCurr(current, i);
+               device->setCurr(current, i + 1);
             });
         }
     }

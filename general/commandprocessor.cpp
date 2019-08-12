@@ -223,8 +223,9 @@ BurnInVoltageSourceOutputCommand* CommandProcessor::_parseVoltageSourceOutputCom
     PowerControlClass* source;
     bool on;
     
+    sourceName = _getQuotedString(line_stream);
     source = _parseVoltageSourceName(sourceName, line_count);
-    output = _parseVoltageSourceOutput(line_stream, line_count);
+    output = _parseVoltageSourceOutput(line_stream, line_count, source);
     on = _parseOnOff(line_stream, line_count);
     
     return new BurnInVoltageSourceOutputCommand(source, sourceName, output, on);
@@ -244,7 +245,7 @@ BurnInVoltageSourceSetCommand* CommandProcessor::_parseVoltageSourceSetCommand(c
     
     sourceName = _getQuotedString(line_stream);
     source = _parseVoltageSourceName(sourceName, line_count);
-    output = _parseVoltageSourceOutput(line_stream, line_count);
+    output = _parseVoltageSourceOutput(line_stream, line_count, source);
     
     line_stream >> value_str;
     value = value_str.toDouble(&ok);
@@ -338,7 +339,7 @@ QString CommandProcessor::_getQuotedString(QTextStream& in) {
 GenericInstrumentClass* CommandProcessor::_parseDeviceName(const QString& devName, int line_count) const {
     GenericInstrumentClass* dev = _controller->getDeviceById(devName.toStdString());
     if (dev == nullptr)
-        throw BurnInException("Line " + std::to_string(line_count) + ": Unknown voltage source \"" + devName.toStdString() + "\"");
+        throw BurnInException("Line " + std::to_string(line_count) + ": Unknown device \"" + devName.toStdString() + "\"");
         
     return dev;
 }
@@ -371,7 +372,7 @@ Chiller* CommandProcessor::_parseChillerName(const QString& devName, int line_co
     return chiller;
 }
 
-int CommandProcessor::_parseVoltageSourceOutput(QTextStream& in, int line_count) {
+int CommandProcessor::_parseVoltageSourceOutput(QTextStream& in, int line_count, const PowerControlClass* source) {
     QString output_str;
     int output;
     bool ok;
@@ -380,6 +381,8 @@ int CommandProcessor::_parseVoltageSourceOutput(QTextStream& in, int line_count)
     output = output_str.toInt(&ok);
     if (not ok or output < 0)
         throw BurnInException("Line " + std::to_string(line_count) + ": Invalid output index " + output_str.toStdString() + "");
+    if (output > source->getNumOutputs())
+        throw BurnInException("Line " + std::to_string(line_count) + ": Output number  too high");
         
     return output;
 }
