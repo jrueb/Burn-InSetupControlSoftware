@@ -44,6 +44,7 @@ VoltageSourceWidget::VoltageSourceWidget(const QString& title, PowerControlClass
     _settersAlwaysEnabled = settersAlwaysEnabled;
     setTitle(title);
     QGridLayout *group_box_layout = new QGridLayout(this);
+    group_box_layout->setAlignment(Qt::AlignTop);
 
     // set the labels
     QLabel *label_i_set = new QLabel("Current limit:");

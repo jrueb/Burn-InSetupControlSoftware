@@ -222,26 +222,12 @@
            <item>
             <widget class="QScrollArea" name="scrollArea">
              <property name="verticalScrollBarPolicy">
-              <enum>Qt::ScrollBarAlwaysOff</enum>
+              <enum>Qt::ScrollBarAsNeeded</enum>
              </property>
              <property name="widgetResizable">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
              <widget class="QWidget" name="lowVoltageContents">
-              <property name="geometry">
-               <rect>
-                <x>0</x>
-                <y>0</y>
-                <width>752</width>
-                <height>277</height>
-               </rect>
-              </property>
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
               <layout class="QHBoxLayout" name="lowVoltageLayout"/>
              </widget>
             </widget>
@@ -273,20 +259,12 @@
            <item>
             <widget class="QScrollArea" name="scrollArea_2">
              <property name="verticalScrollBarPolicy">
-              <enum>Qt::ScrollBarAlwaysOff</enum>
+              <enum>Qt::ScrollBarAsNeeded</enum>
              </property>
              <property name="widgetResizable">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
              <widget class="QWidget" name="highVoltageContents">
-              <property name="geometry">
-               <rect>
-                <x>0</x>
-                <y>0</y>
-                <width>777</width>
-                <height>277</height>
-               </rect>
-              </property>
               <layout class="QHBoxLayout" name="highVoltageLayout"/>
              </widget>
             </widget>
@@ -336,20 +314,12 @@
              <item>
               <widget class="QScrollArea" name="scrollArea_3">
                <property name="verticalScrollBarPolicy">
-                <enum>Qt::ScrollBarAlwaysOff</enum>
+                <enum>Qt::ScrollBarAsNeeded</enum>
                </property>
                <property name="widgetResizable">
-                <bool>false</bool>
+                <bool>true</bool>
                </property>
                <widget class="QWidget" name="envMonitorContents">
-                <property name="geometry">
-                 <rect>
-                  <x>0</x>
-                  <y>0</y>
-                  <width>750</width>
-                  <height>276</height>
-                 </rect>
-                </property>
                 <layout class="QHBoxLayout" name="envMonitorLayout"/>
                </widget>
               </widget>
@@ -381,20 +351,12 @@
              <item>
               <widget class="QScrollArea" name="scrollArea_4">
                <property name="verticalScrollBarPolicy">
-                <enum>Qt::ScrollBarAlwaysOff</enum>
+                <enum>Qt::ScrollBarAsNeeded</enum>
                </property>
                <property name="widgetResizable">
-                <bool>false</bool>
+                <bool>true</bool>
                </property>
                <widget class="QWidget" name="envControlContents">
-                <property name="geometry">
-                 <rect>
-                  <x>0</x>
-                  <y>0</y>
-                  <width>775</width>
-                  <height>276</height>
-                 </rect>
-                </property>
                 <layout class="QHBoxLayout" name="envControlLayout"/>
                </widget>
               </widget>
