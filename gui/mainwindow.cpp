@@ -21,26 +21,20 @@ DeviceWidget::DeviceWidget(const QString& title)
 
 VoltageSourceWidgetControls::VoltageSourceWidgetControls() {
     i_set = new QDoubleSpinBox();
-    i_set->setMaximumHeight(20);
     i_set->setDecimals(3);
     i_set->setSuffix(" A");
     v_set = new QDoubleSpinBox();
-    v_set->setMaximumHeight(20);
-    v_set->setMinimum(-100000);
     v_set->setDecimals(3);
     v_set->setSuffix(" V");
     i_applied = new QLCDNumber();
-    i_applied->setMaximumHeight(20);
     i_applied->setSegmentStyle(QLCDNumber::Flat);
     i_applied->setDigitCount(8);
     v_applied = new QLCDNumber();
-    v_applied->setMaximumHeight(20);
     v_applied->setSegmentStyle(QLCDNumber::Flat);
     v_applied->setDigitCount(8);
 
     // on off
     onoff_button = new QCheckBox("On");
-    onoff_button->setMaximumHeight(20);
 }
 
 VoltageSourceWidget::VoltageSourceWidget(const QString& title, PowerControlClass* device, bool settersAlwaysEnabled)
@@ -51,38 +45,25 @@ VoltageSourceWidget::VoltageSourceWidget(const QString& title, PowerControlClass
     setTitle(title);
     QGridLayout *group_box_layout = new QGridLayout(this);
 
-    QSize size(300, 20);
-
     // set the labels
-    QLabel *label_type = new QLabel("Type:");
-    label_type->setMinimumSize(size);
-    group_box_layout->addWidget(label_type, 0, 0);
     QLabel *label_i_set = new QLabel("Current limit:");
-    label_i_set->setMinimumSize(size);
-    group_box_layout->addWidget(label_i_set, 1, 0);
+    group_box_layout->addWidget(label_i_set, 0, 0);
     QLabel *label_v_set = new QLabel("Voltage:");
-    label_v_set->setMinimumSize(size);
-    group_box_layout->addWidget(label_v_set, 2, 0);
+    group_box_layout->addWidget(label_v_set, 1, 0);
     QLabel *label_i_applied = new QLabel("Current (A):");
-    label_i_applied->setMinimumSize(size);
-    group_box_layout->addWidget(label_i_applied, 3, 0);
+    group_box_layout->addWidget(label_i_applied, 2, 0);
     QLabel *label_v_applied = new QLabel("Voltage app. (V):");
-    label_v_applied->setMinimumSize(size);
-    group_box_layout->addWidget(label_v_applied, 4, 0);
+    group_box_layout->addWidget(label_v_applied, 3, 0);
     QLabel *label_onoff = new QLabel("On/Off:");
-    label_onoff->setMinimumSize(size);
-    group_box_layout->addWidget(label_onoff, 5, 0);
+    group_box_layout->addWidget(label_onoff, 4, 0);
 
     for (int i = 0; i < device->getNumOutputs(); i++) {
         VoltageSourceWidgetControls control;
-        //QLabel *type = new QLabel(pType.c_str());
-        //type->setMaximumHeight(20);
-        //group_box_layout->addWidget(type, 0, i + 1);
-        group_box_layout->addWidget(control.i_set, 1, i + 1);
-        group_box_layout->addWidget(control.v_set, 2, i + 1);
-        group_box_layout->addWidget(control.i_applied, 3, i + 1);
-        group_box_layout->addWidget(control.v_applied, 4, i + 1);
-        group_box_layout->addWidget(control.onoff_button, 5, i + 1);
+        group_box_layout->addWidget(control.i_set, 0, i + 1);
+        group_box_layout->addWidget(control.v_set, 1, i + 1);
+        group_box_layout->addWidget(control.i_applied, 2, i + 1);
+        group_box_layout->addWidget(control.v_applied, 3, i + 1);
+        group_box_layout->addWidget(control.onoff_button, 4, i + 1);
         _controls.push_back(control);
         
         connect(control.onoff_button, &QCheckBox::toggled, this, [this, i](bool state) {
@@ -103,8 +84,8 @@ VoltageSourceWidget::VoltageSourceWidget(const QString& title, PowerControlClass
 
 void VoltageSourceWidget::onOnOffToggled(int output, bool state) {
     if (state) {
-        _device->setVolt(_controls[output].v_set->value(), output);
-        _device->setCurr(_controls[output].i_set->value(), output);
+        _device->setVolt(_controls[output - 1].v_set->value(), output);
+        _device->setCurr(_controls[output - 1].i_set->value(), output);
         _device->onPower(output);
     } else {
         _device->offPower(output);
@@ -113,17 +94,17 @@ void VoltageSourceWidget::onOnOffToggled(int output, bool state) {
 
 void VoltageSourceWidget::initialize() {
     connect(_device, &PowerControlClass::voltSetChanged, this, [this](double volt, int output) {
-        QDoubleSpinBox* box = this->_controls[output].v_set;
+        QDoubleSpinBox* box = this->_controls[output - 1].v_set;
         QSignalBlocker blocker(box);
         box->setValue(volt);
     });
     connect(_device, &PowerControlClass::currSetChanged, this, [this](double curr, int output) {
-        QDoubleSpinBox* box = this->_controls[output].i_set;
+        QDoubleSpinBox* box = this->_controls[output - 1].i_set;
         QSignalBlocker blocker(box);
         box->setValue(curr);
     });
     connect(_device, &PowerControlClass::voltAppChanged, this, [this](double volt, int output) {
-        QLCDNumber* num = this->_controls[output].v_applied;
+        QLCDNumber* num = this->_controls[output - 1].v_applied;
         QSignalBlocker blocker(num);
         // If a small number needs too many digits, display() seems to do nothing.
         if (abs(volt) < 0.0001)
@@ -132,7 +113,7 @@ void VoltageSourceWidget::initialize() {
             num->display(volt);
     });
     connect(_device, &PowerControlClass::currAppChanged, this, [this](double curr, int output) {
-        QLCDNumber* num = this->_controls[output].i_applied;
+        QLCDNumber* num = this->_controls[output - 1].i_applied;
         QSignalBlocker blocker(num);
         if (abs(curr) < 0.0001)
             num->display(0.);
@@ -140,12 +121,12 @@ void VoltageSourceWidget::initialize() {
             num->display(curr);
     });
     connect(_device, &PowerControlClass::powerStateChanged, this, [this](bool on, int output) {
-        QCheckBox* box = this->_controls[output].onoff_button;
+        QCheckBox* box = this->_controls[output - 1].onoff_button;
         QSignalBlocker blocker(box);
         box->setChecked(on);
         if (not this->_settersAlwaysEnabled) {
-            this->_controls[output].v_set->setEnabled(not on);
-            this->_controls[output].i_set->setEnabled(not on);
+            this->_controls[output - 1].v_set->setEnabled(not on);
+            this->_controls[output - 1].i_set->setEnabled(not on);
         }
     });
 }
@@ -282,25 +263,29 @@ bool MainWindow::readXmlFile()
     
     fControl->setupFromDesc(descriptions);
     for (const auto& source: fControl->getLowVoltageSources()) {
-        VoltageSourceWidget* widget = new VoltageSourceWidget("test", source, true);
+        QString name = QString::fromStdString(fControl->getId(source));
+        VoltageSourceWidget* widget = new VoltageSourceWidget(name, source, true);
         ui->lowVoltageLayout->addWidget(widget);
         _lowVoltageWidgets.push_back(widget);
         _deviceWidgets.push_back(widget);
     }
     for (const auto& source: fControl->getHighVoltageSources()) {
-        VoltageSourceWidget* widget = new VoltageSourceWidget("test", source, false);
+        QString name = QString::fromStdString(fControl->getId(source));
+        VoltageSourceWidget* widget = new VoltageSourceWidget(name, source, false);
         ui->highVoltageLayout->addWidget(widget);
         _highVoltageWidgets.push_back(widget);
         _deviceWidgets.push_back(widget);
     }
     for (const auto& rasp: fControl->getThermorasps()) {
-        ThermoraspWidget* widget = new ThermoraspWidget("test", rasp);
+        QString name = QString::fromStdString(fControl->getId(rasp));
+        ThermoraspWidget* widget = new ThermoraspWidget(name, rasp);
         ui->envMonitorLayout->addWidget(widget);
         _thermoraspWidgets.push_back(widget);
         _deviceWidgets.push_back(widget);
     }
     for (const auto& chiller: fControl->getChillers()) {
-        ChillerWidget* widget = new ChillerWidget("test", chiller);
+        QString name = QString::fromStdString(fControl->getId(chiller));
+        ChillerWidget* widget = new ChillerWidget(name, chiller);
         ui->envControlLayout->addWidget(widget);
         _chillerWidgets.push_back(widget);
         _deviceWidgets.push_back(widget);

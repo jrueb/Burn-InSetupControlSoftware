@@ -56,10 +56,14 @@ void ControlTTiPower::initialize()
 
 void ControlTTiPower::setVolt(double pVoltage , int pId)
 {
-    Q_ASSERT(pId == 1 or pId == 2);
-//    viPrintf(fVi , "V%d %f\n" , pId , pVoltage);
+    Q_ASSERT(pId == 0 or pId == 1 or pId == 2);
+    if (pId == 0) {
+        setVolt(pVoltage, 1);
+        setVolt(pVoltage, 2);
+        return;
+    }
     char cCommand[BUFLEN];
-    snprintf(cCommand, sizeof(cCommand), "V%d %.4f\n", pId, pVoltage);
+    snprintf(cCommand, sizeof(cCommand), "V%d %.4f\n", 3 - pId, pVoltage);
     _commMutex.lock();
     lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
     _commMutex.unlock();
@@ -71,9 +75,14 @@ void ControlTTiPower::setVolt(double pVoltage , int pId)
 
 void ControlTTiPower::setCurr(double pCurrent , int pId)
 {
-    Q_ASSERT(pId == 1 or pId == 2);
+    Q_ASSERT(pId == 0 or pId == 1 or pId == 2);
+    if (pId == 0) {
+        setCurr(pCurrent, 1);
+        setCurr(pCurrent, 2);
+        return;
+    }
     char cCommand[BUFLEN];
-    snprintf(cCommand, sizeof(cCommand), "I%d %.4f\n", pId, pCurrent);
+    snprintf(cCommand, sizeof(cCommand), "I%d %.4f\n", 3 - pId, pCurrent);
     _commMutex.lock();
     lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
     _commMutex.unlock();
@@ -87,7 +96,7 @@ void ControlTTiPower::onPower(int pId)
     Q_ASSERT(pId == 0 or pId == 1 or pId == 2);
     char cCommand[BUFLEN];
     if (pId)
-        snprintf(cCommand, sizeof(cCommand), "OP%d 1 \n", pId);
+        snprintf(cCommand, sizeof(cCommand), "OP%d 1 \n", 3 - pId);
     else
         snprintf(cCommand, sizeof(cCommand), "OPALL 1\n");
     _commMutex.lock();
@@ -111,7 +120,7 @@ void ControlTTiPower::offPower(int pId)
     char cCommand[BUFLEN];
     _commMutex.lock();
     if(pId){
-        snprintf(cCommand, sizeof(cCommand), "OP%d 0 \n", pId);
+        snprintf(cCommand, sizeof(cCommand), "OP%d 0 \n", 3 - pId);
         lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
     }
     else{
@@ -138,9 +147,14 @@ bool ControlTTiPower::getPower(int pId) const {
 
 void ControlTTiPower::_refreshPowerStatus(int pId)
 {
-    Q_ASSERT(pId == 1 or pId == 2);
+    Q_ASSERT(pId == 0 or pId == 1 or pId == 2);
+    if (pId == 0) {
+        _refreshPowerStatus(1);
+        _refreshPowerStatus(2);
+        return;
+    }
     char buf[BUFLEN];
-    snprintf(buf, sizeof(buf), "OP%d?\n", pId);
+    snprintf(buf, sizeof(buf), "OP%d?\n", 3 - pId);
     _commMutex.lock();
     lxi_send(fDevice, buf, strlen(buf), TIMEOUT);
     QThread::msleep(50);
@@ -183,9 +197,9 @@ void ControlTTiPower::refreshAppliedValues() {
     
     _commMutex.lock();
     for (int i = 1; i <= 2; i++) {
-        snprintf(cCommand, sizeof(cCommand), "V%dO? \n", i);
+        snprintf(cCommand, sizeof(cCommand), "V%dO? \n", 3 - i);
         lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
-        snprintf(cCommand, sizeof(cCommand), "I%dO? \n", i);
+        snprintf(cCommand, sizeof(cCommand), "I%dO? \n", 3 - i);
         lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
     }
     QThread::msleep(50);
@@ -200,6 +214,10 @@ void ControlTTiPower::refreshAppliedValues() {
     cBuff[len] = 0;
     QString res = cBuff;
     QStringList lines = res.split(RMT);
+    if (lines.size() < 4) {
+        qCritical("Got invalid response from TTi at %s: expected at least 4 lines, got %i.", fAddress.c_str(), lines.size());
+        return;
+    }
     
     _setAndEmitIfChanged(&(_voltApp[0]),
         lines[0].left(lines[0].length() - 1).toDouble(), 1,

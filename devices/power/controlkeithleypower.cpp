@@ -135,19 +135,19 @@ bool ControlKeithleyPower::getPower(int) const {
 void ControlKeithleyPower::onPower(int)
 {
     _outputOn = true;
-    emit powerStateChanged(true, 0);
+    emit powerStateChanged(true, 1);
 }
 
 void ControlKeithleyPower::offPower(int)
 {
     _outputOn = false;
-    emit powerStateChanged(false, 0);
+    emit powerStateChanged(false, 1);
 }
 
 void ControlKeithleyPower::setVolt(double pVoltage , int)
 {
     fVoltSet = pVoltage;
-    emit voltSetChanged(fVoltSet, 0);
+    emit voltSetChanged(fVoltSet, 1);
 }
 
 void ControlKeithleyPower::sendVoltageCommand(double pVoltage) {
@@ -189,7 +189,7 @@ void ControlKeithleyPower::setCurr(double pCurrent, int)
     comHandler_->SendCommand(stringinput);
     _commMutex.unlock();
     fCurrCompliance = pCurrent;
-    emit currSetChanged(fCurrCompliance, 0);
+    emit currSetChanged(fCurrCompliance, 1);
 }
 
 double ControlKeithleyPower::getVolt(int) const {
@@ -213,11 +213,11 @@ void ControlKeithleyPower::refreshAppliedValues()
     if (not _outputOn) {
 	if (fVolt != 0) {
 	    fVolt = 0;
-	    emit voltAppChanged(fVolt, 0);
+	    emit voltAppChanged(fVolt, 1);
 	}
 	if (fCurr != 0) {
 	    fCurr = 0;
-	    emit voltAppChanged(fCurr, 0);
+	    emit voltAppChanged(fCurr, 1);
 	}
 	return;
     }
@@ -245,9 +245,9 @@ void ControlKeithleyPower::refreshAppliedValues()
     fCurr = fCurrStr.toDouble();
 
     if (voltchanged)
-	emit voltAppChanged(fVolt, 0);
+	emit voltAppChanged(fVolt, 1);
     if (currchanged)
-	emit currAppChanged(fCurr, 0);
+	emit currAppChanged(fCurr, 1);
 }
 
 void ControlKeithleyPower::closeConnection()

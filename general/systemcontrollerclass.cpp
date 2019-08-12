@@ -163,7 +163,7 @@ void SystemControllerClass::_addHighVoltageSource(const GenericInstrumentDescrip
 
 void SystemControllerClass::_addLowVoltageSource(const GenericInstrumentDescription_t& desc) {
     PowerControlClass *dev;
-    if (desc.classOfInstr == "TTI")
+    if (desc.classOfInstr == "TTi")
         dev = _constructTTiPower(desc);
     else if (desc.classOfInstr == "Keithley2410")
         dev = _constructKeithleyPower(desc);
@@ -277,9 +277,9 @@ void SystemControllerClass::setupFromDesc(const std::vector<GenericInstrumentDes
             QString section = QString::fromStdString(desc.section);
             section = section.toLower();
             
-            if (section == "highvoltageSource")
+            if (section == "highvoltagesource")
                 _addHighVoltageSource(desc);
-            else if (section == "lowvoltageSource")
+            else if (section == "lowvoltagesource")
                 _addLowVoltageSource(desc);
             else if (section == "chiller")
                 _addChiller(desc);
@@ -288,9 +288,7 @@ void SystemControllerClass::setupFromDesc(const std::vector<GenericInstrumentDes
             else if (section == "daqmodule")
                 _addDAQModule(desc);
             else
-                throw BurnInException(std::string("Invalid tag \"") + desc.section
-                    + "\". Valid tags are: HighVoltageSource, LowVoltageSource, "
-                    "Chiller, Thermorasp, DAQModule");
+                Q_ASSERT(false); // Should not reach
         }
         
         if (_daqModules.size() == 0)

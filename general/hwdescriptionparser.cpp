@@ -31,16 +31,27 @@ std::vector<GenericInstrumentDescription_t> HWDescriptionParser::ParseXML(QStrin
         QXmlStreamReader::TokenType token = cXmlFile->readNext();
         if (token == QXmlStreamReader::StartDocument)
             continue;
-        if (token == QXmlStreamReader::StartElement)
-        {
-            if (cXmlFile->name() == "HardwareDescription")
+        if (token == QXmlStreamReader::StartElement) {
+            std::string name = cXmlFile->name().toString().toStdString();
+            std::string namelower = cXmlFile->name().toString().toLower().toStdString();
+            qDebug("Found tag \"%s\".", namelower.c_str());
+            
+            if (namelower == "hardwaredescription")
                 continue;
-            else if (cXmlFile->name() == "Power")
-                ParsePower(cXmlFile, cInstruments);
-            else if (cXmlFile->name() == "Environment")
-                ParseEnvironment(cXmlFile , cInstruments);
-            else if (cXmlFile->name() == "DataAcquisition")
-                ParseDataAquisition(cXmlFile, cInstruments);
+            else if (namelower == "lowvoltagesource")
+                ParseVoltageSource(cXmlFile, cInstruments, true);
+            else if (namelower == "highvoltagesource")
+                ParseVoltageSource(cXmlFile, cInstruments, false);
+            else if (namelower == "chiller")
+                ParseChiller(cXmlFile, cInstruments);
+            else if (namelower == "peltier")
+                ParsePeltier(cXmlFile, cInstruments);
+            else if (namelower == "thermorasp")
+                ParseRaspberry(cXmlFile, cInstruments);
+            else if (namelower == "daqmodule")
+                ParseDAQModule(cXmlFile, cInstruments);
+            else
+                throw BurnInException("Invalid tag \"" + name + "\". Valid tags are: LowVoltageSource, HighVoltageSource, Chiller, Peltier, Thermorasp, DAQModule");
         }
     }
     if (cXmlFile->hasError())
@@ -49,18 +60,6 @@ std::vector<GenericInstrumentDescription_t> HWDescriptionParser::ParseXML(QStrin
     delete cFile;
 
     return cInstruments;
-}
-
-void HWDescriptionParser::ParsePower(QXmlStreamReader *pXmlFile, std::vector<GenericInstrumentDescription_t>& pInstruments) {
-
-    while (pXmlFile->readNextStartElement()) {
-        std::string name = pXmlFile->name().toString().toStdString();
-        if(name == "VoltageSource")
-            ParseVoltageSource(pXmlFile, pInstruments);
-        else
-            throw BurnInException("Invalid Power tag \"" + name + "\". Valid tags are: VoltageSource");
-    }
-
 }
 
 GenericInstrumentDescription_t HWDescriptionParser::ParseGeneric(const QXmlStreamReader *pXmlFile) const {
@@ -82,10 +81,13 @@ GenericInstrumentDescription_t HWDescriptionParser::ParseGeneric(const QXmlStrea
     return cInstrument;
 }
 
-void HWDescriptionParser::ParseVoltageSource(QXmlStreamReader *pXmlFile, std::vector<GenericInstrumentDescription_t>& pInstruments) {
+void HWDescriptionParser::ParseVoltageSource(QXmlStreamReader *pXmlFile, std::vector<GenericInstrumentDescription_t>& pInstruments, bool isLow) {
 
     GenericInstrumentDescription_t cInstrument = ParseGeneric(pXmlFile);
-    cInstrument.section = "VoltageSource";
+    if (isLow)
+        cInstrument.section = "LowVoltageSource";
+    else
+        cInstrument.section = "HighVoltageSource";
 
     while (pXmlFile->readNextStartElement()) {
         std::string name = pXmlFile->name().toString().toStdString();
@@ -107,25 +109,10 @@ void HWDescriptionParser::ParseVoltageSource(QXmlStreamReader *pXmlFile, std::ve
 
 }
 
-void HWDescriptionParser::ParseEnvironment(QXmlStreamReader *pXmlFile, std::vector<GenericInstrumentDescription_t>& pInstruments)
-{
-    while (pXmlFile->readNextStartElement()) {
-        std::string name = pXmlFile->name().toString().toStdString();
-        if(name == "ChillerControl")
-            ParseChiller(pXmlFile, pInstruments);
-        else if(name == "PeltierControl")
-            ParsePeltier(pXmlFile, pInstruments);
-        else if(name == "RaspberryControl")
-            ParseRaspberry(pXmlFile, pInstruments);
-        else
-            throw BurnInException("Invalid DataAquisition tag \"" + name + "\". Valid tags are: DAQModule");
-    }
-}
-
 void HWDescriptionParser::ParseChiller(QXmlStreamReader *pXmlFile, std::vector<GenericInstrumentDescription_t>& pInstruments)
 {
     GenericInstrumentDescription_t cInstrument = ParseGeneric(pXmlFile);
-    cInstrument.section = "ChillerControl";
+    cInstrument.section = "Chiller";
     pXmlFile->skipCurrentElement();
     // push back now
     pInstruments.push_back(cInstrument);
@@ -134,7 +121,7 @@ void HWDescriptionParser::ParseChiller(QXmlStreamReader *pXmlFile, std::vector<G
 void HWDescriptionParser::ParsePeltier(QXmlStreamReader *pXmlFile, std::vector<GenericInstrumentDescription_t>& pInstruments)
 {
     GenericInstrumentDescription_t cInstrument = ParseGeneric(pXmlFile);
-    cInstrument.section = "PeltierControl";
+    cInstrument.section = "Peltier";
     pXmlFile->skipCurrentElement();
     pInstruments.push_back(cInstrument);
 }
@@ -142,7 +129,7 @@ void HWDescriptionParser::ParsePeltier(QXmlStreamReader *pXmlFile, std::vector<G
 void HWDescriptionParser::ParseRaspberry(QXmlStreamReader *pXmlFile, std::vector<GenericInstrumentDescription_t>& pInstruments)
 {
     GenericInstrumentDescription_t cInstrument = ParseGeneric(pXmlFile);
-    cInstrument.section = "RaspberryControl";
+    cInstrument.section = "Thermorasp";
 
     while (pXmlFile->readNextStartElement()) {
         std::string name = pXmlFile->name().toString().toStdString();
@@ -159,16 +146,6 @@ void HWDescriptionParser::ParseRaspberry(QXmlStreamReader *pXmlFile, std::vector
         
     }
     pInstruments.push_back(cInstrument);
-}
-
-void HWDescriptionParser::ParseDataAquisition(QXmlStreamReader *pXmlFile, std::vector<GenericInstrumentDescription_t>& pInstruments) {
-    while (pXmlFile->readNextStartElement()) {
-        std::string name = pXmlFile->name().toString().toStdString();
-        if(name == "DAQModule")
-            ParseDAQModule(pXmlFile , pInstruments);
-        else
-            throw BurnInException("Invalid DataAquisition tag \"" + name + "\". Valid tags are: DAQModule");
-    }
 }
 
 void HWDescriptionParser::ParseDAQModule(QXmlStreamReader *pXmlFile, std::vector<GenericInstrumentDescription_t>& pInstruments) {
