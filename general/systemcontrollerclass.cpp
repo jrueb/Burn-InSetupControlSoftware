@@ -292,9 +292,12 @@ void SystemControllerClass::setupFromDesc(const std::vector<GenericInstrumentDes
                 _addChiller(desc);
             else if (section == "thermorasp")
                 _addThermorasp(desc);
-            else if (section == "daqmodule")
-                _addDAQModule(desc);
-            else
+            else if (section == "daqmodule") {
+                if (_daqModules.size() > 0)
+                    qWarning("Already have one DAQ module. Ignoring others");
+                else
+                    _addDAQModule(desc);
+            } else
                 Q_ASSERT(false); // Should not reach
         }
         
