@@ -53,7 +53,8 @@ SOURCES += \
     general/burnincommand.cpp \
     gui/commandsrundialog.cpp \
     gui/commanddisplayer.cpp \
-    devices/environment/chiller.cpp
+    devices/environment/chiller.cpp \
+    devices/environment/HuberPetiteFleur.cpp
 
 
 
@@ -90,4 +91,5 @@ HEADERS += \
     general/burnincommand.h \
     gui/commandsrundialog.h \
     gui/commanddisplayer.h \
-    devices/environment/chiller.h
+    devices/environment/chiller.h \
+    devices/environment/HuberPetiteFleur.h

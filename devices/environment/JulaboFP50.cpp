@@ -139,14 +139,6 @@ bool JulaboFP50::SetCirculatorOn( void ) {
   char buffer[1000];
   
   SetAndConfirm("out_mode_05 1", "in_mode_05", buffer);
-  comMutex_.lock();
-  comHandler_->SendCommand( "out_mode_05 1" );
-  usleep( 20000 );
-  comHandler_->SendCommand( "in_mode_05" );
-  usleep( 10000 );
-  comHandler_->ReceiveString( buffer );
-  comMutex_.unlock();
-  StripBuffer( buffer );
 
   if( static_cast<unsigned int>( atoi( buffer ) ) != 1 ) {
     qCritical("JulaboFP50 reported wrong circulator status \"%s\" after it was set to 1", buffer);

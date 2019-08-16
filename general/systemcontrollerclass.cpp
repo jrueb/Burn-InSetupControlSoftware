@@ -12,6 +12,7 @@
 #include "general/systemcontrollerclass.h"
 #include "devices/environment/chiller.h"
 #include "devices/environment/JulaboFP50.h"
+#include "devices/environment/HuberPetiteFleur.h"
 #include "general/BurnInException.h"
 
 const unsigned int DEVICE_REFRESH_INTERVAL = 1; // s
@@ -184,9 +185,15 @@ void SystemControllerClass::_addChiller(const GenericInstrumentDescription_t& de
             throw BurnInException("Invalid address for Chiller device JulaboFP50: " + address);
 
         chiller = new JulaboFP50(address);
+    } else if (desc.classOfInstr == "HuberPetiteFleur") {
+        std::string address = desc.interface_settings.at("address");
+        if (address == "")
+            throw BurnInException("Invalid address for Chiller device HuberPetiteFleur: " + address);
+
+        chiller = new HuberPetiteFleur(address);
     } else {
         throw BurnInException("Invalid class \"" + desc.classOfInstr
-            + "\" for a Chiller device. Valid classes are: JulaboFP50");
+            + "\" for a Chiller device. Valid classes are: JulaboFP50, HuberPetiteFleur");
     }
     
     std::string ident = _buildId(desc);
