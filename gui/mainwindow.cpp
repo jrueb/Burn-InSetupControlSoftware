@@ -221,9 +221,10 @@ void ChillerWidget::initialize() {
     });
 }
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(Logger *logger, QWidget *parent)
     : QMainWindow(parent),
-      ui(new Ui::MainWindow)
+      ui(new Ui::MainWindow),
+      _logger(logger)
 {
     ui->setupUi(this);
     commandListPage = new CommandListPage(ui->CommandList);
@@ -231,7 +232,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     fControl = nullptr;
     
-    ui->tabWidget->setEnabled(false);
+    ui->CommandList->setEnabled(false);
+    
+    connect(_logger, &Logger::newMessage, this, &MainWindow::onNewLogMessage);
 }
 
 MainWindow::~MainWindow() {
@@ -249,6 +252,37 @@ void MainWindow::initialize()
     
     // Setup thread to refresh the readings from the devices
     fControl->startRefreshingReadings();
+}
+
+void MainWindow::onNewLogMessage(QtMsgType type, const QString &msg) {
+    QString line;
+    QTextCharFormat format;
+    
+    switch (type) {
+    case QtDebugMsg:
+        line = "Debug: " + msg;
+        format.setFontWeight(10);
+        break;
+    case QtInfoMsg:
+        line = "Info: " + msg;
+        format.setFontWeight(50);
+        break;
+    case QtWarningMsg:
+        line = "Warning: " + msg;
+        format.setFontWeight(50);
+        break;
+    case QtCriticalMsg:
+        line = "Critical: " + msg;
+        format.setFontWeight(100);
+        break;
+    case QtFatalMsg:
+        line = "Fatal: " + msg;
+        format.setFontWeight(100);
+        break;
+    }
+    
+    ui->logTextEdit->setCurrentCharFormat(format);
+    ui->logTextEdit->append(line);
 }
 
 bool MainWindow::readXmlFile()
@@ -312,7 +346,7 @@ void MainWindow::on_read_conf_button_clicked()
         initialize();
             
         // enable back
-        ui->tabWidget->setEnabled(true);
+        ui->CommandList->setEnabled(true);
         ui->read_conf_button->setEnabled(false);
         
         if (fControl->getDaqModules().size() != 0)

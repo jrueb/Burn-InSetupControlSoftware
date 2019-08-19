@@ -7,6 +7,7 @@
 #include <QCheckBox>
 #include <QGroupBox>
 
+#include "general/logger.h"
 #include "general/systemcontrollerclass.h"
 #include "devices/power/powercontrolclass.h"
 #include "devices/environment/thermorasp.h"
@@ -94,12 +95,13 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(Logger* logger, QWidget *parent = nullptr);
     virtual ~MainWindow();
 
 private slots:
 
     void initialize();
+    void onNewLogMessage(QtMsgType type, const QString&);
 
     bool readXmlFile();
 
@@ -108,6 +110,9 @@ private slots:
     void app_quit();
 
 private:
+    Ui::MainWindow *ui;
+    
+    Logger* _logger;
     std::vector<DeviceWidget*> _deviceWidgets;
     std::vector<VoltageSourceWidget*> _lowVoltageWidgets;
     std::vector<VoltageSourceWidget*> _highVoltageWidgets;
@@ -115,7 +120,6 @@ private:
     std::vector<ChillerWidget*> _chillerWidgets;
 
     SystemControllerClass *fControl;
-    Ui::MainWindow *ui;
     CommandListPage* commandListPage;
     DAQPage* daqPage;
 

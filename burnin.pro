@@ -54,7 +54,8 @@ SOURCES += \
     gui/commandsrundialog.cpp \
     gui/commanddisplayer.cpp \
     devices/environment/chiller.cpp \
-    devices/environment/HuberPetiteFleur.cpp
+    devices/environment/HuberPetiteFleur.cpp \
+    general/logger.cpp
 
 
 
@@ -92,4 +93,5 @@ HEADERS += \
     gui/commandsrundialog.h \
     gui/commanddisplayer.h \
     devices/environment/chiller.h \
-    devices/environment/HuberPetiteFleur.h
+    devices/environment/HuberPetiteFleur.h \
+    general/logger.h
