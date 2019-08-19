@@ -1,35 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <HardwareDescription>
     <!-- Low Voltage Section -->
-    <LowVoltageSource class="TTi" port="9221" address="192.168.1.181">
+    <LowVoltageSource class="TTi" port="9221" address="192.168.1.180">
         <Output Voltage="5" CurrentLimit="0.06"/>
         <Output Voltage="5" CurrentLimit="0.06"/>
     </LowVoltageSource>
-    <LowVoltageSource class="TTi" port="9221" address="192.168.1.180">
+    <LowVoltageSource class="TTi" port="9221" address="192.168.1.181">
         <Output Voltage="3.3" CurrentLimit="0.4"/>
         <Output Voltage="1.3" CurrentLimit="0.75"/>
     </LowVoltageSource>
     
     <!-- High Voltage Section -->
-    <HighVoltageSource class="Keithley2410" address="/dev/ttyUSB1">
+    <HighVoltageSource class="Keithley2410" address="/dev/ttyUSB0">
         <Output Voltage="-40" CurrentLimit="1.0"/>
     </HighVoltageSource>
-
+  
     <!-- Chiller Section -->
     <Chiller class="JulaboFP50" address="/dev/ttyS0"/>
         
     <!-- Thermorasp Section -->
     <Thermorasp class="Thermorasp" address="fhlthermorasp1.desy.de" port="50007">
-        <Sensor sensor="W1_10-0008032b1481_temp"/>
-        <Sensor sensor="DHT11_PIN4_temp"/>
-        <Sensor sensor="DHT11_PIN4_hum"/>
-        <Sensor sensor="SHT75_PIN20_temp"/>
-        <Sensor sensor="SHT75_PIN20_hum"/>
+        <Sensor name="W1_10-0008032b1481_temp"/>
+        <Sensor name="DHT11_PIN4_temp"/>
+        <Sensor name="DHT11_PIN4_hum"/>
+        <Sensor name="SHT75_PIN20_temp"/>
+        <Sensor name="SHT75_PIN20_hum"/>
     </Thermorasp>
     <Thermorasp class="Thermorasp" address="fhlthermorasp2.desy.de" port="50007">
-        <Sensor sensor="BME680_i2c-0_0x77_temp"/>
-        <Sensor sensor="BME680_i2c-0_0x77_hum"/>
-        <Sensor sensor="BME680_i2c-0_0x77_pres"/>
+        <Sensor name="BME680_i2c-0_0x77_temp"/>
+        <Sensor name="BME680_i2c-0_0x77_hum"/>
+        <Sensor name="BME680_i2c-0_0x77_pres"/>
     </Thermorasp>
 
     <!-- Data Acquisition Section -->

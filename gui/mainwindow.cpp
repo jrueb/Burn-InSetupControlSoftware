@@ -42,7 +42,6 @@ VoltageSourceWidget::VoltageSourceWidget(const QString& title, PowerControlClass
 {
     _device = device;
     _settersAlwaysEnabled = settersAlwaysEnabled;
-    setTitle(title);
     QGridLayout *group_box_layout = new QGridLayout(this);
     group_box_layout->setAlignment(Qt::AlignTop);
 
@@ -136,7 +135,6 @@ ThermoraspWidget::ThermoraspWidget(const QString& title, Thermorasp* device)
     : DeviceWidget(title)
 {
     _device = device;
-    setTitle(title);
     
     QFormLayout* layout = new QFormLayout(this);
     for (const auto& name: device->getSensorNames()) {
@@ -168,7 +166,6 @@ ChillerWidget::ChillerWidget(const QString& title, Chiller* device)
     : DeviceWidget(title)
 {
     _device = device;
-    setTitle(title);
     
     QFormLayout* layout = new QFormLayout(this);
     
@@ -219,6 +216,39 @@ void ChillerWidget::initialize() {
         QSignalBlocker blocker(this->_bathTemp);
         this->_bathTemp->display(temperature);
     });
+}
+
+PeltierWidget::PeltierWidget(const QString& title)
+    : DeviceWidget(title)
+{
+    QFormLayout* layout = new QFormLayout(this);
+    
+    QLabel* workingTempLabel = new QLabel("Temperature set:");
+    _workingTemp = new QDoubleSpinBox();
+    _workingTemp->setSuffix(" °C");
+    layout->addRow(workingTempLabel, _workingTemp);
+    
+    QLabel* appliedVoltageLabel = new QLabel("Voltage applied, V:");
+    _appliedVoltage = new QLCDNumber();
+    _appliedVoltage->setSegmentStyle(QLCDNumber::Flat);
+    _appliedVoltage->setDigitCount(6);
+    layout->addRow(appliedVoltageLabel, _appliedVoltage);
+    
+    QLabel* sensorTemperatureLabel = new QLabel("Temperature (sensor), °C:");
+    _sensorTemperature = new QLCDNumber();
+    _sensorTemperature->setSegmentStyle(QLCDNumber::Flat);
+    _sensorTemperature->setDigitCount(6);
+    layout->addRow(sensorTemperatureLabel, _sensorTemperature);
+    
+    QLabel* onoffLabel = new QLabel("On/Off:");
+    _onoffButton = new QCheckBox("On");
+    layout->addRow(onoffLabel, _onoffButton);
+    
+    setLayout(layout);
+}
+
+void PeltierWidget::initialize() {
+    
 }
 
 MainWindow::MainWindow(Logger *logger, QWidget *parent)
@@ -294,7 +324,7 @@ bool MainWindow::readXmlFile()
         return false;
         
     HWDescriptionParser cParser;
-    std::vector<GenericInstrumentDescription_t> descriptions = cParser.ParseXML(cFileName);
+    std::vector<InstrumentDescription> descriptions = cParser.ParseXML(cFileName);
     
     fControl->setupFromDesc(descriptions);
     for (const auto& source: fControl->getLowVoltageSources()) {

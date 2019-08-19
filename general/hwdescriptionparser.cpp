@@ -15,10 +15,10 @@
 HWDescriptionParser::HWDescriptionParser()
 {}
 
-std::vector<GenericInstrumentDescription_t> HWDescriptionParser::ParseXML(QString pFileName)
+std::vector<InstrumentDescription> HWDescriptionParser::ParseXML(QString pFileName)
 {
     // creating the vector to return
-    std::vector<GenericInstrumentDescription_t> cInstruments;
+    std::vector<InstrumentDescription> cInstruments;
 
     // opening file    
     QFile *cFile =  new QFile(pFileName);
@@ -39,17 +39,17 @@ std::vector<GenericInstrumentDescription_t> HWDescriptionParser::ParseXML(QStrin
             if (namelower == "hardwaredescription")
                 continue;
             else if (namelower == "lowvoltagesource")
-                ParseVoltageSource(cXmlFile, cInstruments, true);
+                cInstruments.push_back(ParseVoltageSource(cXmlFile, true));
             else if (namelower == "highvoltagesource")
-                ParseVoltageSource(cXmlFile, cInstruments, false);
+                cInstruments.push_back(ParseVoltageSource(cXmlFile, false));
             else if (namelower == "chiller")
-                ParseChiller(cXmlFile, cInstruments);
+                cInstruments.push_back(ParseChiller(cXmlFile));
             else if (namelower == "peltier")
-                ParsePeltier(cXmlFile, cInstruments);
+                cInstruments.push_back(ParsePeltier(cXmlFile));
             else if (namelower == "thermorasp")
-                ParseRaspberry(cXmlFile, cInstruments);
+                cInstruments.push_back(ParseRaspberry(cXmlFile));
             else if (namelower == "daqmodule")
-                ParseDAQModule(cXmlFile, cInstruments);
+                cInstruments.push_back(ParseDAQModule(cXmlFile));
             else
                 throw BurnInException("Invalid tag \"" + name + "\". Valid tags are: LowVoltageSource, HighVoltageSource, Chiller, Peltier, Thermorasp, DAQModule");
         }
@@ -62,95 +62,104 @@ std::vector<GenericInstrumentDescription_t> HWDescriptionParser::ParseXML(QStrin
     return cInstruments;
 }
 
-GenericInstrumentDescription_t HWDescriptionParser::ParseGeneric(const QXmlStreamReader *pXmlFile) const {
-    GenericInstrumentDescription_t cInstrument;
+InstrumentDescription HWDescriptionParser::ParseGeneric(const QXmlStreamReader *pXmlFile) const {
+    InstrumentDescription cInstrument;
+    cInstrument.type = "Unknown";
     QXmlStreamAttributes attributes = pXmlFile->attributes();
     for (const auto& attribute: attributes) {
-        std::string name = attribute.name().toString().toStdString();
+        std::string name = attribute.name().toString().toLower().toStdString();
         std::string value = attribute.value().toString().toStdString();
-        if (name == "name")
-            cInstrument.name = value;
-        else if (name == "class")
-            cInstrument.classOfInstr = value;
-        else if (name == "desciption")
-            cInstrument.description = value;
-        else
-            cInstrument.interface_settings[name] = value;
+        cInstrument.attrs[name] = value;
     }
+    if (cInstrument.attrs.count("class") == 0)
+        throw BurnInException("Device is missing class attribute: " + pXmlFile->name().toString().toStdString());
     
     return cInstrument;
 }
 
-void HWDescriptionParser::ParseVoltageSource(QXmlStreamReader *pXmlFile, std::vector<GenericInstrumentDescription_t>& pInstruments, bool isLow) {
+InstrumentDescription HWDescriptionParser::ParseVoltageSource(QXmlStreamReader *pXmlFile, bool isLow) {
 
-    GenericInstrumentDescription_t cInstrument = ParseGeneric(pXmlFile);
+    InstrumentDescription cInstrument = ParseGeneric(pXmlFile);
     if (isLow)
-        cInstrument.section = "LowVoltageSource";
+        cInstrument.type = "LowVoltageSource";
     else
-        cInstrument.section = "HighVoltageSource";
+        cInstrument.type = "HighVoltageSource";
+    if (cInstrument.attrs.count("address") == 0)
+        throw BurnInException("Device is missing address attribute: " + pXmlFile->name().toString().toStdString());
 
     while (pXmlFile->readNextStartElement()) {
-        std::string name = pXmlFile->name().toString().toStdString();
-        if(name == "Output") {
+        std::string name = pXmlFile->name().toString().toLower().toStdString();
+        if (name == "output") {
             std::map<std::string, std::string> cMap;
-            QXmlStreamAttributes attributes = pXmlFile->attributes();
-            for(int i = 0; i < attributes.length(); i++) {
-                cMap[attributes.at(i).name().toString().toStdString()] = attributes.at(i).value().toString().toStdString();
+            for (const auto& attribute: pXmlFile->attributes()) {
+                std::string name = attribute.name().toString().toLower().toStdString();
+                std::string value = attribute.value().toString().toStdString();
+                cMap[name] = value;
             }
-            cInstrument.operational_settings.push_back(cMap);
+            if (cMap.count("voltage") == 0 or cMap.count("currentlimit") == 0)
+                throw BurnInException("Invalid child attributes for " + cInstrument.type + ". Need \"voltage\" and \"currentlimit\"");
+            cInstrument.settings.push_back(cMap);
             pXmlFile->skipCurrentElement();
             
         } else
-            throw BurnInException("Invalid VoltageSource tag \"" + name + "\". Valid tags are: Output");
+            throw BurnInException("Invalid VoltageSource child tag \"" + name + "\". Valid tags are: Output");
     }
 
-    // push back now
-    pInstruments.push_back(cInstrument);
+    return cInstrument;
 
 }
 
-void HWDescriptionParser::ParseChiller(QXmlStreamReader *pXmlFile, std::vector<GenericInstrumentDescription_t>& pInstruments)
+InstrumentDescription HWDescriptionParser::ParseChiller(QXmlStreamReader *pXmlFile)
 {
-    GenericInstrumentDescription_t cInstrument = ParseGeneric(pXmlFile);
-    cInstrument.section = "Chiller";
+    InstrumentDescription cInstrument = ParseGeneric(pXmlFile);
+    cInstrument.type = "Chiller";
     pXmlFile->skipCurrentElement();
-    // push back now
-    pInstruments.push_back(cInstrument);
+    return cInstrument;
 }
 
-void HWDescriptionParser::ParsePeltier(QXmlStreamReader *pXmlFile, std::vector<GenericInstrumentDescription_t>& pInstruments)
+InstrumentDescription HWDescriptionParser::ParsePeltier(QXmlStreamReader *pXmlFile)
 {
-    GenericInstrumentDescription_t cInstrument = ParseGeneric(pXmlFile);
-    cInstrument.section = "Peltier";
+    InstrumentDescription cInstrument = ParseGeneric(pXmlFile);
+    cInstrument.type = "Peltier";
     pXmlFile->skipCurrentElement();
-    pInstruments.push_back(cInstrument);
+    return cInstrument;
 }
 
-void HWDescriptionParser::ParseRaspberry(QXmlStreamReader *pXmlFile, std::vector<GenericInstrumentDescription_t>& pInstruments)
+InstrumentDescription HWDescriptionParser::ParseRaspberry(QXmlStreamReader *pXmlFile)
 {
-    GenericInstrumentDescription_t cInstrument = ParseGeneric(pXmlFile);
-    cInstrument.section = "Thermorasp";
+    InstrumentDescription cInstrument = ParseGeneric(pXmlFile);
+    cInstrument.type = "Thermorasp";
 
     while (pXmlFile->readNextStartElement()) {
-        std::string name = pXmlFile->name().toString().toStdString();
-        if(name == "Sensor") {
+        std::string name = pXmlFile->name().toString().toLower().toStdString();
+        if (name == "sensor") {
             std::map<std::string, std::string> cMap;
-            QXmlStreamAttributes attributes = pXmlFile->attributes();
-            for(int i = 0; i < attributes.length(); i++) {
-                cMap[attributes.at(i).name().toString().toStdString()] = attributes.at(i).value().toString().toStdString();
+            for (const auto& attribute: pXmlFile->attributes()) {
+                std::string name = attribute.name().toString().toLower().toStdString();
+                std::string value = attribute.value().toString().toStdString();
+                cMap[name] = value;
             }
-            cInstrument.operational_settings.push_back(cMap);
+            if (cMap.count("name") == 0)
+                throw BurnInException("Invalid child attributes for Thermorasp. Need attribute \"name\"");
+            cInstrument.settings.push_back(cMap);
             pXmlFile->skipCurrentElement();
+            
         } else
-            throw BurnInException("Invalid RaspberryControl tag \"" + name + "\". Valid tags are: Sensor");
+            throw BurnInException("Invalid RaspberryControl child tag \"" + name + "\". Valid tags are: Sensor");
         
     }
-    pInstruments.push_back(cInstrument);
+    return cInstrument;
 }
 
-void HWDescriptionParser::ParseDAQModule(QXmlStreamReader *pXmlFile, std::vector<GenericInstrumentDescription_t>& pInstruments) {
-    GenericInstrumentDescription_t cInstrument = ParseGeneric(pXmlFile);
-    cInstrument.section = "DAQModule";
+InstrumentDescription HWDescriptionParser::ParseDAQModule(QXmlStreamReader *pXmlFile) {
+    InstrumentDescription cInstrument = ParseGeneric(pXmlFile);
+    cInstrument.type = "DAQModule";
     pXmlFile->skipCurrentElement();
-    pInstruments.push_back(cInstrument);
+    if (cInstrument.attrs.count("fc7port") == 0
+        or cInstrument.attrs.count("controlhubpath") == 0
+        or cInstrument.attrs.count("ph2acfpath") == 0
+        or cInstrument.attrs.count("daqhwdescfile") == 0
+        or cInstrument.attrs.count("daqimage") == 0)
+        throw BurnInException("DAQModule is missing attributes. Need fc7port, controlhubpath, ph2acfpath, daqhwdescfile, daqimage");
+    return cInstrument;
 }

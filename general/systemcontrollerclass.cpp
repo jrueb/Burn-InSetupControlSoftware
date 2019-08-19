@@ -84,42 +84,44 @@ std::vector<DAQModule*> SystemControllerClass::getDaqModules() const {
     return _daqModules;
 }
 
-std::string SystemControllerClass::_buildId(const GenericInstrumentDescription_t& desc) const {
+std::string SystemControllerClass::_buildId(const InstrumentDescription& desc) const {
     std::string ident;
     
-    ident = desc.classOfInstr;
+    ident = desc.attrs.at("class");
     int n = 1;
     while (_devices.count(ident)) {
         ++n;
-        ident = desc.classOfInstr + string("_") + to_string(n);
+        ident = desc.attrs.at("class") + string("_") + to_string(n);
     }
     
     return ident;
 }
 
-ControlTTiPower* SystemControllerClass::_constructTTiPower(const GenericInstrumentDescription_t& desc) const {
-    std::string address = desc.interface_settings.at("address");
+ControlTTiPower* SystemControllerClass::_constructTTiPower(const InstrumentDescription& desc) const {
+    std::string address = desc.attrs.at("address");
     if (address == "")
         throw BurnInException("Invalid address for a TTi power source:" + address);
     int cPort;
     std::vector<double> cVolt(2, 0);
     std::vector<double> cCurr(2, 0);
     
+    if (desc.attrs.count("port") == 0)
+        throw BurnInException("TTi is missing port number.");
     try {
-        cPort = stoi(desc.interface_settings.at("port"));
+        cPort = stoi(desc.attrs.at("port"));
     } catch (logic_error) {
         throw BurnInException("Invalid port number for TTi.");
     }
 
-    int opset_size = desc.operational_settings.size();
-    if (opset_size > 2) {
+    int num_outputs = desc.settings.size();
+    if (num_outputs > 2) {
         qWarning("More than two Output given for TTI. Only using first two.");
-        opset_size = 2;
+        num_outputs = 2;
     }
     try {
-        for (int j = 0; j < opset_size; ++j) {
-            cVolt[1 - j] = stod(desc.operational_settings[j].at("Voltage"));
-            cCurr[1 - j] = stod(desc.operational_settings[j].at("CurrentLimit"));
+        for (int j = 0; j < num_outputs; ++j) {
+            cVolt[1 - j] = stod(desc.settings[j].at("voltage"));
+            cCurr[1 - j] = stod(desc.settings[j].at("currentlimit"));
         }
     } catch (logic_error) {
         throw BurnInException("Invalid output setting for TTi.");
@@ -127,19 +129,19 @@ ControlTTiPower* SystemControllerClass::_constructTTiPower(const GenericInstrume
     return new ControlTTiPower(address, cPort, cVolt[0], cCurr[0], cVolt[1], cCurr[1]);
 }
 
-ControlKeithleyPower* SystemControllerClass::_constructKeithleyPower(const GenericInstrumentDescription_t& desc) const {
-    std::string address = desc.interface_settings.at("address");
+ControlKeithleyPower* SystemControllerClass::_constructKeithleyPower(const InstrumentDescription& desc) const {
+    std::string address = desc.attrs.at("address");
     if (address == "")
         throw BurnInException("Invalid address for a Keithley power source: " + address);
     
     double cSetVolt = 0;
     double cSetCurr = 0;
-    if (desc.operational_settings.size() > 0) {
-        if (desc.operational_settings.size() > 1)
+    if (desc.settings.size() > 0) {
+        if (desc.settings.size() > 1)
             qWarning("More than one output given for Keithley2410. Only using first one.");
         try {
-            cSetVolt = stod(desc.operational_settings[0].at("Voltage"));
-            cSetCurr = stod(desc.operational_settings[0].at("CurrentLimit"));
+            cSetVolt = stod(desc.settings[0].at("voltage"));
+            cSetCurr = stod(desc.settings[0].at("currentlimit"));
         } catch (logic_error) {
             throw BurnInException("Invalid output setting for Keithley2410.");
         }
@@ -147,14 +149,14 @@ ControlKeithleyPower* SystemControllerClass::_constructKeithleyPower(const Gener
     return new ControlKeithleyPower(address, cSetVolt, cSetCurr);
 }
 
-void SystemControllerClass::_addHighVoltageSource(const GenericInstrumentDescription_t& desc) {
+void SystemControllerClass::_addHighVoltageSource(const InstrumentDescription& desc) {
     PowerControlClass *dev;
-    if (desc.classOfInstr == "TTi")
+    if (desc.attrs.at("class") == "TTi")
         dev = _constructTTiPower(desc);
-    else if (desc.classOfInstr == "Keithley2410")
+    else if (desc.attrs.at("class") == "Keithley2410")
         dev = _constructKeithleyPower(desc);
     else
-        throw BurnInException("Invalid class \"" + desc.classOfInstr
+        throw BurnInException("Invalid class \"" + desc.attrs.at("class")
             + "\" for a HighVoltageSource device. Valid classes are: TTi, Keithley2410");
     
     std::string ident = _buildId(desc);
@@ -162,14 +164,14 @@ void SystemControllerClass::_addHighVoltageSource(const GenericInstrumentDescrip
     _highVoltageSources.push_back(dev);
 }
 
-void SystemControllerClass::_addLowVoltageSource(const GenericInstrumentDescription_t& desc) {
+void SystemControllerClass::_addLowVoltageSource(const InstrumentDescription& desc) {
     PowerControlClass *dev;
-    if (desc.classOfInstr == "TTi")
+    if (desc.attrs.at("class") == "TTi")
         dev = _constructTTiPower(desc);
-    else if (desc.classOfInstr == "Keithley2410")
+    else if (desc.attrs.at("class") == "Keithley2410")
         dev = _constructKeithleyPower(desc);
     else
-        throw BurnInException("Invalid class \"" + desc.classOfInstr
+        throw BurnInException("Invalid class \"" + desc.attrs.at("class")
             + "\" for a LowVoltageSource device. Valid classes are: TTi, Keithley2410");
     
     std::string ident = _buildId(desc);
@@ -177,22 +179,22 @@ void SystemControllerClass::_addLowVoltageSource(const GenericInstrumentDescript
     _lowVoltageSources.push_back(dev);
 }
 
-void SystemControllerClass::_addChiller(const GenericInstrumentDescription_t& desc) {
+void SystemControllerClass::_addChiller(const InstrumentDescription& desc) {
     Chiller* chiller;
-    if (desc.classOfInstr == "JulaboFP50") {
-        std::string address = desc.interface_settings.at("address");
+    if (desc.attrs.at("class") == "JulaboFP50") {
+        std::string address = desc.attrs.at("address");
         if (address == "")
             throw BurnInException("Invalid address for Chiller device JulaboFP50: " + address);
 
         chiller = new JulaboFP50(address);
-    } else if (desc.classOfInstr == "HuberPetiteFleur") {
-        std::string address = desc.interface_settings.at("address");
+    } else if (desc.attrs.at("class") == "HuberPetiteFleur") {
+        std::string address = desc.attrs.at("address");
         if (address == "")
             throw BurnInException("Invalid address for Chiller device HuberPetiteFleur: " + address);
 
         chiller = new HuberPetiteFleur(address);
     } else {
-        throw BurnInException("Invalid class \"" + desc.classOfInstr
+        throw BurnInException("Invalid class \"" + desc.attrs.at("class")
             + "\" for a Chiller device. Valid classes are: JulaboFP50, HuberPetiteFleur");
     }
     
@@ -201,18 +203,18 @@ void SystemControllerClass::_addChiller(const GenericInstrumentDescription_t& de
     _chillers.push_back(chiller);
 }
 
-void SystemControllerClass::_addThermorasp(const GenericInstrumentDescription_t& desc) {
+void SystemControllerClass::_addThermorasp(const InstrumentDescription& desc) {
     // The only available class for this kind of tag is Thermorasp and
     // because there are currently no plans to expand this tag's usage,
     // the tag has the same name.
     
-    if (desc.classOfInstr == "Thermorasp") {
+    if (desc.attrs.at("class") == "Thermorasp") {
         quint16 port;
-        std::string address = desc.interface_settings.at("address");
+        std::string address = desc.attrs.at("address");
         if (address == "")
             throw BurnInException("Invalid address for Thermorasp device: " + address);
         try {
-            port = stoi(desc.interface_settings.at("port"));
+            port = stoi(desc.attrs.at("port"));
         } catch (logic_error) {
             throw BurnInException("Invalid port number for Thermorasp.");
         }
@@ -221,31 +223,31 @@ void SystemControllerClass::_addThermorasp(const GenericInstrumentDescription_t&
         std::string ident = _buildId(desc);
         _devices[ident] = rasp;
 
-        for (const auto& opset: desc.operational_settings)
-            rasp->addSensorName(opset.at("sensor"));
+        for (const auto& opset: desc.settings)
+            rasp->addSensorName(opset.at("name"));
     } else {
-        throw BurnInException("Invalid class \"" + desc.classOfInstr
+        throw BurnInException("Invalid class \"" + desc.attrs.at("class")
             + "\" for a Thermorasp device. Valid classes are: Thermorasp");
     }
 }
 
-void SystemControllerClass::_addDAQModule(const GenericInstrumentDescription_t& desc) {
+void SystemControllerClass::_addDAQModule(const InstrumentDescription& desc) {
     // The only available class for this kind of tag is DAQModule and
     // because there are currently no plans to expand this tag's usage,
     // the tag has the same name.
     
     DAQModule* daqmodule;
-    if (desc.classOfInstr == "DAQModule") {
+    if (desc.attrs.at("class") == "DAQModule") {
         QString fc7Port, controlhubPath, ph2acfPath, daqHwdescFile, daqImage;
-        fc7Port = QString::fromStdString(desc.interface_settings.at("fc7Port"));
-        controlhubPath = QString::fromStdString(desc.interface_settings.at("controlhubPath"));
-        ph2acfPath = QString::fromStdString(desc.interface_settings.at("ph2acfPath"));
-        daqHwdescFile = QString::fromStdString(desc.interface_settings.at("daqHwdescFile"));
-        daqImage = QString::fromStdString(desc.interface_settings.at("daqImage"));
+        fc7Port = QString::fromStdString(desc.attrs.at("fc7port"));
+        controlhubPath = QString::fromStdString(desc.attrs.at("controlhubpath"));
+        ph2acfPath = QString::fromStdString(desc.attrs.at("ph2acfpath"));
+        daqHwdescFile = QString::fromStdString(desc.attrs.at("daqhwdescfile"));
+        daqImage = QString::fromStdString(desc.attrs.at("daqimage"));
         
         daqmodule = new DAQModule(fc7Port, controlhubPath, ph2acfPath, daqHwdescFile, daqImage);
     } else {
-        throw BurnInException("Invalid class \"" + desc.classOfInstr
+        throw BurnInException("Invalid class \"" + desc.attrs.at("class")
             + "\" for a DAQModule device. Valid classes are: DAQModule");
     }
     
@@ -278,21 +280,21 @@ void SystemControllerClass::_deleteAllDevices() {
     _devices.clear();
 }
 
-void SystemControllerClass::setupFromDesc(const std::vector<GenericInstrumentDescription_t>& descs) {
+void SystemControllerClass::setupFromDesc(const std::vector<InstrumentDescription>& descs) {
     try {
         for (const auto& desc: descs) {
-            QString section = QString::fromStdString(desc.section);
-            section = section.toLower();
+            QString type = QString::fromStdString(desc.type);
+            type = type.toLower();
             
-            if (section == "highvoltagesource")
+            if (type == "highvoltagesource")
                 _addHighVoltageSource(desc);
-            else if (section == "lowvoltagesource")
+            else if (type == "lowvoltagesource")
                 _addLowVoltageSource(desc);
-            else if (section == "chiller")
+            else if (type == "chiller")
                 _addChiller(desc);
-            else if (section == "thermorasp")
+            else if (type == "thermorasp")
                 _addThermorasp(desc);
-            else if (section == "daqmodule") {
+            else if (type == "daqmodule") {
                 if (_daqModules.size() > 0)
                     qWarning("Already have one DAQ module. Ignoring others");
                 else

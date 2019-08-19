@@ -89,6 +89,20 @@ private:
     QCheckBox *_onoffButton;
 };
 
+class PeltierWidget : public DeviceWidget {
+    Q_OBJECT
+    
+public:
+    PeltierWidget(const QString& title);
+    void initialize();
+    
+private:
+    QDoubleSpinBox* _workingTemp;
+    QLCDNumber* _appliedVoltage;
+    QLCDNumber* _sensorTemperature;
+    QCheckBox* _onoffButton;
+};
+
 
 class MainWindow : public QMainWindow
 {

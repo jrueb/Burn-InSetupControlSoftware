@@ -5,30 +5,27 @@
 #include <QString>
 #include <QXmlStreamReader>
 
-struct GenericInstrumentDescription_t {
-    std::string section;
-    std::string name;
-    std::string classOfInstr;
-    std::string description;
-    std::map<std::string, std::string> interface_settings;
-    std::vector<std::map<std::string, std::string>> operational_settings;
+struct InstrumentDescription {
+  std::string type;
+  std::map<std::string, std::string> attrs;
+  std::vector<std::map<std::string, std::string>> settings;
 };
 
 class HWDescriptionParser
 {
 public:
     HWDescriptionParser();
-    std::vector<GenericInstrumentDescription_t> ParseXML(QString pFileName);
+    std::vector<InstrumentDescription> ParseXML(QString pFileName);
 private:
-    GenericInstrumentDescription_t ParseGeneric(const QXmlStreamReader *pXmlFile) const;
+    InstrumentDescription ParseGeneric(const QXmlStreamReader *pXmlFile) const;
     
-    void ParseVoltageSource(QXmlStreamReader *pXmlFile, std::vector<GenericInstrumentDescription_t>& pInstruments, bool isLow);
+    InstrumentDescription ParseVoltageSource(QXmlStreamReader *pXmlFile, bool isLow);
     
-    void ParseChiller(QXmlStreamReader *pXmlFile, std::vector<GenericInstrumentDescription_t>& pInstruments);
-    void ParsePeltier(QXmlStreamReader *pXmlFile, std::vector<GenericInstrumentDescription_t>& pInstruments);
-    void ParseRaspberry(QXmlStreamReader *pXmlFile, std::vector<GenericInstrumentDescription_t>& pInstruments);
+    InstrumentDescription ParseChiller(QXmlStreamReader *pXmlFile);
+    InstrumentDescription ParsePeltier(QXmlStreamReader *pXmlFile);
+    InstrumentDescription ParseRaspberry(QXmlStreamReader *pXmlFile);
     
-    void ParseDAQModule(QXmlStreamReader *pXmlFile, std::vector<GenericInstrumentDescription_t>& pInstruments);
+    InstrumentDescription ParseDAQModule(QXmlStreamReader *pXmlFile);
 };
 
 #endif // HWDESCRIPTIONPARSER_H

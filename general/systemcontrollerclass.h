@@ -24,7 +24,7 @@ public:
     SystemControllerClass();
     virtual ~SystemControllerClass();
     
-    void setupFromDesc(const std::vector<GenericInstrumentDescription_t>& descs);
+    void setupFromDesc(const std::vector<InstrumentDescription>& descs);
     void initialize();
     void startRefreshingReadings();
     
@@ -40,17 +40,17 @@ public:
     std::vector<DAQModule*> getDaqModules() const;
 
 private:
-    string _buildId(const GenericInstrumentDescription_t& desc) const;
+    string _buildId(const InstrumentDescription& desc) const;
     
     void _deleteAllDevices();
     
-    ControlTTiPower* _constructTTiPower(const GenericInstrumentDescription_t& desc) const;
-    ControlKeithleyPower* _constructKeithleyPower(const GenericInstrumentDescription_t& desc) const;
-    void _addHighVoltageSource(const GenericInstrumentDescription_t& desc);
-    void _addLowVoltageSource(const GenericInstrumentDescription_t& desc);
-    void _addChiller(const GenericInstrumentDescription_t& desc);
-    void _addThermorasp(const GenericInstrumentDescription_t& desc);
-    void _addDAQModule(const GenericInstrumentDescription_t& desc);
+    ControlTTiPower* _constructTTiPower(const InstrumentDescription& desc) const;
+    ControlKeithleyPower* _constructKeithleyPower(const InstrumentDescription& desc) const;
+    void _addHighVoltageSource(const InstrumentDescription& desc);
+    void _addLowVoltageSource(const InstrumentDescription& desc);
+    void _addChiller(const InstrumentDescription& desc);
+    void _addThermorasp(const InstrumentDescription& desc);
+    void _addDAQModule(const InstrumentDescription& desc);
     
     void _refreshingReadings();
     
