@@ -12,6 +12,7 @@
 #include "devices/power/powercontrolclass.h"
 #include "devices/power/controlttipower.h"
 #include "devices/power/controlkeithleypower.h"
+#include "devices/power/kepco.h"
 #include "devices/environment/thermorasp.h"
 #include "devices/environment/chiller.h"
 #include "devices/daq/daqmodule.h"
@@ -46,6 +47,7 @@ private:
     
     ControlTTiPower* _constructTTiPower(const InstrumentDescription& desc) const;
     ControlKeithleyPower* _constructKeithleyPower(const InstrumentDescription& desc) const;
+    Kepco* _constructKepco(const InstrumentDescription& desc) const;
     void _addHighVoltageSource(const InstrumentDescription& desc);
     void _addLowVoltageSource(const InstrumentDescription& desc);
     void _addChiller(const InstrumentDescription& desc);

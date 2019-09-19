@@ -55,7 +55,10 @@ SOURCES += \
     gui/commanddisplayer.cpp \
     devices/environment/chiller.cpp \
     devices/environment/HuberPetiteFleur.cpp \
-    general/logger.cpp
+    general/logger.cpp \
+    devices/power/kepco.cpp \
+    devices/communication/communicator.cpp \
+    devices/communication/lxicommunicator.cpp
 
 
 
@@ -94,4 +97,7 @@ HEADERS += \
     gui/commanddisplayer.h \
     devices/environment/chiller.h \
     devices/environment/HuberPetiteFleur.h \
-    general/logger.h
+    general/logger.h \
+    devices/power/kepco.h \
+    devices/communication/communicator.h \
+    devices/communication/lxicommunicator.h

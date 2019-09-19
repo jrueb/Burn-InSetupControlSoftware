@@ -10,7 +10,7 @@
 #include <QTime>
 
 #include "general/systemcontrollerclass.h"
-#include "devices/environment/chiller.h"
+#include "devices/communication/lxicommunicator.h"
 #include "devices/environment/JulaboFP50.h"
 #include "devices/environment/HuberPetiteFleur.h"
 #include "general/BurnInException.h"
@@ -132,7 +132,7 @@ ControlTTiPower* SystemControllerClass::_constructTTiPower(const InstrumentDescr
 ControlKeithleyPower* SystemControllerClass::_constructKeithleyPower(const InstrumentDescription& desc) const {
     std::string address = desc.attrs.at("address");
     if (address == "")
-        throw BurnInException("Invalid address for a Keithley power source: " + address);
+        throw BurnInException("Invalid address for a Keithley power supply: \"" + address + "\"");
     
     double cSetVolt = 0;
     double cSetCurr = 0;
@@ -149,15 +149,48 @@ ControlKeithleyPower* SystemControllerClass::_constructKeithleyPower(const Instr
     return new ControlKeithleyPower(address, cSetVolt, cSetCurr);
 }
 
+Kepco* SystemControllerClass::_constructKepco(const InstrumentDescription &desc) const {
+    std::string address = desc.attrs.at("address");
+    if (address == "")
+        throw BurnInException("Invalid address for a Kepco power supply: \"" + address + "\"");
+    
+    int port;
+    if (desc.attrs.count("port") == 0)
+        throw BurnInException("TTi is missing port number.");
+    try {
+        port = stoi(desc.attrs.at("port"));
+    } catch (logic_error) {
+        throw BurnInException("Invalid port number for TTi.");
+    }
+    
+    LXICommunicator* comm = new LXICommunicator(address, port, true); // Gets deleted by Kepco destructor
+    Kepco* kepco = new Kepco(comm);
+    if (desc.settings.size() > 0) {
+        if (desc.settings.size() > 1)
+            qWarning("More than one output given for Keithley2410. Only using first one.");
+        try {
+            double volt = stod(desc.settings[0].at("voltage"));
+            kepco->setVolt(volt);
+            double curr = stod(desc.settings[0].at("currentlimit"));
+            kepco->setCurr(curr);
+        } catch (logic_error) {
+            throw BurnInException("Invalid output setting for Keithley2410.");
+        }
+    }
+    return kepco;
+}
+
 void SystemControllerClass::_addHighVoltageSource(const InstrumentDescription& desc) {
     PowerControlClass *dev;
     if (desc.attrs.at("class") == "TTi")
         dev = _constructTTiPower(desc);
     else if (desc.attrs.at("class") == "Keithley2410")
         dev = _constructKeithleyPower(desc);
+    else if (desc.attrs.at("class") == "Kepco")
+        dev = _constructKepco(desc);
     else
         throw BurnInException("Invalid class \"" + desc.attrs.at("class")
-            + "\" for a HighVoltageSource device. Valid classes are: TTi, Keithley2410");
+            + "\" for a HighVoltageSource device. Valid classes are: TTi, Keithley2410, Kepco");
     
     std::string ident = _buildId(desc);
     _devices[ident] = dev;
@@ -170,9 +203,11 @@ void SystemControllerClass::_addLowVoltageSource(const InstrumentDescription& de
         dev = _constructTTiPower(desc);
     else if (desc.attrs.at("class") == "Keithley2410")
         dev = _constructKeithleyPower(desc);
+    else if (desc.attrs.at("class") == "Kepco")
+        dev = _constructKepco(desc);
     else
         throw BurnInException("Invalid class \"" + desc.attrs.at("class")
-            + "\" for a LowVoltageSource device. Valid classes are: TTi, Keithley2410");
+            + "\" for a LowVoltageSource device. Valid classes are: TTi, Keithley2410, Kepco");
     
     std::string ident = _buildId(desc);
     _devices[ident] = dev;
