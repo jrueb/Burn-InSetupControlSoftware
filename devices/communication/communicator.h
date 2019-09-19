@@ -10,6 +10,7 @@ public:
     
     virtual void open() = 0;
     virtual void close() = 0;
+    virtual bool isOpen() const = 0;
     
     virtual void send(const std::string& buf) const = 0;
     virtual std::string receive() const = 0;

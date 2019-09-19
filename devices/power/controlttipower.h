@@ -1,22 +1,16 @@
 #ifndef CONTROLTTIPOWER_H
 #define CONTROLTTIPOWER_H
 
-#include <QMutex>
-
-extern "C" {
-	#include "lxi.h"
-}
-
+#include "devices/communication/communicator.h"
 #include "powercontrolclass.h"
-
-using namespace std;
-
+#include <QObject>
 class ControlTTiPower:public PowerControlClass
 {
     Q_OBJECT
 
 public:
-    ControlTTiPower(string pAddress, int pPort, double pSetVolt1, double pSetCurr1, double pSetVolt2, double pSetCurr2);
+    ControlTTiPower(Communicator* comm);
+    ~ControlTTiPower();
 
     /* Implementation of PowerControlClass pure virtual functions */
     void initialize() override;
@@ -31,15 +25,11 @@ public:
     void onPower(int pId) override;
     void offPower(int pId) override;
     void closeConnection() override;
+    void refreshAppliedValues() override;
     /* End of implementation of pure virtual functions */
 
-    void refreshAppliedValues();
 private:
-    string fAddress;
-    int fPort;
-
-    int fDevice;
-    QMutex _commMutex;
+    Communicator* _comm;
     
     bool _power[2];
     

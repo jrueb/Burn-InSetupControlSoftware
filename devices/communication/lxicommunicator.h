@@ -22,6 +22,7 @@ public:
     
     void open() override;
     void close() override;
+    bool isOpen() const override;
     void send(const std::string& buf) const override;
     std::string receive() const override;
     std::string query(const std::string& buf, int sleep_time = 0) const override;

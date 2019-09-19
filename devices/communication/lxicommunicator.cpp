@@ -41,6 +41,10 @@ void LXICommunicator::close() {
     _lxidev = LXI_ERROR;
 }
 
+bool LXICommunicator::isOpen() const {
+    return _lxidev != LXI_ERROR;
+}
+
 void LXICommunicator::send(const std::string& buf) const {
     Q_ASSERT_X(_lxidev != LXI_ERROR, "LXICommunicator::send", "connection must be open");
     char* cstr = _get_cstr_copy(buf + getSuffix());

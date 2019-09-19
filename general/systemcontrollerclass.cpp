@@ -101,16 +101,24 @@ ControlTTiPower* SystemControllerClass::_constructTTiPower(const InstrumentDescr
     std::string address = desc.attrs.at("address");
     if (address == "")
         throw BurnInException("Invalid address for a TTi power source:" + address);
-    int cPort;
+    int port;
     std::vector<double> cVolt(2, 0);
     std::vector<double> cCurr(2, 0);
     
     if (desc.attrs.count("port") == 0)
         throw BurnInException("TTi is missing port number.");
     try {
-        cPort = stoi(desc.attrs.at("port"));
+        port = stoi(desc.attrs.at("port"));
     } catch (logic_error) {
         throw BurnInException("Invalid port number for TTi.");
+    }
+    LXICommunicator* comm = new LXICommunicator(address, port, true); // Gets deleted by ControlTTiPower destructor
+    ControlTTiPower* tti;
+    try {
+        tti = new ControlTTiPower(comm);
+    } catch (...) {
+        delete comm;
+        throw;
     }
 
     int num_outputs = desc.settings.size();
@@ -120,13 +128,14 @@ ControlTTiPower* SystemControllerClass::_constructTTiPower(const InstrumentDescr
     }
     try {
         for (int j = 0; j < num_outputs; ++j) {
-            cVolt[1 - j] = stod(desc.settings[j].at("voltage"));
-            cCurr[1 - j] = stod(desc.settings[j].at("currentlimit"));
+            tti->setVolt(stod(desc.settings[j].at("voltage")), j + 1);
+            tti->setCurr(stod(desc.settings[j].at("currentlimit")), j + 1);
         }
     } catch (logic_error) {
+        delete tti;
         throw BurnInException("Invalid output setting for TTi.");
     }
-    return new ControlTTiPower(address, cPort, cVolt[0], cCurr[0], cVolt[1], cCurr[1]);
+    return tti;
 }
 
 ControlKeithleyPower* SystemControllerClass::_constructKeithleyPower(const InstrumentDescription& desc) const {
@@ -164,7 +173,12 @@ Kepco* SystemControllerClass::_constructKepco(const InstrumentDescription &desc)
     }
     
     LXICommunicator* comm = new LXICommunicator(address, port, true); // Gets deleted by Kepco destructor
-    Kepco* kepco = new Kepco(comm);
+    Kepco* kepco;
+    try {
+        kepco = new Kepco(comm);
+    } catch (...) {
+        delete comm;
+    }
     if (desc.settings.size() > 0) {
         if (desc.settings.size() > 1)
             qWarning("More than one output given for Keithley2410. Only using first one.");
@@ -174,6 +188,7 @@ Kepco* SystemControllerClass::_constructKepco(const InstrumentDescription &desc)
             double curr = stod(desc.settings[0].at("currentlimit"));
             kepco->setCurr(curr);
         } catch (logic_error) {
+            delete kepco;
             throw BurnInException("Invalid output setting for Keithley2410.");
         }
     }

@@ -40,14 +40,16 @@ double Kepco::getCurrApp(int) const {
 }
 
 void Kepco::setVolt(double volt, int) {
-    _comm->send(std::string("VOLT ") + to_string(volt));
+	if (_comm->isOpen())
+		_comm->send(std::string("VOLT ") + to_string(volt));
     _volt = volt;
     
     emit voltSetChanged(_volt, 1);
 }
 
 void Kepco::setCurr(double curr, int) {
-    _comm->send(std::string("CURR ") + to_string(curr));
+	if (_comm->isOpen())
+		_comm->send(std::string("CURR ") + to_string(curr));
     _curr = curr;
     
     emit currSetChanged(_curr, 1);

@@ -14,38 +14,25 @@ const int TIMEOUT = 1000;
 const int BUFLEN = 256;
 const char RMT[] = "\r\n";
 
-ControlTTiPower::ControlTTiPower(string pAddress, int pPort, double pSetVolt1, double pSetCurr1, double pSetVolt2, double pSetCurr2)
-{
-    fAddress = pAddress;
-    fPort = pPort;
-
-    fDevice = 0;
+ControlTTiPower::ControlTTiPower(Communicator* comm) {
+    _comm = comm;
+    _comm->setSuffix("\n");
     
     for (int i = 0; i < 2; ++i) {
         _power[i] = false;
+        _volt[i] = 0;
         _voltApp[i] = 0;
+        _curr[i] = 0;
         _currApp[i] = 0;
     }
-    
-    _volt[0] = pSetVolt1;
-    _curr[0] = pSetCurr1;
-    _volt[1] = pSetVolt2;
-    _curr[1] = pSetCurr2;
 }
 
-void ControlTTiPower::initialize()
-{
-    // Current installed lxi version accepts char* instead of const char*
-    // Make a non-const copy as a workaround
-    char* pConn = new char[fAddress.length() + 1];
-    strcpy(pConn, fAddress.c_str());
-    fDevice = lxi_connect(pConn, fPort, NULL, TIMEOUT, RAW);
-    delete[] pConn;
-    
-    if (fDevice == -1) {
-        qCritical("Could not open ControlTTiPower on %s and port %i", fAddress.c_str(), fPort);
-        throw BurnInException("Could not open connection to TTi");
-    }
+ControlTTiPower::~ControlTTiPower() {
+    delete _comm;
+}
+
+void ControlTTiPower::initialize() {
+    _comm->open();
     
     for (int i = 0; i < 2; ++i) {
         _refreshPowerStatus(i + 1);
@@ -54,54 +41,40 @@ void ControlTTiPower::initialize()
     }
 }
 
-void ControlTTiPower::setVolt(double pVoltage , int pId)
-{
+void ControlTTiPower::setVolt(double pVoltage , int pId) {
     Q_ASSERT(pId == 0 or pId == 1 or pId == 2);
     if (pId == 0) {
         setVolt(pVoltage, 1);
         setVolt(pVoltage, 2);
         return;
     }
-    char cCommand[BUFLEN];
-    snprintf(cCommand, sizeof(cCommand), "V%d %.4f\n", 3 - pId, pVoltage);
-    _commMutex.lock();
-    lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
-    _commMutex.unlock();
-    
+    if (_comm->isOpen())
+        _comm->send("V" + std::to_string(3 - pId) + " " + std::to_string(pVoltage));
     _volt[pId - 1] = pVoltage;
     
     emit voltSetChanged(pVoltage, pId);
 }
 
-void ControlTTiPower::setCurr(double pCurrent , int pId)
-{
+void ControlTTiPower::setCurr(double pCurrent , int pId) {
     Q_ASSERT(pId == 0 or pId == 1 or pId == 2);
     if (pId == 0) {
         setCurr(pCurrent, 1);
         setCurr(pCurrent, 2);
         return;
     }
-    char cCommand[BUFLEN];
-    snprintf(cCommand, sizeof(cCommand), "I%d %.4f\n", 3 - pId, pCurrent);
-    _commMutex.lock();
-    lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
-    _commMutex.unlock();
-    
+    if (_comm->isOpen())
+        _comm->send("I" + std::to_string(3 - pId) + " " + std::to_string(pCurrent));
     _curr[pId - 1] = pCurrent;
+    
     emit currSetChanged(pCurrent, pId);
 }
 
-void ControlTTiPower::onPower(int pId)
-{
+void ControlTTiPower::onPower(int pId) {
     Q_ASSERT(pId == 0 or pId == 1 or pId == 2);
-    char cCommand[BUFLEN];
     if (pId)
-        snprintf(cCommand, sizeof(cCommand), "OP%d 1 \n", 3 - pId);
+        _comm->send("OP" + std::to_string(3 - pId) + " 1");
     else
-        snprintf(cCommand, sizeof(cCommand), "OPALL 1\n");
-    _commMutex.lock();
-    lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
-    _commMutex.unlock();
+        _comm->send("OPALL 1");
     
     if (pId == 0) {
         _power[0] = true;
@@ -114,20 +87,12 @@ void ControlTTiPower::onPower(int pId)
     }
 }
 
-void ControlTTiPower::offPower(int pId)
-{
+void ControlTTiPower::offPower(int pId) {
     Q_ASSERT(pId == 0 or pId == 1 or pId == 2);
-    char cCommand[BUFLEN];
-    _commMutex.lock();
-    if(pId){
-        snprintf(cCommand, sizeof(cCommand), "OP%d 0 \n", 3 - pId);
-        lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
-    }
-    else{
-        snprintf(cCommand, sizeof(cCommand), "OPALL 0\n");
-        lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
-    }
-    _commMutex.unlock();
+    if (pId)
+        _comm->send("OP" + std::to_string(3 - pId) + " 0");
+    else
+        _comm->send("OPALL 0");
     
     if (pId == 0) {
         _power[0] = false;
@@ -153,16 +118,7 @@ void ControlTTiPower::_refreshPowerStatus(int pId)
         _refreshPowerStatus(2);
         return;
     }
-    char buf[BUFLEN];
-    snprintf(buf, sizeof(buf), "OP%d?\n", 3 - pId);
-    _commMutex.lock();
-    lxi_send(fDevice, buf, strlen(buf), TIMEOUT);
-    QThread::msleep(50);
-    
-    int len;
-    if ((len = lxi_receive(fDevice, buf, sizeof(buf), TIMEOUT)) == LXI_ERROR)
-        throw BurnInException("Could not receive TTi power status");
-    _commMutex.unlock();
+    std::string buf = _comm->query("OP" + std::to_string(3 - pId) + "?");
     
     bool changed = _power[pId - 1] == (buf[0] == '1');
     _power[pId - 1] = buf[0] == '1';
@@ -192,45 +148,20 @@ double ControlTTiPower::getCurrApp(int pId) const {
 }
 
 void ControlTTiPower::refreshAppliedValues() {
-    char cCommand[BUFLEN];
-    char cBuff[256];
-    
-    _commMutex.lock();
-    for (int i = 1; i <= 2; i++) {
-        snprintf(cCommand, sizeof(cCommand), "V%dO? \n", 3 - i);
-        lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
-        snprintf(cCommand, sizeof(cCommand), "I%dO? \n", 3 - i);
-        lxi_send(fDevice, cCommand, strlen(cCommand), TIMEOUT);
-    }
-    QThread::msleep(50);
-    
-    int len;
-    if ((len = lxi_receive(fDevice, cBuff, sizeof(cBuff), TIMEOUT)) == LXI_ERROR) {
-        qCritical("Could not receive values TTi values during refresh.");
+    double voltapp0, currapp0, voltapp1, currapp1;
+    try {
+        voltapp0 = std::stof(_comm->query("V2?").substr(3));
+        currapp0 = std::stof(_comm->query("I2?").substr(3));
+        voltapp1 = std::stof(_comm->query("V1?").substr(3));
+        currapp1 = std::stof(_comm->query("I1?").substr(3));
+    } catch (std::invalid_argument& e) {
+        qCritical("Invalid response from TTi at %s", _comm->getLocDisplay().c_str());
         return;
     }
-    _commMutex.unlock();
-    
-    cBuff[len] = 0;
-    QString res = cBuff;
-    QStringList lines = res.split(RMT);
-    if (lines.size() < 4) {
-        qCritical("Got invalid response from TTi at %s: expected at least 4 lines, got %i.", fAddress.c_str(), lines.size());
-        return;
-    }
-    
-    _setAndEmitIfChanged(&(_voltApp[0]),
-        lines[0].left(lines[0].length() - 1).toDouble(), 1,
-        &ControlTTiPower::voltAppChanged);
-    _setAndEmitIfChanged(&(_currApp[0]),
-        lines[1].left(lines[1].length() - 1).toDouble(), 1,
-        &ControlTTiPower::currAppChanged);
-    _setAndEmitIfChanged(&(_voltApp[1]),
-        lines[2].left(lines[2].length() - 1).toDouble(), 2,
-        &ControlTTiPower::voltAppChanged);
-    _setAndEmitIfChanged(&(_currApp[1]),
-        lines[3].left(lines[3].length() - 1).toDouble(), 2,
-        &ControlTTiPower::currAppChanged);
+    _setAndEmitIfChanged(&(_voltApp[0]), voltapp0, 1, &ControlTTiPower::voltAppChanged);
+    _setAndEmitIfChanged(&(_currApp[0]), currapp0, 1, &ControlTTiPower::currAppChanged);
+    _setAndEmitIfChanged(&(_voltApp[1]), voltapp1, 2, &ControlTTiPower::voltAppChanged);
+    _setAndEmitIfChanged(&(_currApp[1]), currapp1, 2, &ControlTTiPower::currAppChanged);
 }
 
 void ControlTTiPower::_setAndEmitIfChanged(double* target, double val, int id, void (ControlTTiPower::*signal)(double, int)) {
@@ -240,7 +171,6 @@ void ControlTTiPower::_setAndEmitIfChanged(double* target, double val, int id, v
         emit (this->*signal)(val, id);
 }
 
-void ControlTTiPower::closeConnection()
-{
-    lxi_disconnect(fDevice);
+void ControlTTiPower::closeConnection() {
+    _comm->close();
 }

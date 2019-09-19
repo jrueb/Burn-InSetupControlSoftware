@@ -56,9 +56,9 @@ public:
     void onPower(int = 0) override;
     void offPower(int = 0) override;
     void closeConnection() override;
+    void refreshAppliedValues() override;
     /* End of implementation of pure virtual functions */
     
-    void refreshAppliedValues();
     void waitForSafeShutdown();
 
 private:
