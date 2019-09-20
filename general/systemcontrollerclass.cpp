@@ -178,6 +178,7 @@ Kepco* SystemControllerClass::_constructKepco(const InstrumentDescription &desc)
         kepco = new Kepco(comm);
     } catch (...) {
         delete comm;
+        throw;
     }
     if (desc.settings.size() > 0) {
         if (desc.settings.size() > 1)
