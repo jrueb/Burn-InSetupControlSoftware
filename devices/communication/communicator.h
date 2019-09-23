@@ -5,6 +5,7 @@
 
 /**
  * Abstract class to communicate with devices
+ * Implementations should be made thread-safe
  */
 class Communicator {
 public:
@@ -29,7 +30,7 @@ public:
     
     /**
      * Send data to the device
-     * @param buf Data to send
+     * @param buf Data to send. A suffix is attached, which is set using setSuffix
      */
     virtual void send(const std::string& buf) const = 0;
     
